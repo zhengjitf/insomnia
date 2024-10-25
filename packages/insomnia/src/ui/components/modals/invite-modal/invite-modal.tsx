@@ -266,7 +266,7 @@ export const InviteModalContainer: FC<{
   const [currentUserAccountId, setCurrentUserAccountId] = useState('');
   const [currentOrgInfo, setCurrentOrgInfo] = useState<OrganizationAuth0 | null>(null);
 
-  const isCurrentUserOrganizationOwner = currentUserAccountId === currentOrgInfo?.metadata.ownerAccountId;
+  const isCurrentUserOrganizationOwner = currentUserAccountId === currentOrgInfo?.metadata?.ownerAccountId;
 
   function getBaseInfo(organizationId: string) {
     return Promise.all([
