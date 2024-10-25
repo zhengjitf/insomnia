@@ -113,7 +113,7 @@ export const EnvironmentPicker = ({
                   return match;
                 }}
                 onSelectionChange={key => {
-                  if (key === 'all' || !key) {
+                  if (key === 'all' || key === null) {
                     return;
                   }
 
