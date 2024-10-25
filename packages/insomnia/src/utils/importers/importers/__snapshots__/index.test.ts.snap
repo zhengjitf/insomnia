@@ -4473,7 +4473,7 @@ exports[`Fixtures > Import postman > complex-v2_0_fromHeaders-input.json 1`] = `
         "type": "bearer",
       },
       "body": {
-        "mimeType": "application/json",
+        "mimeType": "text/plain",
         "text": "[]",
       },
       "description": "<br>See [Display the specified project.](#display-the-specified-project) for the returned attributes.",
@@ -4518,7 +4518,7 @@ exports[`Fixtures > Import postman > complex-v2_0_fromHeaders-input.json 1`] = `
         "type": "iam",
       },
       "body": {
-        "mimeType": "application/json",
+        "mimeType": "text/plain",
         "text": "[]",
       },
       "description": "<br>See [Display the specified project.](#display-the-specified-project) for the returned attributes.",
@@ -4571,7 +4571,7 @@ exports[`Fixtures > Import postman > complex-v2_0_fromHeaders-input.json 1`] = `
         "username": "john@example.com",
       },
       "body": {
-        "mimeType": "application/json",
+        "mimeType": "text/plain",
         "text": "{
     "title": "Acme Inc.",
     "parent": "\\/projects\\/1",
@@ -4614,7 +4614,7 @@ exports[`Fixtures > Import postman > complex-v2_0_fromHeaders-input.json 1`] = `
         "username": "Username",
       },
       "body": {
-        "mimeType": "application/json",
+        "mimeType": "text/plain",
         "text": "[]",
       },
       "description": "<br>The following attributes will be returned:
@@ -4674,7 +4674,7 @@ Child projects are provided as references; i.e. they only contain the <code>self
         "version": "Version",
       },
       "body": {
-        "mimeType": "application/json",
+        "mimeType": "text/plain",
         "text": "{
     "title": "Acme Inc.",
     "color": "#FF0000",
@@ -4833,11 +4833,16 @@ exports[`Fixtures > Import postman > complex-v2_0-input.json 1`] = `
       "afterResponseScript": "",
       "authentication": {},
       "body": {
-        "mimeType": "",
+        "mimeType": "text/plain",
         "text": "hello world!",
       },
       "description": "Request with raw body",
-      "headers": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "text/plain",
+        },
+      ],
       "metaSortKey": -1622117983996,
       "method": "POST",
       "name": "Test Request Raw Body",
@@ -5021,11 +5026,16 @@ exports[`Fixtures > Import postman > complex-v2_1-input.json 1`] = `
       "afterResponseScript": "",
       "authentication": {},
       "body": {
-        "mimeType": "",
+        "mimeType": "text/plain",
         "text": "hello world!",
       },
       "description": "Request with raw body",
-      "headers": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "text/plain",
+        },
+      ],
       "metaSortKey": -1622117983996,
       "method": "POST",
       "name": "Test Request",
@@ -5207,7 +5217,7 @@ exports[`Fixtures > Import postman > faker-vars-v2_1-input.json 1`] = `
         "type": "bearer",
       },
       "body": {
-        "mimeType": "",
+        "mimeType": "text/plain",
         "text": "{% faker 'guid' %}",
       },
       "description": "",
@@ -5216,6 +5226,10 @@ exports[`Fixtures > Import postman > faker-vars-v2_1-input.json 1`] = `
           "description": "",
           "name": "{% faker 'guid' %}",
           "value": "{% faker 'guid' %}",
+        },
+        {
+          "name": "Content-Type",
+          "value": "text/plain",
         },
       ],
       "metaSortKey": -1622117983999,
@@ -8412,7 +8426,7 @@ exports[`Fixtures > Import wsdl > addition-input.wsdl 1`] = `
       "afterResponseScript": "",
       "authentication": {},
       "body": {
-        "mimeType": "text/xml",
+        "mimeType": "text/plain",
         "text": "
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
  <soapenv:Header>
@@ -8502,7 +8516,7 @@ exports[`Fixtures > Import wsdl > calculator-input.wsdl 1`] = `
       "afterResponseScript": "",
       "authentication": {},
       "body": {
-        "mimeType": "text/xml",
+        "mimeType": "text/plain",
         "text": "
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
  <soapenv:Header>
@@ -8557,7 +8571,7 @@ exports[`Fixtures > Import wsdl > calculator-input.wsdl 1`] = `
       "afterResponseScript": "",
       "authentication": {},
       "body": {
-        "mimeType": "text/xml",
+        "mimeType": "text/plain",
         "text": "
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
  <soapenv:Header>
@@ -8612,7 +8626,7 @@ exports[`Fixtures > Import wsdl > calculator-input.wsdl 1`] = `
       "afterResponseScript": "",
       "authentication": {},
       "body": {
-        "mimeType": "text/xml",
+        "mimeType": "text/plain",
         "text": "
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
  <soapenv:Header>
@@ -8667,7 +8681,7 @@ exports[`Fixtures > Import wsdl > calculator-input.wsdl 1`] = `
       "afterResponseScript": "",
       "authentication": {},
       "body": {
-        "mimeType": "text/xml",
+        "mimeType": "text/plain",
         "text": "
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
  <soapenv:Header>
