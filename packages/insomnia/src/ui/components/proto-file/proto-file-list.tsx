@@ -1,4 +1,5 @@
 import React, { type FunctionComponent } from 'react';
+import { Checkbox } from 'react-aria-components';
 
 import type { ProtoDirectory } from '../../../models/proto-directory';
 import type { ProtoFile } from '../../../models/proto-file';
@@ -63,11 +64,21 @@ const recursiveRender = (
   ),
   ...files.map(f => (
     <li
-      className='row-spaced'
+      className='row-spaced cursor-pointer'
       key={f._id}
       onClick={() => handleSelect(f._id)}
     >
       <>
+        <Checkbox className="py-0" isSelected={f._id === selectedId} onChange={isSelected => isSelected && handleSelect(f._id)}>
+          {({ isSelected }) => {
+            return <>
+              {isSelected ?
+                <i className="fa fa-square-check fa-1x h-4 mr-2" style={{ color: 'rgb(74 222 128)' }} /> :
+                <i className="fa fa-square fa-1x h-4 mr-2" />
+              }
+            </>;
+          }}
+        </Checkbox>
         <span className="wide">
           <i className="fa fa-file-o pad-right-sm" />
           {f.name}

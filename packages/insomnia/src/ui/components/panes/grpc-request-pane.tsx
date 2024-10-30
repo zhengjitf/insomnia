@@ -24,7 +24,7 @@ import { GrpcMethodDropdown } from '../dropdowns/grpc-method-dropdown/grpc-metho
 import { ErrorBoundary } from '../error-boundary';
 import { KeyValueEditor } from '../key-value-editor/key-value-editor';
 import { useDocBodyKeyboardShortcuts } from '../keydown-binder';
-import { showAlert, showModal } from '../modals';
+import { showAlert, showError, showModal } from '../modals';
 import { ErrorModal } from '../modals/error-modal';
 import { ProtoFilesModal } from '../modals/proto-files-modal';
 import { RequestRenderErrorModal } from '../modals/request-render-error-modal';
@@ -61,7 +61,7 @@ export const GrpcRequestPane: FunctionComponent<Props> = ({
       console.log(`[gRPC] loading proto file methods pf=${activeRequest.protoFileId}`);
       const methods = await window.main.grpc.loadMethods(activeRequest.protoFileId);
       setGrpcState({ ...grpcState, methods });
-    } else {
+    } else if (activeRequest.url && activeRequest.reflectionApi) {
       const rendered =
         await tryToInterpolateRequestOrShowRenderErrorModal({
           request: activeRequest,
@@ -350,12 +350,21 @@ export const GrpcRequestPane: FunctionComponent<Props> = ({
         onHide={() => setIsProtoModalOpen(false)}
         onSave={async (protoFileId: string) => {
           if (activeRequest.protoFileId !== protoFileId) {
-            patchRequest(requestId, { protoFileId, protoMethodName: '' });
-            const methods = await window.main.grpc.loadMethods(protoFileId);
-            setGrpcState({ ...grpcState, methods });
+            try {
+              const methods = await window.main.grpc.loadMethods(protoFileId);
+              patchRequest(requestId, { protoFileId, protoMethodName: '' });
+              setGrpcState({ ...grpcState, methods });
+              setIsProtoModalOpen(false);
+            } catch (error) {
+              showError({
+                title: 'Invalid Proto File',
+                message: 'The proto file could not be parsed',
+                error,
+              });
+            }
+          } else {
             setIsProtoModalOpen(false);
           }
-          setIsProtoModalOpen(false);
         }}
       />}
     </>
