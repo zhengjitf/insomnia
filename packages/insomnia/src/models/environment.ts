@@ -134,6 +134,8 @@ export async function getOrCreateForParentId(parentId: string) {
       const baseEnvironment = await create({
         parentId,
         name: 'Base Environment',
+        // set default environment type to key-value type
+        environmentType: EnvironmentType.KVPAIR,
         _id: baseEnvironmentId,
       });
 

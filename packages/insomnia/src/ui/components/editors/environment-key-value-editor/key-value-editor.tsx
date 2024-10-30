@@ -12,7 +12,7 @@ import { checkNestedKeys, ensureKeyIsValid } from '../environment-utils';
 
 interface EditorProps {
   data: EnvironmentKvPairData[];
-  onChange: (newPari: EnvironmentKvPairData[]) => void;
+  onChange: (newPair: EnvironmentKvPairData[]) => void;
 }
 const cellCommonStyle = 'h-full px-2  flex items-center';
 
@@ -41,7 +41,7 @@ const ItemButton = (props: ButtonProps & { tabIndex?: number }) => {
 export const EnvironmentKVEditor = ({ data, onChange }: EditorProps) => {
   const kvPairs: EnvironmentKvPairData[] = data.length > 0 ? [...data] : [createNewPair()];
   const codeModalRef = useRef<CodePromptModalHandle>(null);
-  const [kvPairError, setKvPariError] = useState<{ id: string; error: string }[]>([]);
+  const [kvPairError, setKvPairError] = useState<{ id: string; error: string }[]>([]);
 
   const repositionInArray = (moveItems: string[], targetIndex: number) => {
     const removed = kvPairs.filter(pair => pair.id !== moveItems[0]);
@@ -153,13 +153,13 @@ export const EnvironmentKVEditor = ({ data, onChange }: EditorProps) => {
               const error = ensureKeyIsValid(newName, true);
               if (error) {
                 if (itemError) {
-                  setKvPariError(kvPairError.map(p => p.id === id ? { id, error } : p));
+                  setKvPairError(kvPairError.map(p => p.id === id ? { id, error } : p));
                 } else {
-                  setKvPariError([...kvPairError, { id, error }]);
+                  setKvPairError([...kvPairError, { id, error }]);
                 }
               } else {
                 if (itemError) {
-                  setKvPariError(kvPairError.filter(p => p.id !== id));
+                  setKvPairError(kvPairError.filter(p => p.id !== id));
                 }
                 handleItemChange(id, 'name', newName);
               }
@@ -286,12 +286,8 @@ export const EnvironmentKVEditor = ({ data, onChange }: EditorProps) => {
     );
   };
 
-  useEffect(() => {
-
-  }, []);
-
   return (
-    <div className="p-[--padding-sm] min-w-max h-full overflow-hidden flex flex-col">
+    <div className="min-w-max h-full overflow-hidden flex flex-col">
       <Toolbar className="content-box z-10 bg-[var(--color-bg)] flex flex-shrink-0 h-[var(--line-height-sm)] text-[var(--font-size-sm)]">
         <Button
           className="px-4 py-1 h-full flex items-center justify-center gap-2 aria-pressed:bg-[--hl-sm] text-[--color-font] text-xs hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all"
@@ -317,7 +313,7 @@ export const EnvironmentKVEditor = ({ data, onChange }: EditorProps) => {
         selectionMode='none'
         dragAndDropHooks={dragAndDropHooks}
         dependencies={[kvPairError]}
-        className="w-full overflow-y-auto py-1 h-full"
+        className="p-[--padding-sm] w-full overflow-y-auto h-full"
         items={kvPairs}
       >
         {kvPair => {
@@ -326,7 +322,7 @@ export const EnvironmentKVEditor = ({ data, onChange }: EditorProps) => {
             <ListBoxItem
               key={id}
               id={id}
-              textValue={name}
+              textValue={`environment-item-${name || id}`}
               style={{ opacity: enabled ? '1' : '0.4' }}
               className={'w-full flex focus:outline-none  h-[--line-height-sm]'}
             >
