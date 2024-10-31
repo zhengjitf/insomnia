@@ -6,6 +6,13 @@ import { VCS } from './vcs';
 
 let vcs: VCS | null = null;
 
+export class UserAbortResolveMergeConflictError extends Error {
+  constructor(msg: string = 'User aborted merge') {
+    super(msg);
+  }
+  name = 'UserAbortResolveMergeConflictError';
+}
+
 export const VCSInstance = () => {
   if (vcs) {
     return vcs;
@@ -21,9 +28,9 @@ export const VCSInstance = () => {
         handleDone: (conflicts?: MergeConflict[]) => {
           if (conflicts && conflicts.length) {
             resolve(conflicts);
+          } else {
+            reject(new UserAbortResolveMergeConflictError());
           }
-
-          reject(new Error('User aborted merge'));
         },
       });
     });

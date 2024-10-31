@@ -95,12 +95,15 @@ const LocalBranchItem = ({
           doneMessage="Merged"
           confirmMessage='Confirm'
           disabled={isCurrent}
-          onClick={() => mergeBranchFetcher.submit({
-            branch,
-          }, {
-            method: 'POST',
-            action: `/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/insomnia-sync/branch/merge`,
-          })}
+          onClick={() => {
+            // file://./../../routes/remote-collections.tsx#mergeBranchAction
+            mergeBranchFetcher.submit({
+              branch,
+            }, {
+              method: 'POST',
+              action: `/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/insomnia-sync/branch/merge`,
+            });
+          }}
         >
           <Icon icon={mergeBranchFetcher.state !== 'idle' ? 'spinner' : 'code-merge'} className={`w-5 ${mergeBranchFetcher.state !== 'idle' ? 'animate-spin' : ''}`} />
           Merge

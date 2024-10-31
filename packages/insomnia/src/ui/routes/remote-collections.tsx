@@ -24,7 +24,7 @@ import type {
   Status,
   StatusCandidate,
 } from '../../sync/types';
-import { VCSInstance } from '../../sync/vcs/insomnia-sync';
+import { UserAbortResolveMergeConflictError, VCSInstance } from '../../sync/vcs/insomnia-sync';
 import { pullBackendProject } from '../../sync/vcs/pull-backend-project';
 import { invariant } from '../../utils/invariant';
 
@@ -417,7 +417,16 @@ export const mergeBranchAction: ActionFunction = async ({
   invariant(typeof branch === 'string', 'Branch is required');
   const vcs = VCSInstance();
   const { syncItems } = await getSyncItems({ workspaceId });
-  const delta = await vcs.merge(syncItems, branch);
+  let delta;
+  try {
+    delta = await vcs.merge(syncItems, branch);
+  } catch (err) {
+    if (err instanceof UserAbortResolveMergeConflictError) {
+      return null;
+    } else {
+      throw err;
+    }
+  }
   try {
     await database.batchModifyDocs(delta as Operation);
     delete remoteCompareCache[workspaceId];
