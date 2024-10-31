@@ -395,7 +395,7 @@ export const WorkspaceEnvironmentsEditModal = ({ onClose }: {
                 </GridList>
                 <div className='flex-1 flex flex-col divide-solid divide-y divide-[--hl-md] overflow-hidden'>
                   <div className='flex items-center justify-between gap-2 w-full px-[--padding-sm] overflow-hidden'>
-                    <Heading className='flex items-center gap-2 text-lg py-2 px-4 overflow-hidden'>
+                    <Heading className='flex items-center flex-grow gap-2 text-lg py-2 px-4 overflow-hidden'>
                       <Icon style={{ color: selectedEnvironment?.color || '' }} className='w-4' icon={selectedEnvironment?.isPrivate ? 'lock' : isUsingGitSync ? ['fab', 'git-alt'] : isUsingInsomniaCloudSync ? 'globe-americas' : 'file-arrow-down'} />
                       <EditableInput
                         value={selectedEnvironment?.name || ''}

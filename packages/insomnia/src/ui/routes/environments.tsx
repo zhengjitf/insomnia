@@ -412,7 +412,7 @@ const Environments = () => {
       <Panel id="pane-one" className='pane-one theme--pane'>
         <div className='flex-1 flex flex-col h-full divide-solid divide-y divide-[--hl-md] overflow-hidden'>
           <div className='flex flex-shrink-0 basis-[--line-height-sm] items-center p-[--padding-sm] justify-between gap-2 w-full overflow-hidden'>
-            <Heading className='flex items-center gap-2 text-lg py-2 px-4 overflow-hidden'>
+            <Heading className='flex flex-grow items-center gap-2 text-lg py-2 px-4 overflow-hidden'>
               <Icon className='w-4' icon={selectedEnvironment?.isPrivate ? 'lock' : isUsingGitSync ? ['fab', 'git-alt'] : isUsingInsomniaCloudSync ? 'globe-americas' : 'file-arrow-down'} />
               <EditableInput
                 value={selectedEnvironment?.name || ''}
