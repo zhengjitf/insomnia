@@ -81,12 +81,15 @@ const LocalBranchItem = ({
         <Button
           className="px-4 py-1 font-semibold border border-solid border-[--hl-md] flex items-center justify-center gap-2 aria-pressed:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm"
           isDisabled={isCurrent}
-          onPress={() => checkoutBranchFetcher.submit({
-            branch,
-          }, {
-            method: 'POST',
-            action: `/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/git/branch/checkout`,
-          })}
+          onPress={() => {
+            // file://./../../routes/git-actions.tsx#checkoutGitBranchAction
+            checkoutBranchFetcher.submit({
+              branch,
+            }, {
+              method: 'POST',
+              action: `/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/git/branch/checkout`,
+            });
+          }}
         >
           <Icon icon={checkoutBranchFetcher.state !== 'idle' ? 'spinner' : 'turn-up'} className={`w-5 ${checkoutBranchFetcher.state !== 'idle' ? 'animate-spin' : 'rotate-90'}`} />
           Checkout

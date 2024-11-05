@@ -877,13 +877,6 @@ async function renderApp() {
                                     path: 'changes',
                                     loader: async (...args) =>
                                       (await import('./routes/git-actions')).gitChangesLoader(...args),
-                                    shouldRevalidate: ({ formAction }) => {
-                                      if (formAction?.includes('git')) {
-                                        return true;
-                                      }
-                                      // disable revalidation for this loader, we will fetch this loader periodically through fetcher.load in component
-                                      return false;
-                                    },
                                   },
                                   {
                                     path: 'log',
@@ -924,11 +917,6 @@ async function renderApp() {
                                     path: 'reset',
                                     action: async (...args) =>
                                       (await import('./routes/git-actions')).resetGitRepoAction(...args),
-                                  },
-                                  {
-                                    path: 'pull',
-                                    action: async (...args) =>
-                                      (await import('./routes/git-actions')).pullFromGitRemoteAction(...args),
                                   },
                                   {
                                     path: 'push',

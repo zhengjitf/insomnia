@@ -23,6 +23,7 @@ export const GitLogModal: FC<Props> = ({ onClose }) => {
 
   useEffect(() => {
     if (gitLogFetcher.state === 'idle' && !gitLogFetcher.data) {
+      // file://./../../routes/git-actions.tsx#gitLogLoader
       gitLogFetcher.load(`/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/git/log`);
     }
   }, [organizationId, projectId, workspaceId, gitLogFetcher]);

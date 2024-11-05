@@ -27,6 +27,7 @@ import { shallowClone } from '../../sync/git/shallow-clone';
 import {
   getOauth2FormatName,
 } from '../../sync/git/utils';
+import type { MergeConflict } from '../../sync/types';
 import { invariant } from '../../utils/invariant';
 import {
   SegmentEvent,
@@ -1266,14 +1267,7 @@ export const pushToGitRemoteAction: ActionFunction = async ({
   return {};
 };
 
-export interface PullFromGitRemoteResult {
-  errors?: string[];
-}
-
-export const pullFromGitRemoteAction: ActionFunction = async ({
-  params,
-}): Promise<PullFromGitRemoteResult> => {
-  const { workspaceId } = params;
+export const pullFromGitRemote = async (workspaceId: string) => {
   invariant(workspaceId, 'Workspace ID is required');
   const workspace = await models.workspace.getById(workspaceId);
   invariant(workspace, 'Workspace not found');
@@ -1293,16 +1287,6 @@ export const pullFromGitRemoteAction: ActionFunction = async ({
   const providerName = getOauth2FormatName(gitRepository.credentials);
 
   try {
-    await GitVCS.fetch({
-      singleBranch: true,
-      depth: 1,
-      credentials: gitRepository?.credentials,
-    });
-  } catch (e) {
-    console.warn('Error fetching from remote', e);
-  }
-
-  try {
     await GitVCS.pull(gitRepository.credentials);
     window.main.trackSegmentEvent({
       event: SegmentEvent.vcsAction, properties: {
@@ -1312,7 +1296,7 @@ export const pullFromGitRemoteAction: ActionFunction = async ({
     });
   } catch (err: unknown) {
     if (err instanceof Errors.HttpError) {
-      return { errors: [`${err.message}, ${err.data.response}`] };
+      err = new Error(`${err.message}, ${err.data.response}`);
     }
     const errorMessage = err instanceof Error ? err.message : 'Unknown Error';
     window.main.trackSegmentEvent({
@@ -1321,14 +1305,35 @@ export const pullFromGitRemoteAction: ActionFunction = async ({
         vcsSegmentEventProperties('git', 'pull', errorMessage),
     });
 
-    return {
-      errors: [`${errorMessage}`],
-    };
+    throw err;
   }
 
   await database.flushChanges(bufferId);
+};
 
-  return {};
+export const continueMerge = async (
+  {
+    handledMergeConflicts,
+    commitMessage,
+    commitParent,
+  }: {
+    handledMergeConflicts: MergeConflict[];
+      commitMessage: string;
+      commitParent: string[];
+  }
+) => {
+  // filter in conflicts that user has chosen to keep 'theirs'
+  handledMergeConflicts = handledMergeConflicts.filter(conflict => conflict.choose !== conflict.mineBlob);
+
+  const bufferId = await database.bufferChanges();
+
+  await GitVCS.continueMerge({
+    handledMergeConflicts,
+    commitMessage,
+    commitParent,
+  });
+
+  await database.flushChanges(bufferId);
 };
 
 export interface GitChange {

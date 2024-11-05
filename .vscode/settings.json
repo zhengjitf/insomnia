@@ -21,6 +21,8 @@
     "inso",
     "libcurl",
     "svgr",
+    "unstage",
+    "Unstaged",
     "xmark"
   ],
 }
