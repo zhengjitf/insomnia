@@ -209,6 +209,7 @@ export const Plugins: FC = () => {
             <Button
               className="m-1 px-[--padding-md] h-[--line-height-xs] py-1 flex items-center justify-center gap-2 aria-pressed:bg-[--hl-sm] text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all border border-solid border-[--hl-lg] rounded-[--radius-md]"
               isDisabled={isInstallingFromNpm}
+              type="submit"
             >
               {isInstallingFromNpm && <i className="fa fa-refresh fa-spin space-right" />}
               Install Plugin
