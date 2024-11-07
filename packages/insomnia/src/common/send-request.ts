@@ -33,6 +33,7 @@ const wrapAroundIterationOverIterationData = (list?: UserUploadEnvironment[], cu
   };
   return list[(currentIteration + 1) % list.length];
 };
+
 export async function getSendRequestCallbackMemDb(environmentId: string, memDB: any, settingsOverrides?: SettingsOverride, iterationData?: UserUploadEnvironment[], iterationCount?: number) {
   // Initialize the DB in-memory and fill it with data if we're given one
   await database.init(
@@ -168,6 +169,16 @@ export async function getSendRequestCallbackMemDb(environmentId: string, memDB: 
     const bodyBuffer = await getBodyBuffer(res) as Buffer;
     const data = bodyBuffer ? bodyBuffer.toString('utf8') : undefined;
 
-    return { status, statusMessage, data, headers, responseTime, timelinePath: requestData.timelinePath, testResults: postMutatedContext.requestTestResults };
+    const testResults = [...(mutatedContext.requestTestResults || []), ...(postMutatedContext.requestTestResults || [])];
+    return {
+      status,
+      statusMessage,
+      data,
+      headers,
+      responseTime,
+      timelinePath: requestData.timelinePath,
+      testResults,
+      nextRequestIdOrName: postMutatedContext?.execution?.nextRequestIdOrName,
+    };
   };
 }

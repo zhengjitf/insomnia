@@ -23,6 +23,7 @@ import { Database, isFile, loadDb } from './db';
 import { insomniaExportAdapter } from './db/adapters/insomnia-adapter';
 import { loadApiSpec, promptApiSpec } from './db/models/api-spec';
 import { loadEnvironment, promptEnvironment } from './db/models/environment';
+import { BaseModel } from './db/models/types';
 import { loadTestSuites, promptTestSuites } from './db/models/unit-test-suite';
 import { matchIdIsh } from './db/models/util';
 import { loadWorkspace, promptWorkspace } from './db/models/workspace';
@@ -537,7 +538,10 @@ export const go = (args?: string[]) => {
         const sendRequest = await getSendRequestCallbackMemDb(environment._id, db, { validateSSL: !options.disableCertValidation }, iterationData, iterationCount);
         let success = true;
         for (let i = 0; i < iterationCount; i++) {
-          for (const req of requestsToRun) {
+          let reqIndex = 0;
+          while (reqIndex < requestsToRun.length) {
+            const req = requestsToRun[reqIndex];
+
             if (options.bail && !success) {
               return;
             }
@@ -548,7 +552,7 @@ export const go = (args?: string[]) => {
               success = false;
               continue;
             }
-            // logger.debug(res);
+
             const timelineString = await readFile(res.timelinePath, 'utf8');
             const appendNewLineIfNeeded = (str: string) => str.endsWith('\n') ? str : str + '\n';
             const timeline = deserializeNDJSON(timelineString).map(e => appendNewLineIfNeeded(e.value)).join('');
@@ -564,6 +568,18 @@ Test results:`);
             }
 
             await new Promise(r => setTimeout(r, parseInt(options.delayRequest, 10)));
+
+            if (res.nextRequestIdOrName) {
+              const offset = getNextRequestOffset(requestsToRun.slice(reqIndex), res.nextRequestIdOrName);
+              reqIndex += offset;
+              if (reqIndex < requestsToRun.length) {
+                console.log(`The next request has been pointed to "${requestsToRun[reqIndex].name}"`);
+              } else {
+                console.log(`No request has been found for "${res.nextRequestIdOrName}", ending the iteration`);
+              }
+            } else {
+              reqIndex++;
+            }
           }
         }
         return process.exit(success ? 0 : 1);
@@ -708,4 +724,21 @@ Test results:`);
     });
 
   program.parseAsync(args || process.argv).catch(logErrorAndExit);
+};
+
+const getNextRequestOffset = (
+  leftRequestsToRun: BaseModel[],
+  nextRequestIdOrName: string
+) => {
+  const idMatchOffset = leftRequestsToRun.findIndex(req => req._id.trim() === nextRequestIdOrName.trim());
+  if (idMatchOffset >= 0) {
+    return idMatchOffset;
+  }
+
+  const nameMatchOffset = leftRequestsToRun.reverse().findIndex(req => req.name.trim() === nextRequestIdOrName.trim());
+  if (nameMatchOffset >= 0) {
+    return leftRequestsToRun.length - 1 - nameMatchOffset;
+  }
+
+  return leftRequestsToRun.length;
 };
