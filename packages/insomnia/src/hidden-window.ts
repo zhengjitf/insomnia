@@ -2,8 +2,6 @@ import { initInsomniaObject, InsomniaObject } from 'insomnia-sdk';
 import { Console, mergeClientCertificates, mergeCookieJar, mergeRequests, mergeSettings, type RequestContext } from 'insomnia-sdk';
 import * as _ from 'lodash';
 
-import { invariant } from '../src/utils/invariant';
-
 export interface HiddenBrowserWindowBridgeAPI {
   runScript: (options: { script: string; context: RequestContext }) => Promise<RequestContext>;
 };
@@ -39,18 +37,11 @@ const runScript = async (
 
   const executionContext = await initInsomniaObject(context, scriptConsole.log);
 
-  const evalInterceptor = (script: string) => {
-    invariant(script && typeof script === 'string', 'eval is called with invalid or empty value');
-    const result = eval(script);
-    return result;
-  };
-
   const AsyncFunction = (async () => { }).constructor;
   const executeScript = AsyncFunction(
     'insomnia',
     'require',
     'console',
-    'eval',
     '_',
     'setTimeout',
     // disable these as they are not supported in web or existing implementation
@@ -70,7 +61,6 @@ const runScript = async (
     executionContext,
     window.bridge.requireInterceptor,
     scriptConsole,
-    evalInterceptor,
     _,
     proxiedSetTimeout,
     undefined,
