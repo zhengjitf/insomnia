@@ -196,12 +196,24 @@ export class GitVCS {
       http: httpClient,
       repoId,
     };
-    await git.clone({
-      ...this._baseOpts,
-      url,
-      singleBranch: true,
-    });
-    console.log(`[git] Clones repo to ${gitDirectory} from ${url}`);
+    try {
+      await git.clone({
+        ...this._baseOpts,
+        url,
+        singleBranch: true,
+      });
+    } catch (err) {
+      // If we there is a checkout conflict we only want to clone the repo
+      if (err instanceof git.Errors.CheckoutConflictError) {
+        await git.clone({
+          ...this._baseOpts,
+          url,
+          singleBranch: true,
+          noCheckout: true,
+        });
+      }
+    }
+    console.log(`[git] Cloned repo to ${gitDirectory} from ${url}`);
   }
 
   isInitializedForRepo(id: string) {
