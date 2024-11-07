@@ -14,6 +14,8 @@ export function useExecutionState({ requestId }: { requestId?: string }) {
       const targetSteps = await window.main.getExecution({ requestId });
       if (targetSteps) {
         isMounted && setSteps(targetSteps);
+      } else {
+        isMounted && setSteps([]);
       }
     };
     fn();
