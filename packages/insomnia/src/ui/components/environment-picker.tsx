@@ -144,9 +144,9 @@ export const EnvironmentPicker = ({
                     <Icon icon="caret-down" className='w-5 flex-shrink-0' />
                   </Button>
                 </div>
-                <Popover className="min-w-max max-h-[90vh] !z-10 border grid grid-flow-col auto-cols-[min(250px,calc(45vw))] overflow-hidden divide-x divide-solid divide-[--hl-md] select-none text-sm border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] rounded-md focus:outline-none" placement='bottom start' offset={8}>
+                <Popover className="min-w-max max-h-[90vh] !z-10 border grid grid-flow-col auto-cols-[min(250px,calc(45vw))] overflow-y-auto divide-x divide-solid divide-[--hl-md] select-none text-sm border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] rounded-md focus:outline-none" placement='bottom start' offset={8}>
                   <ListBox<{ name: string; icon: IconName }>
-                    className="select-none text-sm min-w-max p-2 flex flex-col overflow-y-auto focus:outline-none"
+                    className="select-none text-sm min-w-max p-2 h-full max-h-full flex flex-col focus:outline-none"
                   >
                     {item => (
                       <ListBoxItem
