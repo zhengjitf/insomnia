@@ -280,6 +280,7 @@ export const createNewWorkspaceAction: ActionFunction = async ({
     if (mockServerType === 'self-hosted') {
       const mockServerUrl = formData.get('mockServerUrl');
       invariant(typeof mockServerUrl === 'string', 'Mock Server URL is required');
+      mockServerPatch.useInsomniaCloud = false;
       mockServerPatch.url = mockServerUrl;
     }
 
