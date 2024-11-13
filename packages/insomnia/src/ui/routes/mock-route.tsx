@@ -3,7 +3,7 @@ import React from 'react';
 import { Button, Tab, TabList, TabPanel, Tabs, Toolbar } from 'react-aria-components';
 import { type LoaderFunction, useFetcher, useParams, useRouteLoaderData } from 'react-router-dom';
 
-import { CONTENT_TYPE_JSON, CONTENT_TYPE_OTHER, CONTENT_TYPE_PLAINTEXT, CONTENT_TYPE_XML, CONTENT_TYPE_YAML, contentTypesMap, getMockServiceURL, RESPONSE_CODE_REASONS } from '../../common/constants';
+import { CONTENT_TYPE_JSON, CONTENT_TYPE_OTHER, CONTENT_TYPE_PLAINTEXT, CONTENT_TYPE_XML, CONTENT_TYPE_YAML, contentTypesMap, getMockServiceBinURL, getMockServiceURL, RESPONSE_CODE_REASONS } from '../../common/constants';
 import { database as db } from '../../common/database';
 import { getResponseCookiesFromHeaders } from '../../common/har';
 import * as models from '../../models';
@@ -144,7 +144,7 @@ export const MockRouteRoute = () => {
     }
   };
 
-  const createandSendPrivateRequest = (patch: Partial<Request>) =>
+  const createAndSendPrivateRequest = (patch: Partial<Request>) =>
     requestFetcher.submit(JSON.stringify(patch),
       {
         encType: 'application/json',
@@ -205,9 +205,8 @@ export const MockRouteRoute = () => {
       return;
     };
     await upsertMockbinHar(pathInput);
-    const compoundId = mockRoute.parentId + pathInput;
-    createandSendPrivateRequest({
-      url: mockbinUrl + '/bin/' + compoundId,
+    createAndSendPrivateRequest({
+      url: getMockServiceBinURL(mockServer, pathInput),
       method: mockRoute.method,
       headers: mockRoute.headers,
       parentId: mockRoute._id,

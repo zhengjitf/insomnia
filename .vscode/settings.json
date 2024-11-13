@@ -20,9 +20,11 @@
     "getinsomnia",
     "inso",
     "libcurl",
+    "mockbin",
     "svgr",
     "unstage",
     "Unstaged",
+    "upsert",
     "xmark"
   ],
 }

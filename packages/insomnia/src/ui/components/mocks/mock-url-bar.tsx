@@ -75,8 +75,8 @@ export const MockUrlBar = ({ onPathUpdate, onSend }: { onPathUpdate: (path: stri
         onPress={() => {
           showModal(AlertModal, {
             title: 'Full URL',
-            message: getMockServiceBinURL(mockRoute.parentId, pathInput, mockServer.useInsomniaCloud ? undefined : mockServer.url),
-            onConfirm: () => window.clipboard.writeText(getMockServiceBinURL(mockRoute.parentId, pathInput, mockServer.useInsomniaCloud ? undefined : mockServer.url)),
+            message: getMockServiceBinURL(mockServer, pathInput),
+            onConfirm: () => window.clipboard.writeText(getMockServiceBinURL(mockServer, pathInput)),
             addCancel: true,
             okLabel: 'Copy',
           });
@@ -93,7 +93,7 @@ export const MockUrlBar = ({ onPathUpdate, onSend }: { onPathUpdate: (path: stri
       <Button
         className="bg-[--hl-sm] px-3 rounded-sm aria-pressed:bg-[--hl-xs] data-[pressed]:bg-[--hl-xs]"
         onPress={() => {
-          window.clipboard.writeText(getMockServiceBinURL(mockRoute.parentId, pathInput, mockServer.useInsomniaCloud ? undefined : mockServer.url));
+          window.clipboard.writeText(getMockServiceBinURL(mockServer, pathInput));
         }}
       >
         <Icon icon="copy" />
@@ -142,7 +142,7 @@ export const MockUrlBar = ({ onPathUpdate, onSend }: { onPathUpdate: (path: stri
               label="Generate Client Code"
               onClick={async () => {
                 const request = await models.request.getByParentId(mockRoute._id);
-                request && showModal(GenerateCodeModal, { request: { ...request, url: getMockServiceBinURL(mockRoute.parentId, pathInput, mockServer.useInsomniaCloud ? undefined : mockServer.url) } });
+                request && showModal(GenerateCodeModal, { request: { ...request, url: getMockServiceBinURL(mockServer, pathInput) } });
               }}
             />
           </DropdownItem>

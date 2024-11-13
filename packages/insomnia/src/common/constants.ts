@@ -1,5 +1,6 @@
 import appConfig from '../../config/config.json';
 import { version } from '../../package.json';
+import type { MockServer } from '../models/mock-server';
 import type { KeyCombination } from './settings';
 
 // Vite is filtering out process.env variables that are not prefixed with VITE_.
@@ -120,15 +121,17 @@ export enum UpdateURL {
 export const getApiBaseURL = () => env.INSOMNIA_API_URL || 'https://api.insomnia.rest';
 export const getMockServiceURL = () => env.INSOMNIA_MOCK_API_URL || 'https://mock.insomnia.rest';
 
-export const getMockServiceBinURL = (serverId: string, path: string, customUrl?: string) => {
-  if (serverId && !customUrl) {
+export const getMockServiceBinURL = (mockServer: MockServer, path: string) => {
+  if (!mockServer.useInsomniaCloud) {
+    return `${mockServer.url}/bin/${mockServer._id}${path}`;
+  } else {
     const baseUrl = getMockServiceURL();
     const url = new URL(baseUrl);
-    url.host = serverId.replace('_', '-') + '.' + url.host;
+    url.host = mockServer._id.replace('_', '-') + '.' + url.host;
     return url.origin + path;
   }
-  return customUrl + '/bin/' + serverId + path;
 };
+
 export const getAIServiceURL = () => env.INSOMNIA_AI_URL || 'https://ai-helper.insomnia.rest';
 
 export const getUpdatesBaseURL = () => env.INSOMNIA_UPDATES_URL || 'https://updates.insomnia.rest';
