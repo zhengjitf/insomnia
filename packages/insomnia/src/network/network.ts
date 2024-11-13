@@ -180,6 +180,7 @@ export const tryToExecutePreRequestScript = async (
     responseId,
     ancestors,
   }: Awaited<ReturnType<typeof fetchRequestData>>,
+  transientVariables: Environment,
   userUploadEnvironment?: UserUploadEnvironment,
   iteration?: number,
   iterationCount?: number,
@@ -224,6 +225,7 @@ export const tryToExecutePreRequestScript = async (
     ancestors,
     eventName: 'prerequest',
     settings,
+    transientVariables,
   });
   if (!mutatedContext || 'error' in mutatedContext) {
     return {
@@ -250,6 +252,7 @@ export const tryToExecutePreRequestScript = async (
     requestTestResults: mutatedContext.requestTestResults,
     userUploadEnvironment: mutatedContext.userUploadEnvironment,
     execution: mutatedContext.execution,
+    transientVariables: mutatedContext.transientVariables,
   };
 };
 
@@ -311,7 +314,24 @@ export async function savePatchesMadeByScript(
 }
 
 export const tryToExecuteScript = async (context: RequestAndContextAndOptionalResponse) => {
-  const { script, request, environment, timelinePath, responseId, baseEnvironment, clientCertificates, cookieJar, response, globals, userUploadEnvironment, iteration, iterationCount, ancestors, eventName, execution } = context;
+  const { script,
+    request,
+    environment,
+    timelinePath,
+    responseId,
+    baseEnvironment,
+    clientCertificates,
+    cookieJar,
+    response,
+    globals,
+    userUploadEnvironment,
+    iteration,
+    iterationCount,
+    ancestors,
+    eventName,
+    execution,
+    transientVariables,
+  } = context;
   invariant(script, 'script must be provided');
 
   const settings = await models.settings.get();
@@ -359,6 +379,7 @@ export const tryToExecuteScript = async (context: RequestAndContextAndOptionalRe
           ...execution, // keep some existing properties in the after-response script from the pre-request script
           location: requestLocation,
         },
+        transientVariables,
       },
     });
     if ('error' in originalOutput) {
@@ -402,6 +423,16 @@ export const tryToExecuteScript = async (context: RequestAndContextAndOptionalRe
       userUploadEnvironment.dataPropertyOrder = userUploadEnvPropertyOrder.map;
     }
 
+    if (output?.transientVariables !== undefined) {
+      const variablesPropertyOrder = orderedJSON.parse(
+        JSON.stringify(output?.transientVariables?.data || {}),
+        JSON_ORDER_PREFIX,
+        JSON_ORDER_SEPARATOR,
+      );
+      transientVariables.data = output?.transientVariables?.data || {};
+      transientVariables.dataPropertyOrder = variablesPropertyOrder.map;
+    }
+
     return {
       request: output.request,
       environment,
@@ -413,6 +444,7 @@ export const tryToExecuteScript = async (context: RequestAndContextAndOptionalRe
       userUploadEnvironment,
       requestTestResults: output.requestTestResults,
       execution: output.execution,
+      transientVariables,
     };
   } catch (err) {
     await fs.promises.appendFile(
@@ -449,6 +481,7 @@ interface RequestContextForScript {
   globals?: Environment; // there could be no global environment
   settings: Settings;
   execution?: ExecutionOption;
+  transientVariables: Environment;
 }
 
 type RequestAndContextAndResponse = RequestContextForScript & {
@@ -509,6 +542,7 @@ export const tryToInterpolateRequest = async ({
   extraInfo,
   baseEnvironment,
   userUploadEnvironment,
+  transientVariables,
   ignoreUndefinedEnvVariable,
 }: {
   request: Request;
@@ -517,6 +551,7 @@ export const tryToInterpolateRequest = async ({
   extraInfo?: ExtraRenderInfo;
   baseEnvironment?: Environment;
     userUploadEnvironment?: UserUploadEnvironment;
+    transientVariables?: Environment;
   ignoreUndefinedEnvVariable?: boolean;
 }
 ) => {
@@ -526,6 +561,7 @@ export const tryToInterpolateRequest = async ({
       environment,
       baseEnvironment,
       userUploadEnvironment,
+      transientVariables,
       purpose,
       extraInfo,
       ignoreUndefinedEnvVariable,

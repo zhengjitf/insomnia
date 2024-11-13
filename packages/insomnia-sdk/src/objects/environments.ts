@@ -56,13 +56,14 @@ export class Variables {
             collectionVars: Environment;
             environmentVars: Environment;
             iterationDataVars: Environment;
+            localVars: Environment;
         },
     ) {
         this.globalVars = args.globalVars;
         this.collectionVars = args.collectionVars;
         this.environmentVars = args.environmentVars;
         this.iterationDataVars = args.iterationDataVars;
-        this.localVars = new Environment('__localVars', {});
+        this.localVars = args.localVars;
     }
 
     has = (variableName: string) => {
@@ -115,5 +116,9 @@ export class Variables {
             (ctx, obj) => ({ ...ctx, ...obj }),
             {},
         );
+    };
+
+    localVarsToObject = () => {
+        return this.localVars.toObject();
     };
 }

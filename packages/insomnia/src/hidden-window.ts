@@ -97,6 +97,10 @@ const runScript = async (
       name: context.iterationData.name,
       data: mutatedContextObject.iterationData,
     } : undefined,
+    transientVariables: {
+      name: context.transientVariables?.name || 'transientVariables',
+      data: mutatedContextObject.variables,
+    },
     request: updatedRequest,
     execution: mutatedContextObject.execution,
     settings: updatedSettings,

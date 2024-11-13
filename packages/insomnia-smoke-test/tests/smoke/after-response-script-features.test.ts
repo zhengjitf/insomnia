@@ -58,4 +58,22 @@ test.describe('after-response script features tests', async () => {
             '__fromAfterScript': 'environment',
         });
     });
+
+    test('set transient var', async ({ page }) => {
+        const statusTag = page.locator('[data-testid="response-status-tag"]:visible');
+        await page.getByLabel('Request Collection').getByTestId('transient var').press('Enter');
+
+        // send
+        await page.getByTestId('request-pane').getByRole('button', { name: 'Send' }).click();
+
+        // verify response
+        await page.waitForSelector('[data-testid="response-status-tag"]:visible');
+        await expect(statusTag).toContainText('200 OK');
+
+        // verify
+        await page.getByRole('tab', { name: 'Tests' }).click();
+
+        const rows = page.getByTestId('test-result-row');
+        await expect(rows.first()).toContainText('PASS');
+    });
 });

@@ -6,6 +6,7 @@ import { Panel, PanelResizeHandle } from 'react-resizable-panels';
 import { type ActionFunction, type LoaderFunction, redirect, useNavigate, useParams, useRouteLoaderData, useSearchParams, useSubmit } from 'react-router-dom';
 import { useListData } from 'react-stately';
 import { useInterval } from 'react-use';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Tooltip } from '../../../src/ui/components/tooltip';
 import { JSON_ORDER_PREFIX, JSON_ORDER_SEPARATOR } from '../../common/constants';
@@ -892,6 +893,16 @@ export const runCollectionAction: ActionFunction = async ({ request, params }) =
     iterationResults: [],
     done: false,
     responsesInfo: [],
+    transientVariables: {
+      ...models.environment.init(),
+      _id: uuidv4(),
+      type: models.environment.type,
+      parentId: '',
+      modified: 0,
+      created: Date.now(),
+      name: 'Transient Variables',
+      data: {},
+    },
   };
 
   window.main.startExecution({ requestId: workspaceId });
@@ -968,6 +979,7 @@ export const runCollectionAction: ActionFunction = async ({ request, params }) =
             shouldPromptForPathAfterResponse: false,
             ignoreUndefinedEnvVariable: true,
             testResultCollector: resultCollector,
+            transientVariables: testCtx.transientVariables,
           }) as RequestContext | null;
           if (mutatedContext?.execution?.nextRequestIdOrName) {
             nextRequestIdOrName = mutatedContext.execution.nextRequestIdOrName || '';

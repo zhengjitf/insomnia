@@ -110,7 +110,7 @@ export class InsomniaObject {
             environment: this.environment.toObject(),
             baseEnvironment: this.baseEnvironment.toObject(),
             iterationData: this.iterationData.toObject(),
-            variables: this.variables.toObject(),
+            variables: this.variables.localVarsToObject(),
             request: this.request,
             settings: this.settings,
             clientCertificates: this.clientCertificates,
@@ -146,6 +146,8 @@ export async function initInsomniaObject(
     // Mapping rule for the environment user uploaded in collection runner
     const iterationData = rawObj.iterationData ?
         new Environment(rawObj.iterationData.name, rawObj.iterationData.data) : new Environment('iterationData', {});
+    const localVariables = rawObj.transientVariables ?
+        new Environment(rawObj.transientVariables.name, rawObj.transientVariables.data) : new Environment('transientVariables', {});
     const cookies = new CookieObject(rawObj.cookieJar);
     // TODO: update follows when post-request script and iterationData are introduced
     const requestInfo = new RequestInfo({
@@ -161,6 +163,7 @@ export async function initInsomniaObject(
         environmentVars: environment,
         collectionVars: baseEnvironment,
         iterationDataVars: iterationData,
+        localVars: localVariables,
     });
 
     const existClientCert = rawObj.clientCertificates != null && rawObj.clientCertificates.length > 0;

@@ -119,6 +119,8 @@ test.describe('runner features tests', async () => {
         await page.locator('.runner-request-list-req0').click();
         await page.locator('.runner-request-list-req01').click();
         await page.locator('.runner-request-list-req02').click();
+        await page.locator('.runner-request-list-set-var1').click();
+        await page.locator('.runner-request-list-read-var1').click();
 
         // send
         await page.getByTestId('request-pane').getByRole('button', { name: 'Run' }).click();
@@ -203,5 +205,26 @@ test.describe('runner features tests', async () => {
         ];
 
         await verifyResultRows(page, 1, 1, 2, expectedTestOrder, 1);
+    });
+
+    test('can read variables during whole execution', async ({ page }) => {
+        await page.getByTestId('run-collection-btn-quick').click();
+
+        await page.locator('.runner-request-list-set-var1').click();
+        await page.locator('.runner-request-list-read-var1').click();
+
+        // send
+        await page.getByRole('button', { name: 'Run', exact: true }).click();
+
+        // check result
+        await page.getByText('3 / 3').first().click();
+
+        const expectedTestOrder = [
+            'set-var1-check',
+            'read-var1-pre-check',
+            'read-var1-post-check',
+        ];
+
+        await verifyResultRows(page, 3, 0, 3, expectedTestOrder, 1);
     });
 });

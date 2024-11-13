@@ -6,6 +6,7 @@ import { GRAPHQL_TRANSPORT_WS_PROTOCOL, MessageType } from 'graphql-ws';
 import type { RequestTestResult } from 'insomnia-sdk';
 import { extension as mimeExtension } from 'mime-types';
 import { type ActionFunction, type LoaderFunction, redirect } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 
 import { version } from '../../../package.json';
 import { CONTENT_TYPE_EVENT_STREAM, CONTENT_TYPE_GRAPHQL, CONTENT_TYPE_JSON, METHOD_GET, METHOD_POST } from '../../common/constants';
@@ -17,7 +18,7 @@ import type { TimingStep } from '../../main/network/request-timing';
 import type { BaseModel } from '../../models';
 import * as models from '../../models';
 import type { CookieJar } from '../../models/cookie-jar';
-import type { UserUploadEnvironment } from '../../models/environment';
+import type { Environment, UserUploadEnvironment } from '../../models/environment';
 import { type GrpcRequest, isGrpcRequestId } from '../../models/grpc-request';
 import type { GrpcRequestMeta } from '../../models/grpc-request-meta';
 import * as requestOperations from '../../models/helpers/request-operations';
@@ -458,6 +459,7 @@ export interface CollectionRunnerContext {
   iterationResults: RunnerResultPerRequestPerIteration;
   done: boolean;
   responsesInfo: ResponseInfo[];
+  transientVariables: Environment;
 }
 
 export interface RunnerContextForRequest {
@@ -479,6 +481,7 @@ export const sendActionImplementation = async ({
   testResultCollector,
   iteration,
   iterationCount,
+  transientVariables,
 }: {
     requestId: string;
   shouldPromptForPathAfterResponse: boolean | undefined;
@@ -487,12 +490,24 @@ export const sendActionImplementation = async ({
     iteration?: number;
     iterationCount?: number;
     userUploadEnvironment?: UserUploadEnvironment;
+    transientVariables?: Environment;
 }) => {
   window.main.startExecution({ requestId });
   const requestData = await fetchRequestData(requestId);
   const requestMeta = await models.requestMeta.getByParentId(requestId);
+  transientVariables = transientVariables || {
+    ...models.environment.init(),
+    _id: uuidv4(),
+    type: models.environment.type,
+    parentId: requestData.environment.parentId,
+    modified: 0,
+    created: Date.now(),
+    name: 'Transient Environment',
+    data: {},
+  };
+
   window.main.addExecutionStep({ requestId, stepName: 'Executing pre-request script' });
-  const mutatedContext = await tryToExecutePreRequestScript(requestData, userUploadEnvironment, iteration, iterationCount);
+  const mutatedContext = await tryToExecutePreRequestScript(requestData, transientVariables, userUploadEnvironment, iteration, iterationCount);
   if ('error' in mutatedContext) {
     throw {
       // create response with error info, so that we can store response in db and show it in response viewer
@@ -540,6 +555,7 @@ export const sendActionImplementation = async ({
     extraInfo: undefined,
     baseEnvironment: mutatedContext.baseEnvironment,
     userUploadEnvironment: mutatedContext.userUploadEnvironment,
+    transientVariables: mutatedContext.transientVariables,
     ignoreUndefinedEnvVariable,
   });
   const renderedRequest = await tryToTransformRequestWithPlugins(renderedResult);
@@ -578,6 +594,7 @@ export const sendActionImplementation = async ({
   const postMutatedContext = await tryToExecuteAfterResponseScript({
     ...requestData,
     ...mutatedContext,
+    transientVariables: mutatedContext.transientVariables || transientVariables,
     response,
     iteration,
     iterationCount,
