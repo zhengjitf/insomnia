@@ -32,6 +32,14 @@ body:
     options:
       - label: I have searched the [issue tracker](https://www.github.com/Kong/insomnia/issues) for this problem.
         required: true
+- type: checkboxes
+  attributes:
+    label: Which sync method do you use?
+    options:
+      - label: Git sync.
+      - label: Insomnia Cloud sync.
+      - label: Local only
+        required: true
 - type: textarea
   attributes:
     label: Additional Information
