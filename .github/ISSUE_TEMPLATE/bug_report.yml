@@ -39,7 +39,6 @@ body:
       - label: Git sync.
       - label: Insomnia Cloud sync.
       - label: Local only
-        required: true
 - type: textarea
   attributes:
     label: Additional Information
