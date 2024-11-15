@@ -76,6 +76,10 @@ export const runScript = async (
       name: context.baseEnvironment.name,
       data: mutatedContextObject.baseEnvironment,
     },
+    transientVariables: {
+      name: context.transientVariables?.name || 'transientVariables',
+      data: mutatedContextObject.variables,
+    },
     request: updatedRequest,
     settings: updatedSettings,
     clientCertificates: updatedCertificates,
