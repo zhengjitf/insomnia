@@ -461,7 +461,10 @@ export class UrlMatchPattern extends Property {
     // TODO: the url can not start with -
 
     getProtocols(): string[] {
-        // the pattern could be <all_urls>
+        if (this.pattern === '<all_urls>') {
+            return ['http', 'https', 'file'];
+        }
+
         const protocolEndPos = this.pattern.indexOf('://');
         if (protocolEndPos < 0) {
             return [];

@@ -402,6 +402,7 @@ export class Request extends Property {
                 authenticate: this.proxy.authenticate,
                 username: this.proxy.username,
                 password: this.proxy.password,
+                protocol: this.proxy.protocol,
             } : undefined,
             certificate: this.certificate ? {
                 name: this.certificate?.name,

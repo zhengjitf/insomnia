@@ -8,6 +8,7 @@ import { CookieObject } from './cookies';
 import { Environment, Variables } from './environments';
 import { Execution } from './execution';
 import type { RequestContext } from './interfaces';
+import { transformToSdkProxyOptions } from './proxy-configs';
 import { Request as ScriptRequest, type RequestOptions, toScriptRequestBody } from './request';
 import { RequestInfo } from './request-info';
 import { Response as ScriptResponse } from './response';
@@ -179,39 +180,12 @@ export async function initInsomniaObject(
         } :
         { disabled: true };
 
-    const bestProxy = rawObj.settings.httpsProxy || rawObj.settings.httpProxy;
-    const enabledProxy = rawObj.settings.proxyEnabled && bestProxy !== '';
-    const bypassProxyList = rawObj.settings.noProxy ?
-        rawObj.settings.noProxy
-            .split(',')
-            .map(urlStr => urlStr.trim()) :
-        [];
-    const proxy = {
-        disabled: !enabledProxy,
-        match: '<all_urls>',
-        bypass: bypassProxyList,
-        host: '',
-        port: 0,
-        tunnel: false,
-        authenticate: false,
-        username: '',
-        password: '',
-    };
-    if (bestProxy !== '') {
-        const portStartPos = bestProxy.indexOf(':');
-        if (portStartPos > 0) {
-            proxy.host = bestProxy.slice(0, portStartPos);
-            const port = bestProxy.slice(portStartPos + 1);
-            try {
-                proxy.port = parseInt(port);
-            } catch (e) {
-                throw Error(`Invalid proxy port: ${bestProxy}`);
-            }
-        } else {
-            proxy.host = bestProxy;
-            proxy.port = 0;
-        }
-    }
+    const proxy = transformToSdkProxyOptions(
+        rawObj.settings.httpProxy,
+        rawObj.settings.httpsProxy,
+        rawObj.settings.proxyEnabled,
+        rawObj.settings.noProxy,
+    );
 
     const reqUrl = toUrlObject(rawObj.request.url);
     reqUrl.addQueryParams(

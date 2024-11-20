@@ -1,3 +1,5 @@
+import * as Sentry from '@sentry/electron/renderer';
+import { SENTRY_OPTIONS } from 'insomnia/src/common/sentry';
 import { initInsomniaObject, InsomniaObject } from 'insomnia-sdk';
 import { Console, mergeClientCertificates, mergeCookieJar, mergeRequests, mergeSettings, type RequestContext } from 'insomnia-sdk';
 import * as _ from 'lodash';
@@ -6,9 +8,13 @@ export interface HiddenBrowserWindowBridgeAPI {
   runScript: (options: { script: string; context: RequestContext }) => Promise<RequestContext>;
 };
 
+Sentry.init({
+  ...SENTRY_OPTIONS,
+});
+
 window.bridge.onmessage(async (data, callback) => {
   window.bridge.setBusy(true);
-  console.log('[hidden-browser-window] recieved message', data);
+
   try {
     const timeout = data.context.timeout || 5000;
     const timeoutPromise = new window.bridge.Promise(resolve => {
@@ -19,8 +25,12 @@ window.bridge.onmessage(async (data, callback) => {
     const result = await window.bridge.Promise.race([timeoutPromise, runScript(data)]);
     callback(result);
   } catch (err) {
-    console.error('error', err);
     const errMessage = err.message ? `message: ${err.message}; stack: ${err.stack}` : err;
+    Sentry.captureException(errMessage, {
+      tags: {
+        source: 'hidden-window',
+      },
+    });
     callback({ error: errMessage });
   } finally {
     window.bridge.setBusy(false);
@@ -32,7 +42,6 @@ window.bridge.onmessage(async (data, callback) => {
 const runScript = async (
   { script, context }: { script: string; context: RequestContext },
 ): Promise<RequestContext> => {
-  console.log(script);
   const scriptConsole = new Console();
 
   const executionContext = await initInsomniaObject(context, scriptConsole.log);
@@ -77,9 +86,6 @@ const runScript = async (
   const updatedCookieJar = mergeCookieJar(context.cookieJar, mutatedContextObject.cookieJar);
 
   await window.bridge.appendFile(context.timelinePath, scriptConsole.dumpLogs());
-
-  console.log('mutatedInsomniaObject', mutatedContextObject);
-  console.log('context', context);
 
   return {
     ...context,
