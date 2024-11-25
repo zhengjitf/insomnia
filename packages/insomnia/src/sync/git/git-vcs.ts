@@ -636,9 +636,13 @@ export class GitVCS {
     }
   }
 
-  async pull(gitCredentials?: GitCredentials | null) {
+  async _hasUncommittedChanges() {
     const changes = await this.status();
-    const hasUncommittedChanges = changes.staged.length > 0 || changes.unstaged.length > 0;
+    return changes.staged.length > 0 || changes.unstaged.length > 0;
+  }
+
+  async pull(gitCredentials?: GitCredentials | null) {
+    const hasUncommittedChanges = await this._hasUncommittedChanges();
     if (hasUncommittedChanges) {
       throw new Error('Cannot pull with uncommitted changes, please commit local changes first.');
     }
@@ -658,7 +662,6 @@ export class GitVCS {
             err,
             oursBranch,
             theirsBranch,
-            gitCredentials
           );
         } else {
           throw err;
@@ -667,11 +670,11 @@ export class GitVCS {
     );
   }
 
+  // Collect merge conflict details from isomorphic-git git.Errors.MergeConflictError and throw a MergeConflictError which will be used to display the conflicts in the SyncMergeModal
   async _collectMergeConflicts(
     mergeConflictError: InstanceType<typeof git.Errors.MergeConflictError>,
     oursBranch: string,
     theirsBranch: string,
-    gitCredentials?: GitCredentials | null,
   ) {
     const {
       filepaths, bothModified, deleteByUs, deleteByTheirs,
@@ -691,13 +694,11 @@ export class GitVCS {
 
       const oursHeadCommitOid = await git.resolveRef({
         ...this._baseOpts,
-        ...gitCallbacks(gitCredentials),
         ref: oursBranch,
       });
 
       const theirsHeadCommitOid = await git.resolveRef({
         ...this._baseOpts,
-        ...gitCallbacks(gitCredentials),
         ref: theirsBranch,
       });
 
@@ -706,7 +707,6 @@ export class GitVCS {
       function readBlob(filepath: string, oid: string) {
         return git.readBlob({
           ..._baseOpts,
-          ...gitCallbacks(gitCredentials),
           oid,
           filepath,
         }).then(
@@ -798,6 +798,11 @@ export class GitVCS {
     commitParent: string[];
   }) {
     console.log('[git] continue to merge after resolving merge conflicts', await this.getCurrentBranch());
+
+    // Because wo don't need to do anything with the conflicts that user has chosen to keep 'ours'
+    // Here we just filter in conflicts that user has chosen to keep 'theirs'
+    handledMergeConflicts = handledMergeConflicts.filter(conflict => conflict.choose !== conflict.mineBlob);
+
     for (const conflict of handledMergeConflicts) {
       assertIsPromiseFsClient(this._baseOpts.fs);
       if (conflict.theirsBlobContent) {
@@ -813,6 +818,10 @@ export class GitVCS {
         await git.remove({ ...this._baseOpts, filepath: conflict.key });
       }
     }
+
+    // Add other non-conflicted files to the stage area
+    await git.add({ ...this._baseOpts, filepath: '.' });
+
     await git.commit({
       ...this._baseOpts,
       message: commitMessage,
@@ -820,14 +829,39 @@ export class GitVCS {
     });
   }
 
-  async merge(theirBranch: string) {
-    const ours = await this.getCurrentBranch();
-    console.log(`[git] Merge ${ours} <-- ${theirBranch}`);
+  async merge({
+    theirsBranch,
+    allowUncommittedChangesBeforeMerge = false,
+  }: {
+    theirsBranch: string;
+    allowUncommittedChangesBeforeMerge?: boolean;
+  }) {
+    if (!allowUncommittedChangesBeforeMerge) {
+      const hasUncommittedChanges = await this._hasUncommittedChanges();
+      if (hasUncommittedChanges) {
+        throw new Error('There are uncommitted changes on current branch. Please commit them before merging.');
+      }
+    }
+    const oursBranch = await this.getCurrentBranch();
+    console.log(`[git] Merge ${oursBranch} <-- ${theirsBranch}`);
     return git.merge({
       ...this._baseOpts,
-      ours,
-      theirs: theirBranch,
-    });
+      ours: oursBranch,
+      theirs: theirsBranch,
+      abortOnConflict: false,
+    }).catch(
+      async err => {
+        if (err instanceof git.Errors.MergeConflictError) {
+          return await this._collectMergeConflicts(
+            err,
+            oursBranch,
+            theirsBranch,
+          );
+        } else {
+          throw err;
+        }
+      },
+    );
   }
 
   async fetch({
