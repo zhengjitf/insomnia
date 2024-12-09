@@ -1,3 +1,4 @@
+import { readFile } from 'fs/promises';
 import React, { type FunctionComponent, useRef, useState } from 'react';
 import { Tab, TabList, TabPanel, Tabs } from 'react-aria-components';
 import { useParams, useRouteLoaderData } from 'react-router-dom';
@@ -11,11 +12,15 @@ import type { GrpcMethodType } from '../../../main/ipc/grpc';
 import * as models from '../../../models';
 import type { GrpcRequestHeader } from '../../../models/grpc-request';
 import { queryAllWorkspaceUrls } from '../../../models/helpers/query-all-workspace-urls';
+import { urlMatchesCertHost } from '../../../network/url-matches-cert-host';
+import { getGrpcConnectionErrorDetails } from '../../../utils/grpc';
 import { tryToInterpolateRequestOrShowRenderErrorModal } from '../../../utils/try-interpolate';
+import { setDefaultProtocol } from '../../../utils/url/protocol';
 import { useRequestPatcher } from '../../hooks/use-request';
 import { useActiveRequestSyncVCSVersion, useGitVCSVersion } from '../../hooks/use-vcs-version';
 import type { GrpcRequestState } from '../../routes/debug';
 import type { GrpcRequestLoaderData } from '../../routes/request';
+import { useRootLoaderData } from '../../routes/root';
 import type { WorkspaceLoaderData } from '../../routes/workspace';
 import { GrpcSendButton } from '../buttons/grpc-send-button';
 import { CodeEditor, type CodeEditorHandle } from '../codemirror/code-editor';
@@ -53,7 +58,7 @@ export const GrpcRequestPane: FunctionComponent<Props> = ({
   reloadRequests,
 }) => {
   const { activeRequest } = useRouteLoaderData('request/:requestId') as GrpcRequestLoaderData;
-
+  const { settings } = useRootLoaderData();
   const [isProtoModalOpen, setIsProtoModalOpen] = useState(false);
   const { requestMessages, running, methods } = grpcState;
   useMount(async () => {
@@ -98,7 +103,19 @@ export const GrpcRequestPane: FunctionComponent<Props> = ({
           purpose: 'send',
           skipBody: canClientStream(methodType),
         });
-        window.main.grpc.start({ request });
+        const workspaceClientCertificates = await models.clientCertificate.findByParentId(workspaceId);
+        const clientCertificate = workspaceClientCertificates.find(c => !c.disabled && urlMatchesCertHost(setDefaultProtocol(c.host, 'grpc:'), request.url, false));
+        const caCertificate = (await models.caCertificate.findByParentId(workspaceId));
+        const caCertificatePath = caCertificate && !caCertificate.disabled ? caCertificate.path : undefined;
+        window.main.grpc.start({
+          request,
+          rejectUnauthorized: settings.validateSSL,
+          ...(request.url.toLowerCase().startsWith('grpcs:') ? {
+            clientCert: clientCertificate?.cert ? await readFile(clientCertificate?.cert || '', 'utf8') : undefined,
+            clientKey: clientCertificate?.key ? await readFile(clientCertificate?.key || '', 'utf8') : undefined,
+            caCertificate: caCertificatePath ? await readFile(caCertificatePath, 'utf8') : undefined,
+          } : {}),
+       });
         setGrpcState({
           ...grpcState,
           requestMessages: [],
@@ -189,7 +206,7 @@ export const GrpcRequestPane: FunctionComponent<Props> = ({
                 disabled={!activeRequest.url}
                 onClick={async () => {
                   try {
-                    const rendered =
+                    let rendered =
                       await tryToInterpolateRequestOrShowRenderErrorModal({
                         request: activeRequest,
                         environmentId,
@@ -199,11 +216,26 @@ export const GrpcRequestPane: FunctionComponent<Props> = ({
                           reflectionApi: activeRequest.reflectionApi,
                         },
                       });
+                    const workspaceClientCertificates = await models.clientCertificate.findByParentId(workspaceId);
+                    const clientCertificate = workspaceClientCertificates.find(c => !c.disabled && urlMatchesCertHost(setDefaultProtocol(c.host, 'grpc:'), rendered.url, false));
+                    const caCertificate = (await models.caCertificate.findByParentId(workspaceId));
+                    const caCertificatePath = caCertificate && !caCertificate.disabled ? caCertificate.path : undefined;
+                    const clientCert = clientCertificate?.cert ? await readFile(clientCertificate?.cert, 'utf8') : undefined;
+                    const clientKey = clientCertificate?.key ? await readFile(clientCertificate?.key, 'utf8') : undefined;
+                    rendered = {
+                      ...rendered,
+                      rejectUnauthorized: settings.validateSSL,
+                      ...(activeRequest.url.toLowerCase().startsWith('grpcs:') ? {
+                      clientCert,
+                      clientKey,
+                      caCertificate: caCertificatePath ? await readFile(caCertificatePath, 'utf8') : undefined,
+                      } : {}),
+                    };
                     const methods = await window.main.grpc.loadMethodsFromReflection(rendered);
                     setGrpcState({ ...grpcState, methods });
                     patchRequest(requestId, { protoFileId: '', protoMethodName: '' });
                   } catch (error) {
-                    showModal(ErrorModal, { error });
+                    showModal(ErrorModal, { error, ...getGrpcConnectionErrorDetails(error) });
                   }
                 }}
               >
