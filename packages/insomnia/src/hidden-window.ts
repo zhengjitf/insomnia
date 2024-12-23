@@ -37,6 +37,12 @@ window.bridge.onmessage(async (data, callback) => {
   }
 });
 
+// as insomnia.test accepts an async function, prepend await to it as user don't write it
+function translateTestHandlers(script: string): string {
+  const replacedTests = script.replace(/insomnia\.test\(/g, 'await insomnia.test(');
+  return replacedTests.replace(/insomnia\.test\.skip\(/g, 'await insomnia.test.skip(');
+}
+
 // This function is duplicated in scriptExecutor.ts to run in nodejs
 // TODO: consider removing this implementation and using only nodejs scripting
 const runScript = async (
@@ -46,6 +52,7 @@ const runScript = async (
 
   const executionContext = await initInsomniaObject(context, scriptConsole.log);
 
+  const translatedScript = translateTestHandlers(script);
   const AsyncFunction = (async () => { }).constructor;
   const executeScript = AsyncFunction(
     'insomnia',
@@ -60,7 +67,7 @@ const runScript = async (
     `
       const $ = insomnia;
       window.bridge.resetAsyncTasks(); // exclude unnecessary ones
-      ${script};
+      ${translatedScript};
       window.bridge.stopMonitorAsyncTasks();  // the next one should not be monitored
       await window.bridge.asyncTasksAllSettled();
       return insomnia;`

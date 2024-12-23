@@ -1,12 +1,12 @@
-export function test(
+export async function test(
     msg: string,
-    fn: () => void,
+    fn: () => Promise<void>,
     log: (testResult: RequestTestResult) => void,
 ) {
     const started = performance.now();
 
     try {
-        fn();
+        await fn();
         const executionTime = performance.now() - started;
         log({
             testCase: msg,
@@ -26,9 +26,9 @@ export function test(
     }
 }
 
-export function skip(
+export async function skip(
     msg: string,
-    _: () => void,
+    _: () => Promise<void>,
     log: (testResult: RequestTestResult) => void,
 ) {
     log({
@@ -50,6 +50,6 @@ export interface RequestTestResult {
 }
 
 export interface TestHandler {
-    (msg: string, fn: () => void): void;
-    skip?: (msg: string, fn: () => void) => void;
+    (msg: string, fn: () => Promise<void>): Promise<void>;
+    skip?: (msg: string, fn: () => Promise<void>) => void;
 };
