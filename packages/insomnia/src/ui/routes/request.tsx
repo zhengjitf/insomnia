@@ -2,6 +2,7 @@ import { createWriteStream } from 'node:fs';
 import path from 'node:path';
 
 import * as contentDisposition from 'content-disposition';
+import fs from 'fs';
 import { GRAPHQL_TRANSPORT_WS_PROTOCOL, MessageType } from 'graphql-ws';
 import type { RequestTestResult } from 'insomnia-sdk';
 import { extension as mimeExtension } from 'mime-types';
@@ -63,6 +64,12 @@ export interface RequestLoaderData {
   requestVersions: RequestVersion[];
   mockServerAndRoutes: (MockServer & { routes: MockRoute[] })[];
 }
+
+export const defaultSendActionRuntime = {
+  appendTimeline: async (timelinePath: string, logs: string[]) => {
+    await fs.promises.appendFile(timelinePath, logs.join('\n'));
+  },
+};
 
 export const loader: LoaderFunction = async ({ params }): Promise<RequestLoaderData | WebSocketRequestLoaderData | GrpcRequestLoaderData> => {
   const { organizationId, projectId, requestId, workspaceId } = params;
@@ -407,6 +414,10 @@ export interface SendActionParams {
   ignoreUndefinedEnvVariable?: boolean;
 }
 
+export interface SendActionRuntime {
+  appendTimeline: (timelinePath: string, logs: string[]) => Promise<void>;
+}
+
 export const sendAction: ActionFunction = async ({ request, params }) => {
   const { requestId, workspaceId } = params;
   invariant(typeof requestId === 'string', 'Request ID is required');
@@ -473,29 +484,33 @@ export interface RunnerContextForRequest {
   responseId: string;
 }
 
-export const sendActionImplementation = async ({
-  requestId,
-  userUploadEnvironment,
-  shouldPromptForPathAfterResponse,
-  ignoreUndefinedEnvVariable,
-  testResultCollector,
-  iteration,
-  iterationCount,
-  transientVariables,
-}: {
-  requestId: string;
-  shouldPromptForPathAfterResponse: boolean | undefined;
-  ignoreUndefinedEnvVariable: boolean | undefined;
-  testResultCollector?: RunnerContextForRequest;
-  iteration?: number;
-  iterationCount?: number;
-  userUploadEnvironment?: UserUploadEnvironment;
-  transientVariables?: Environment;
+export const sendActionImplementation = async (options: {
+    requestId: string;
+    shouldPromptForPathAfterResponse: boolean | undefined;
+    ignoreUndefinedEnvVariable: boolean | undefined;
+    testResultCollector?: RunnerContextForRequest;
+    iteration?: number;
+    iterationCount?: number;
+    userUploadEnvironment?: UserUploadEnvironment;
+    transientVariables?: Environment;
+    runtime?: SendActionRuntime;
 }) => {
+  const {
+    requestId,
+    userUploadEnvironment,
+    shouldPromptForPathAfterResponse,
+    ignoreUndefinedEnvVariable,
+    testResultCollector,
+    iteration,
+    iterationCount,
+    transientVariables: nullableTransientVariables,
+    runtime = defaultSendActionRuntime,
+  } = options;
+
   window.main.startExecution({ requestId });
   const requestData = await fetchRequestData(requestId);
   const requestMeta = await models.requestMeta.getByParentId(requestId);
-  transientVariables = transientVariables || {
+  const transientVariables = nullableTransientVariables || {
     ...models.environment.init(),
     _id: uuidv4(),
     type: models.environment.type,
@@ -507,7 +522,7 @@ export const sendActionImplementation = async ({
   };
 
   window.main.addExecutionStep({ requestId, stepName: 'Executing pre-request script' });
-  const mutatedContext = await tryToExecutePreRequestScript(requestData, transientVariables, userUploadEnvironment, iteration, iterationCount);
+  const mutatedContext = await tryToExecutePreRequestScript(requestData, transientVariables, userUploadEnvironment, iteration, iterationCount, runtime);
   if ('error' in mutatedContext) {
     throw {
       // create response with error info, so that we can store response in db and show it in response viewer
@@ -573,7 +588,8 @@ export const sendActionImplementation = async ({
     requestData.caCert,
     mutatedContext.settings,
     requestData.timelinePath,
-    requestData.responseId
+    requestData.responseId,
+    runtime,
   );
   window.main.completeExecutionStep({ requestId });
   if ('error' in response) {
@@ -598,6 +614,7 @@ export const sendActionImplementation = async ({
     response,
     iteration,
     iterationCount,
+    runtime,
   });
   if ('error' in postMutatedContext) {
     throw {

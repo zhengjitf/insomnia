@@ -247,4 +247,33 @@ test.describe('runner features tests', async () => {
 
         await verifyResultRows(page, 0, 0, 4, expectedTestOrder, 1);
     });
+
+    test('settings: can turn off logs', async ({ page }) => {
+
+        await page.getByTestId('run-collection-btn-quick').click();
+
+        await page.locator('.runner-request-list-printLogs').click();
+
+        const expectToHaveLogs = [false, true];
+
+        for (const expectToHaveLog of expectToHaveLogs) {
+            // configure
+            await page.getByRole('tab', { name: 'advanced' }).click();
+            await page.locator('input[name="enable-log"]').click();
+
+            // send
+            await page.getByRole('button', { name: 'Run', exact: true }).click();
+
+            // verify there's no log
+            await page.getByText('1 / 1').first().click();
+            await page.getByRole('tab', { name: 'Console' }).click();
+
+            const consoleTabContent = page.locator('.pane-two');
+            if (expectToHaveLog) {
+                expect(consoleTabContent).toContainText("it won't print");
+            } else {
+                expect(consoleTabContent).not.toContainText("it won't print");
+            }
+        }
+    });
 });

@@ -18,6 +18,7 @@ import {
   tryToExecutePreRequestScript,
   tryToInterpolateRequest,
 } from '../network/network';
+import { defaultSendActionRuntime } from '../ui/routes/request';
 import { invariant } from '../utils/invariant';
 import { database } from './database';
 import { generateId } from './misc';
@@ -156,6 +157,7 @@ export async function getSendRequestCallbackMemDb(environmentId: string, memDB: 
     const postMutatedContext = await tryToExecuteAfterResponseScript({
       ...requestData,
       ...mutatedContext,
+      runtime: defaultSendActionRuntime,
       transientVariables: mutatedContext.transientVariables || transientVariables,
       response,
     });

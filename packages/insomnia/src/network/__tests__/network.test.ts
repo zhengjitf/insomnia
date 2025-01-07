@@ -788,7 +788,8 @@ describe('sendCurlAndWriteTimeline()', () => {
       preferredHttpVersion: HttpVersions.V1_0,
     },
       '/tmp/res_id',
-      'res_id');
+      'res_id'
+    );
     expect(JSON.parse(String(models.response.getBodyBuffer(responseV1))).options.HTTP_VERSION).toBe('V1_0');
     expect(getHttpVersion(HttpVersions.V1_0).curlHttpVersion).toBe(CurlHttpVersion.V1_0);
     expect(getHttpVersion(HttpVersions.V1_1).curlHttpVersion).toBe(CurlHttpVersion.V1_1);
