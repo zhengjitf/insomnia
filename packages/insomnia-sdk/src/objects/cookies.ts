@@ -69,7 +69,7 @@ export class Cookie extends Property {
     }
 
     static parse(cookieStr: string) {
-        const cookieObj = ToughCookie.parse(cookieStr);
+        const cookieObj = ToughCookie.parse(cookieStr, { loose: true });
         if (!cookieObj) {
             throw Error('failed to parse cookie, the cookie string seems invalid');
         }
