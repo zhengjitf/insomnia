@@ -1,5 +1,5 @@
 import type { OAuth2ResponseType, RequestAuthentication } from 'insomnia/src/models/request';
-import { OAuth1SignatureMethod } from 'insomnia/src/network/o-auth-1/constants';
+import type { OAuth1SignatureMethod } from 'insomnia/src/network/o-auth-1/constants';
 
 import { Property } from './properties';
 import { Variable, VariableList } from './variables';
@@ -293,7 +293,7 @@ export class RequestAuth extends Property {
         return this.authOptions.get(this.type);
     }
 
-    toJSON() {
+    override toJSON() {
         const obj: AuthOptions = { type: this.type };
         const authOption = this.authOptions.get(this.type);
         if (!authOption) {
@@ -311,7 +311,7 @@ export class RequestAuth extends Property {
         const currentType = type ? type : this.type;
         const authOpts = rawOptionsToVariables(options, currentType);
 
-        if (authOpts.length > 0) {
+        if (authOpts.length > 0 && authOpts[0]) {
             this.type = currentType;
             this.authOptions.set(currentType, authOpts[0]);
         } else {
@@ -325,7 +325,7 @@ export class RequestAuth extends Property {
         }
 
         const authOpts = rawOptionsToVariables(options, type);
-        if (authOpts.length > 0) {
+        if (authOpts.length > 0 && authOpts[0]) {
             this.type = type;
             this.authOptions.set(type, authOpts[0]);
         } else {
@@ -468,10 +468,11 @@ export function fromPreRequestAuth(auth: RequestAuth): RequestAuthentication {
 
             const responseType = ((): OAuth2ResponseType => {
                 const inputResponseType = findValueInOauth2Options('response_type', authObj.oauth2);
-                if (['code', 'id_token', 'id_token token', 'none', 'token'].includes(inputResponseType)) {
+                // responseType is currently always set to '' in our request auth model, this should be investigated what is correct to be set
+                if (['code', 'id_token', 'id_token token', 'none', 'token', ''].includes(inputResponseType)) {
                     return inputResponseType as OAuth2ResponseType;
                 };
-                throw Error(`unknown response type for oauth2: "${inputResponseType}", it could be: 'code' | 'id_token' | 'id_token token' | 'none' | 'token'`);
+                throw Error(`unknown response type for oauth2: "${inputResponseType}", it could be: 'code' | 'id_token' | 'id_token token' | 'none' | 'token' | ''`);
             })();
 
             return {

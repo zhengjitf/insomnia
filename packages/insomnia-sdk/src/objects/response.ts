@@ -1,8 +1,12 @@
+import Ajv from 'ajv';
+import deepEqual from 'deep-equal';
 import { RESPONSE_CODE_REASONS } from 'insomnia/src/common/constants';
+import { readCurlResponse } from 'insomnia/src/models/response';
+import type { sendCurlAndWriteTimelineError, sendCurlAndWriteTimelineResponse } from 'insomnia/src/network/network';
 
-import { Cookie, CookieOptions } from './cookies';
+import { Cookie, type CookieOptions } from './cookies';
 import { CookieList } from './cookies';
-import { Header, HeaderDefinition, HeaderList } from './headers';
+import { Header, type HeaderDefinition, HeaderList } from './headers';
 import { Property, unsupportedError } from './properties';
 import { Request } from './request';
 
@@ -15,7 +19,6 @@ export interface ResponseOptions {
     // ideally it should work in both browser and node
     stream?: Buffer | ArrayBuffer;
     responseTime: number;
-    status?: string;
     originalRequest: Request;
 }
 
@@ -57,8 +60,13 @@ export class Response extends Property {
         );
         this.originalRequest = options.originalRequest;
         this.responseTime = options.responseTime;
-        this.status = RESPONSE_CODE_REASONS[options.code];
         this.stream = options.stream;
+        const detectedStatus = options.reason || RESPONSE_CODE_REASONS[options.code];
+        if (!detectedStatus) {
+            throw Error('Response constructor: reason or code field must be set in the options');
+        } else {
+            this.status = detectedStatus;
+        }
     }
 
     // TODO: the accurate type of the response should be given
@@ -80,7 +88,7 @@ export class Response extends Property {
             stream: response.stream,
             header: response.headers,
             code: response.statusCode,
-            status: response.statusMessage,
+            reason: response.statusMessage,
             responseTime: response.elapsedTime,
             originalRequest: response.originalRequest,
         });
@@ -103,7 +111,11 @@ export class Response extends Property {
             if (directives.length === 0) {
                 throw Error('contentInfo: header Content-Type value is blank');
             } else {
-                mimeInfo.mimeType = directives[0];
+                const mimeType = directives[0];
+                if (!mimeType) {
+                    throw Error('contentInfo: mime type in header Content-Type is invalid');
+                }
+                mimeInfo.mimeType = mimeType;
                 directives.forEach(dir => {
                     if (dir.startsWith('charset')) {
                         mimeInfo.charset = dir.slice(dir.indexOf('=') + 1);
@@ -155,7 +167,7 @@ export class Response extends Property {
         try {
             return JSON.parse(this.body.toString(), reviver);
         } catch (e) {
-            throw Error(`json: faile to parse: ${e}`);
+            throw Error(`json: failed to parse: ${e}`);
         }
     }
 
@@ -182,4 +194,138 @@ export class Response extends Property {
     text() {
         return this.body.toString();
     }
+
+    // Besides chai.expect, "to" is extended to support cases like:
+    // insomnia.response.to.have.status(200);
+    // insomnia.response.to.not.have.status(200);
+    get to() {
+        type valueType = boolean | number | string | object | undefined;
+
+        const verify = (got: valueType, expected: valueType, checkEquality: boolean = true) => {
+            if (['boolean', 'number', 'string', 'undefined'].includes(typeof got)) {
+                if ((checkEquality && expected === got) || (!checkEquality && expected !== got)) {
+                    return;
+                }
+            } else if (
+                (checkEquality && deepEqual(got, expected, { strict: true })) ||
+                (!checkEquality && !deepEqual(got, expected, { strict: true }))
+            ) {
+                return;
+            }
+            throw Error(`"${got}" is not equal to the expected value: "${expected}"`);
+        };
+        const haveStatus = (expected: number | string, checkEquality: boolean) => {
+            if (typeof expected === 'string') {
+                verify(this.status, expected, checkEquality);
+            } else {
+                verify(this.code, expected, checkEquality);
+            }
+        };
+        const haveHeader = (expected: string, checkEquality: boolean) => verify(
+            this.headers.toObject().find(header => header.key === expected) !== undefined,
+            checkEquality,
+        );
+        const haveBody = (expected: string, checkEquality: boolean) => verify(this.text(), expected, checkEquality);
+        const haveJsonBody = (expected: object, checkEquality: boolean) => verify(this.json(), expected, checkEquality);
+        const haveJsonSchema = (expected: object, checkEquality: boolean) => {
+            const ajv = new Ajv();
+
+            try {
+                const jsonBody = JSON.parse(this.body);
+                const schemaMatched = ajv.validate(expected, jsonBody);
+                if ((schemaMatched && checkEquality) || (!schemaMatched && !checkEquality)) {
+                    return;
+                }
+            } catch (e) {
+                throw Error(`Failed to verify response body schema, response could not be a valid json: "${e}"`);
+            }
+            throw Error("Response's schema is not equal to the expected value");
+        };
+
+        return {
+            // follows extend chai's chains for compatibility
+            have: {
+                status: (expected: number | string) => haveStatus(expected, true),
+                header: (expected: string) => haveHeader(expected, true),
+                body: (expected: string) => haveBody(expected, true),
+                jsonBody: (expected: object) => haveJsonBody(expected, true),
+                jsonSchema: (expected: object) => haveJsonSchema(expected, true),
+            },
+            not: {
+                have: {
+                    status: (expected: number | string) => haveStatus(expected, false),
+                    header: (expected: string) => haveHeader(expected, false),
+                    body: (expected: string) => haveBody(expected, false),
+                    jsonBody: (expected: object) => haveJsonBody(expected, false),
+                    jsonSchema: (expected: object) => haveJsonSchema(expected, false),
+                },
+            },
+        };
+    }
+}
+
+export function toScriptResponse(
+    originalRequest: Request,
+    partialInsoResponse: sendCurlAndWriteTimelineResponse | sendCurlAndWriteTimelineError,
+    responseBody: string,
+): Response | undefined {
+    if ('error' in partialInsoResponse) {
+    // it is sendCurlAndWriteTimelineError and basically doesn't contain anything useful
+        return undefined;
+    }
+    const partialResponse = partialInsoResponse as sendCurlAndWriteTimelineResponse;
+
+    const headers = partialResponse.headers ?
+        partialResponse.headers.map(
+            insoHeader => ({
+                key: insoHeader.name,
+                value: insoHeader.value,
+            }),
+            {},
+        )
+        : [];
+
+    const insoCookieOptions = partialResponse.headers ?
+        partialResponse.headers
+            .filter(
+                header => {
+                    return header.name.toLowerCase() === 'set-cookie';
+                },
+                {},
+            ).map(
+                setCookieHeader => Cookie.parse(setCookieHeader.value)
+        )
+        : [];
+
+    const responseOption = {
+        code: partialResponse.statusCode || 0,
+        reason: partialResponse.statusMessage,
+        header: headers,
+        cookie: insoCookieOptions,
+        body: responseBody,
+        // stream is duplicated with body
+        responseTime: partialResponse.elapsedTime,
+        originalRequest,
+    };
+
+    return new Response(responseOption);
+};
+
+export async function readBodyFromPath(response: sendCurlAndWriteTimelineResponse | sendCurlAndWriteTimelineError | undefined) {
+    // it allows to execute scripts (e.g., for testing) but body contains nothing
+    if (!response || 'error' in response) {
+        return '';
+    } else if (!response.bodyPath) {
+        return '';
+    }
+    const nodejsReadCurlResponse = process.type === 'renderer' ? window.bridge.readCurlResponse : readCurlResponse;
+    const readResponseResult = await nodejsReadCurlResponse({
+        bodyPath: response.bodyPath,
+        bodyCompression: response.bodyCompression,
+    });
+
+    if (readResponseResult.error) {
+        throw Error(`Failed to read body: ${readResponseResult.error}`);
+    }
+    return readResponseResult.body;
 }

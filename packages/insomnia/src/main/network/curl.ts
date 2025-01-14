@@ -1,21 +1,22 @@
 import { Readable } from 'node:stream';
 
-import { Curl, CurlFeature, CurlInfoDebug, HeaderInfo } from '@getinsomnia/node-libcurl';
-import electron, { BrowserWindow, ipcMain } from 'electron';
+import { Curl, CurlFeature, CurlInfoDebug, type HeaderInfo } from '@getinsomnia/node-libcurl';
+import electron, { BrowserWindow } from 'electron';
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidV4 } from 'uuid';
 
 import { describeByteSize, generateId, getSetCookieHeaders } from '../../common/misc';
 import * as models from '../../models';
-import { CookieJar } from '../../models/cookie-jar';
-import { Environment } from '../../models/environment';
-import { RequestAuthentication, RequestHeader } from '../../models/request';
-import { Response } from '../../models/response';
-import { Compression, getBodyBuffer } from '../../models/response';
+import type { CookieJar } from '../../models/cookie-jar';
+import type { Environment } from '../../models/environment';
+import type { RequestAuthentication, RequestHeader } from '../../models/request';
+import type { Response } from '../../models/response';
+import { readCurlResponse } from '../../models/response';
 import { filterClientCertificates } from '../../network/certificate';
 import { addSetCookiesToToughCookieJar } from '../../network/set-cookie-util';
 import { invariant } from '../../utils/invariant';
+import { ipcMainHandle, ipcMainOn } from '../ipc/electron';
 import { createConfiguredCurlInstance } from './libcurl-promise';
 import { parseHeaderStrings } from './parse-header-strings';
 
@@ -342,7 +343,7 @@ const closeCurlConnection = (
   }
 };
 
-const closeAllCurlConnections = (): void => CurlConnections.forEach(curl => curl.close());
+const closeAllCurlConnections = (): void => CurlConnections.forEach(curl => curl.isOpen && curl.close());
 
 const findMany = async (
   options: { responseId: string }
@@ -372,28 +373,12 @@ export interface CurlBridgeAPI {
 }
 
 export const registerCurlHandlers = () => {
-  ipcMain.handle('curl.open', openCurlConnection);
-  ipcMain.on('curl.close', closeCurlConnection);
-  ipcMain.on('curl.closeAll', closeAllCurlConnections);
-  ipcMain.handle('curl.readyState', (_, options: Parameters<typeof getCurlReadyState>[0]) => getCurlReadyState(options));
-  ipcMain.handle('curl.event.findMany', (_, options: Parameters<typeof findMany>[0]) => findMany(options));
+  ipcMainHandle('curl.open', openCurlConnection);
+  ipcMainOn('curl.close', closeCurlConnection);
+  ipcMainOn('curl.closeAll', closeAllCurlConnections);
+  ipcMainHandle('curl.readyState', (_, options: Parameters<typeof getCurlReadyState>[0]) => getCurlReadyState(options));
+  ipcMainHandle('curl.event.findMany', (_, options: Parameters<typeof findMany>[0]) => findMany(options));
+  ipcMainHandle('readCurlResponse', (_, options: Parameters<typeof readCurlResponse>[0]) => readCurlResponse(options));
 };
-
-ipcMain.handle('readCurlResponse', async (_, options: { bodyPath?: string; bodyCompression?: Compression }) => {
-  const readFailureMsg = '[main/curlBridgeAPI] failed to read response body message';
-  const bodyBufferOrErrMsg = getBodyBuffer(options, readFailureMsg);
-  // TODO(jackkav): simplify the fail msg and reuse in other getBodyBuffer renderer calls
-
-  if (!bodyBufferOrErrMsg) {
-    return { body: '', error: readFailureMsg };
-  } else if (typeof bodyBufferOrErrMsg === 'string') {
-    if (bodyBufferOrErrMsg === readFailureMsg) {
-      return { body: '', error: readFailureMsg };
-    }
-    return { body: '', error: `unknown error in loading response body: ${bodyBufferOrErrMsg}` };
-  }
-
-  return { body: bodyBufferOrErrMsg.toString('utf8'), error: '' };
-});
 
 electron.app.on('window-all-closed', closeAllCurlConnections);

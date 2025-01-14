@@ -1,18 +1,19 @@
 import '../css/styles.css';
 
-import { IpcRendererEvent } from 'electron';
+import type { IpcRendererEvent } from 'electron';
 import React, { useEffect, useState } from 'react';
-import { LoaderFunction, Outlet, useFetcher, useNavigate, useParams, useRouteLoaderData } from 'react-router-dom';
+import { type LoaderFunction, Outlet, useFetcher, useNavigate, useParams, useRouteLoaderData } from 'react-router-dom';
 
 import { isDevelopment } from '../../common/constants';
 import * as models from '../../models';
-import { Settings } from '../../models/settings';
-import { UserSession } from '../../models/user-session';
+import type { Settings } from '../../models/settings';
+import type { UserSession } from '../../models/user-session';
 import { reloadPlugins } from '../../plugins';
 import { createPlugin } from '../../plugins/create';
 import { setTheme } from '../../plugins/misc';
 import { exchangeCodeForToken } from '../../sync/git/github-oauth-provider';
 import { exchangeCodeForGitLabToken } from '../../sync/git/gitlab-oauth-provider';
+import { getLoginUrl } from '../auth-session-provider';
 import { ErrorBoundary } from '../components/error-boundary';
 import { showError, showModal } from '../components/modals';
 import { AlertModal } from '../components/modals/alert-modal';
@@ -69,7 +70,7 @@ const Root = () => {
         try {
           parsedUrl = new URL(url);
         } catch (err) {
-          console.log('Invalid args, expected insomnia://x/y/z', url);
+          console.log('[deep-link] Invalid args, expected insomnia://x/y/z', url);
           return;
         }
         let urlWithoutParams = url.substring(0, url.indexOf('?')) || url;
@@ -90,6 +91,9 @@ const Root = () => {
             break;
 
           case 'insomnia://app/auth/login':
+            if (params.message) {
+              window.localStorage.setItem('logoutMessage', params.message);
+            }
             actionFetcher.submit(
               {},
               {
@@ -167,11 +171,25 @@ const Root = () => {
 
           case 'insomnia://oauth/github/authenticate': {
             const { code, state } = params;
-            await exchangeCodeForToken({ code, state }).catch(
+            await exchangeCodeForToken({ code, state, path: '/v1/oauth/github' }).catch(
               (error: Error) => {
                 showError({
                   error,
                   title: 'Error authorizing GitHub',
+                  message: error.message,
+                });
+              },
+            );
+            break;
+          }
+
+          case 'insomnia://oauth/github-app/authenticate': {
+            const { code, state } = params;
+            await exchangeCodeForToken({ code, state, path: '/v1/oauth/github-app' }).catch(
+              (error: Error) => {
+                showError({
+                  error,
+                  title: 'Error authorizing GitHub App',
                   message: error.message,
                 });
               },
@@ -208,7 +226,17 @@ const Root = () => {
           }
 
           case 'insomnia://app/open/organization':
-            navigate(`/organization/${params.organizationId}`);
+            // if user is logged out, navigate to authorize instead
+            // gracefully handle open org in app from browser
+            const userSession = await models.userSession.getOrCreate();
+            if (!userSession.id || userSession.id === '') {
+              const url = new URL(getLoginUrl());
+              window.main.openInBrowser(url.toString());
+              window.localStorage.setItem('specificOrgRedirectAfterAuthorize', params.organizationId);
+              navigate('/auth/authorize');
+            } else {
+              navigate(`/organization/${params.organizationId}`);
+            }
             break;
 
           default: {

@@ -1,6 +1,6 @@
 import { displayModifierKey, isMac } from './constants';
 import { keyboardKeys } from './keyboard-keys';
-import { HotKeyRegistry, KeyboardShortcut, KeyCombination, PlatformKeyCombinations } from './settings';
+import type { HotKeyRegistry, KeyboardShortcut, KeyCombination, PlatformKeyCombinations } from './settings';
 import { strings } from './strings';
 
 /**
@@ -136,8 +136,8 @@ const defaultRegistry: HotKeyRegistry = {
     ],
   },
   request_showDelete: {
-    macKeys: [{ shift: true, meta: true, keyCode: keyboardKeys.delete.keyCode }],
-    winLinuxKeys: [{ ctrl: true, shift: true, keyCode: keyboardKeys.delete.keyCode }],
+    macKeys: [{ shift: true, meta: true, keyCode: keyboardKeys.backspace.keyCode }],
+    winLinuxKeys: [{ ctrl: true, shift: true, keyCode: keyboardKeys.backspace.keyCode }],
   },
   request_showCreateFolder: {
     macKeys: [{ shift: true, meta: true, keyCode: keyboardKeys.n.keyCode }],

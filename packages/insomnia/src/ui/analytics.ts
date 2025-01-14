@@ -1,15 +1,21 @@
 export enum SegmentEvent {
   appStarted = 'App Started',
+  analyticsDisabled = 'Analytics Disabled',
   collectionCreate = 'Collection Created',
   dataExport = 'Data Exported',
   dataImport = 'Data Imported',
   documentCreate = 'Document Created',
+  mockCreate = 'Mock Created',
+  environmentWorkspaceCreate = 'Environment Workspace Created',
+  loginSuccess = 'Login Success',
+  inviteTrigger = 'Invite Triggered From App',
   exportAllCollections = 'Exported All Collections',
   kongConnected = 'Kong Connected',
   kongSync = 'Kong Synced',
   requestBodyTypeSelect = 'Request Body Type Selected',
   requestCreate = 'Request Created',
   requestExecute = 'Request Executed',
+  collectionRunExecute = 'Collection Run Executed',
   projectLocalCreate = 'Local Project Created',
   projectLocalDelete = 'Local Project Deleted',
   selectScratchpad = 'Scratchpad Selected at Login',
@@ -26,6 +32,7 @@ export enum SegmentEvent {
   vcsSyncComplete = 'VCS Sync Completed',
   vcsAction = 'VCS Action Executed',
   buttonClick = 'Button Clicked',
+  inviteMember = 'Invite Member',
 }
 
 type PushPull = 'push' | 'pull';

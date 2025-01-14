@@ -2,8 +2,8 @@ import React, { Fragment, useEffect, useId, useState } from 'react';
 import { Button, Dialog, FileTrigger, GridList, GridListItem, Heading, Input, Label, Modal, ModalOverlay, Tab, TabList, TabPanel, Tabs, ToggleButton } from 'react-aria-components';
 import { useFetcher, useParams, useRouteLoaderData } from 'react-router-dom';
 
-import { ClientCertificate } from '../../../models/client-certificate';
-import { WorkspaceLoaderData } from '../../routes/workspace';
+import type { ClientCertificate } from '../../../models/client-certificate';
+import type { WorkspaceLoaderData } from '../../routes/workspace';
 import { Icon } from '../icon';
 import { PasswordViewer } from '../viewers/password-viewer';
 
@@ -105,7 +105,7 @@ const AddClientCertificateModal = ({ onClose }: { onClose: () => void }) => {
                             const files = Array.from(fileList);
                             const file = files[0];
 
-                            setPfxPath(file.path);
+                            setPfxPath(window.webUtils.getPathForFile(file));
                           }}
                         >
                           <Button className="flex flex-shrink-0 border-solid border border-[--hl-sm] py-1 gap-2 items-center justify-center px-2 h-full aria-pressed:bg-[--hl-sm] aria-selected:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-base">
@@ -134,10 +134,10 @@ const AddClientCertificateModal = ({ onClose }: { onClose: () => void }) => {
                             const files = Array.from(fileList);
                             const file = files[0];
 
-                            setCertificatePath(file.path);
+                            setCertificatePath(window.webUtils.getPathForFile(file));
                           }}
                         >
-                          <Button className="flex flex-shrink-0 border-solid border border-[--hl-sm] py-1 gap-2 items-center justify-center px-2 h-full aria-pressed:bg-[--hl-sm] aria-selected:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-base">
+                          <Button data-test-id='add-client-certificate-file-chooser' className="flex flex-shrink-0 border-solid border border-[--hl-sm] py-1 gap-2 items-center justify-center px-2 h-full aria-pressed:bg-[--hl-sm] aria-selected:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-base">
                             {!certificatePath && <Icon icon="plus" />}
                             <span className='truncate' title={certificatePath}>{certificatePath ? certificatePath : 'Add certificate file'}</span>
                           </Button>
@@ -161,10 +161,10 @@ const AddClientCertificateModal = ({ onClose }: { onClose: () => void }) => {
                             const files = Array.from(fileList);
                             const file = files[0];
 
-                            setKeyPath(file.path);
+                            setKeyPath(window.webUtils.getPathForFile(file));
                           }}
                         >
-                          <Button className="flex flex-shrink-0 border-solid border border-[--hl-sm] py-1 gap-2 items-center justify-center px-2 h-full aria-pressed:bg-[--hl-sm] aria-selected:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-base">
+                          <Button data-test-id='add-client-certificate-key-file-chooser' className="flex flex-shrink-0 border-solid border border-[--hl-sm] py-1 gap-2 items-center justify-center px-2 h-full aria-pressed:bg-[--hl-sm] aria-selected:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-base">
                             {!keyPath && <Icon icon="plus" />}
                             <span className='truncate' title={keyPath}>{keyPath ? keyPath : 'Add key file'}</span>
                           </Button>
@@ -233,6 +233,7 @@ const ClientCertificateGridListItem = ({ certificate }: {
         )}
         <div className='flex items-center gap-2 h-6'>
           <ToggleButton
+            data-test-id="client-certificate-toggle"
             onChange={isSelected => {
               updateClientCertificateFetcher.submit({ ...certificate, disabled: !isSelected }, {
                 action: `/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/clientcert/update`,
@@ -378,7 +379,7 @@ export const CertificatesModal = ({ onClose }: {
                           const files = Array.from(fileList);
                           const file = files[0];
 
-                          createCertificateFetcher.submit({ parentId: workspaceId, path: file.path }, {
+                          createCertificateFetcher.submit({ parentId: workspaceId, path: window.webUtils.getPathForFile(file) }, {
                             action: `/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/cacert/new`,
                             method: 'post',
                             encType: 'application/json',

@@ -1,12 +1,14 @@
-import { RequestContext } from 'insomnia-sdk';
+import type { RequestContext } from 'insomnia-sdk';
 
 import type { CurlRequestOptions, CurlRequestOutput } from '../main/network/libcurl-promise';
-import { CookieJar } from '../models/cookie-jar';
-import { Request } from '../models/request';
+import type { CookieJar } from '../models/cookie-jar';
+import type { Request } from '../models/request';
+import { runScript as nodejsRunScript } from '../scriptExecutor';
 
 const cancelRequestFunctionMap = new Map<string, () => void>();
 
 export async function cancelRequestById(requestId: string) {
+  window.main.completeExecutionStep({ requestId });
   const cancel = cancelRequestFunctionMap.get(requestId);
   if (cancel) {
     return cancel();
@@ -14,21 +16,43 @@ export async function cancelRequestById(requestId: string) {
   console.log(`[network] Failed to cancel req=${requestId} because cancel function not found`);
 }
 
-export const cancellableRunPreRequestScript = async (options: { script: string; context: RequestContext }) => {
+export const cancellableExecution = async (options: { id: string; fn: Promise<any> }) => {
+  const controller = new AbortController();
+  const cancelRequest = () => {
+    // TODO: implement cancelPreRequestScript on hiddenBrowserWindow side?
+    controller.abort();
+  };
+  cancelRequestFunctionMap.set(options.id, cancelRequest);
+
+  try {
+    return await cancellablePromise({
+      signal: controller.signal,
+      fn: options.fn,
+    });
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error('Request was cancelled');
+    }
+    console.log('[network] Error', err);
+    throw err;
+  } finally {
+    cancelRequestFunctionMap.delete(options.id);
+  }
+};
+
+export const cancellableRunScript = async (options: { script: string; context: RequestContext }) => {
   const request = options.context.request;
   const requestId = request._id;
-
   const controller = new AbortController();
   const cancelRequest = () => {
     // TODO: implement cancelPreRequestScript on hiddenBrowserWindow side?
     controller.abort();
   };
   cancelRequestFunctionMap.set(requestId, cancelRequest);
-
   try {
     const result = await cancellablePromise({
       signal: controller.signal,
-      fn: window.main.hiddenBrowserWindow.runPreRequestScript(options),
+      fn: process.type === 'renderer' ? window.main.hiddenBrowserWindow.runScript(options) : nodejsRunScript(options),
     });
 
     return result as {

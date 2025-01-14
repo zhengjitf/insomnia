@@ -1,10 +1,12 @@
-import path from 'path';
+import { stat } from 'fs/promises';
+import { CaCertificate } from 'insomnia/src/models/ca-certificate';
+import { ClientCertificate } from 'insomnia/src/models/client-certificate';
+import { CookieJar } from 'insomnia/src/models/cookie-jar';
+import { Settings } from 'insomnia/src/models/settings';
 
-import { getAppDataDir } from '../data-directory';
-import { logger } from '../logger';
-import { getDefaultProductName } from '../util';
+import { logger } from '../cli';
 import gitAdapter from './adapters/git-adapter';
-import insomniaAdapter from './adapters/insomnia-adapter';
+import insomniaExportAdapter from './adapters/insomnia-adapter';
 import neDbAdapter from './adapters/ne-db-adapter';
 import type {
   ApiSpec,
@@ -13,6 +15,7 @@ import type {
   UnitTest,
   UnitTestSuite,
   Workspace,
+  WorkspaceMeta,
 } from './models/types';
 
 export interface Database {
@@ -21,8 +24,13 @@ export interface Database {
   Request: BaseModel[];
   RequestGroup: BaseModel[];
   Workspace: Workspace[];
+  WorkspaceMeta: WorkspaceMeta[];
   UnitTestSuite: UnitTestSuite[];
   UnitTest: UnitTest[];
+  ClientCertificate: ClientCertificate[];
+  CaCertificate: CaCertificate[];
+  CookieJar: CookieJar[];
+  Settings: Settings[];
 }
 
 export const emptyDb = (): Database => ({
@@ -31,8 +39,13 @@ export const emptyDb = (): Database => ({
   Request: [],
   RequestGroup: [],
   Workspace: [],
+  WorkspaceMeta: [],
   UnitTest: [],
   UnitTestSuite: [],
+  ClientCertificate: [],
+  CaCertificate: [],
+  CookieJar: [],
+  Settings: [],
 });
 
 export type DbAdapter = (
@@ -41,50 +54,51 @@ export type DbAdapter = (
 ) => Promise<Database | null>;
 
 interface Options {
-  workingDir?: string;
-  appDataDir?: string;
+  pathToSearch: string;
   filterTypes?: (keyof Database)[];
-  src?: string;
 }
 
+export const isFile = async (path: string) => {
+  try {
+    return (await stat(path)).isFile();
+  } catch (error) {
+    return false;
+  }
+};
 export const loadDb = async ({
-  workingDir,
-  appDataDir,
+  pathToSearch,
   filterTypes,
-  src,
-}: Options = {}) => {
-  let db: Database | null = null;
-
-  // try load from git
-  if (!appDataDir) {
-    const dir = src || workingDir || '.';
-    db = await gitAdapter(dir, filterTypes);
-    db && logger.debug(`Data store configured from git repository at \`${path.resolve(dir)}\``);
+}: Options) => {
+  // if path to file is provided try to it is an insomnia export file
+  const isFilePath = await isFile(pathToSearch);
+  if (isFilePath) {
+    const exportDb = await insomniaExportAdapter(pathToSearch, filterTypes);
+    if (exportDb) {
+      logger.debug(`Data store configured from Insomnia export at \`${pathToSearch}\``);
+      return exportDb;
+    }
   }
 
-  // try load from file (higher priority)
-  if (!db && src) {
-    db = await insomniaAdapter(src, filterTypes);
-    db && logger.debug(`Data store configured from file at \`${path.resolve(src)}\``);
+  // try load from git
+  const git = await gitAdapter(pathToSearch, filterTypes);
+  git && logger.debug(`Data store configured from git repository at \`${pathToSearch}\``);
+  if (git) {
+    logger.debug(`Data store configured from git repository at \`${pathToSearch}\``);
+    return git;
   }
 
   // try load from nedb
-  if (!db) {
-    const dir = src || appDataDir || getAppDataDir(getDefaultProductName());
-    db = await neDbAdapter(dir, filterTypes);
-    db && logger.debug(`Data store configured from app data directory at \`${path.resolve(dir)}\``); // Try to load from the Designer data dir, if the Core data directory does not exist
-  } // return empty db
-
-  appDataDir && logger.warn(
-    'The option `--appDataDir` has been deprecated and will be removed in future releases. Please use `--src` as an alternative',
-  );
-
-  if (!db) {
-    logger.warn(
-      'No git, app data store or Insomnia V4 export file found, re-run `inso` with `--verbose` to see tracing information',
-    );
-    db = emptyDb();
+  const nedb = await neDbAdapter(pathToSearch, filterTypes);
+  if (nedb) {
+    logger.debug(`Data store configured from app data directory  at \`${pathToSearch}\``);
+    return nedb;
   }
 
-  return db;
+  logger.warn(
+    `No git, app data store or Insomnia V4 export file found at path "${pathToSearch}",
+     --workingDir/-w should point to a git repository root, an Insomnia export file or a directory containing Insomnia data.
+      re-run with --verbose to see tracing information`,
+  );
+
+  return emptyDb();
 };

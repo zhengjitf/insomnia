@@ -1,10 +1,10 @@
-import { PromiseFsClient } from 'isomorphic-git';
+import type { PromiseFsClient } from 'isomorphic-git';
 import path from 'path';
 import YAML from 'yaml';
 
 import { database as db } from '../../common/database';
+import type { BaseModel } from '../../models';
 import * as models from '../../models';
-import { BaseModel } from '../../models';
 import { isWorkspace } from '../../models/workspace';
 import { resetKeys } from '../ignore-keys';
 import { GIT_INSOMNIA_DIR_NAME } from './git-vcs';
@@ -12,6 +12,11 @@ import parseGitPath from './parse-git-path';
 import Stat from './stat';
 import { SystemError } from './system-error';
 
+/**
+ * A fs client to access workspace data stored in NeDB as files.
+ * Used by isomorphic-git
+ * https://isomorphic-git.org/docs/en/fs#implementing-your-own-fs
+ */
 export class NeDBClient {
   _workspaceId: string;
   _projectId: string;
@@ -23,6 +28,7 @@ export class NeDBClient {
 
     this._workspaceId = workspaceId;
     this._projectId = projectId;
+
   }
 
   static createClient(workspaceId: string, projectId: string): PromiseFsClient {
@@ -87,7 +93,14 @@ export class NeDBClient {
       return;
     }
 
-    const doc: BaseModel = YAML.parse(data.toString());
+    const dataStr = data.toString();
+
+    // Skip the file if there is a conflict marker
+    if (dataStr.split('\n').includes('=======')) {
+      return;
+    }
+
+    const doc: BaseModel = YAML.parse(dataStr);
 
     if (id !== doc._id) {
       throw new Error(`Doc _id does not match file path [${doc._id} != ${id || 'null'}]`);
@@ -125,6 +138,9 @@ export class NeDBClient {
     await db.unsafeRemove(doc, true);
   }
 
+  // recurses over each .insomnia subfolder, ApiSpec, Workspace, Request etc..
+  // and returns a list of all the files/folders which should be in the directory
+  // according to the what entities are children of the workspace
   async readdir(filePath: string) {
     filePath = path.normalize(filePath);
     const { root, type, id } = parseGitPath(filePath);
@@ -134,6 +150,7 @@ export class NeDBClient {
     if (root === null && id === null && type === null) {
       otherFolders = [GIT_INSOMNIA_DIR_NAME];
     } else if (id === null && type === null) {
+      // TODO: It doesn't scale if we add another model which can be sync in the future
       otherFolders = [
         models.workspace.type,
         models.environment.type,
@@ -152,7 +169,30 @@ export class NeDBClient {
       ];
     } else if (type !== null && id === null) {
       const workspace = await db.get(models.workspace.type, this._workspaceId);
-      const children = await db.withDescendants(workspace);
+      let typeFilter = [type];
+
+      const modelTypesWithinFolders = [models.request.type, models.grpcRequest.type, models.webSocketRequest.type];
+      if (modelTypesWithinFolders.includes(type)) {
+        typeFilter = [models.requestGroup.type, type];
+      };
+
+      if (type === models.unitTest.type) {
+        typeFilter = [models.unitTestSuite.type, type];
+      }
+
+      if (type === models.protoFile.type) {
+        typeFilter = [models.protoDirectory.type, type];
+      }
+
+      if (type === models.mockRoute.type) {
+        typeFilter = [models.mockServer.type, type];
+      }
+
+      if (type === models.webSocketPayload.type) {
+        typeFilter = [models.webSocketRequest.type, type];
+      }
+
+      const children = await db.withDescendants(workspace, null, typeFilter);
       docs = children.filter(d => d.type === type && !d.isPrivate);
     } else {
       throw this._errMissing(filePath);

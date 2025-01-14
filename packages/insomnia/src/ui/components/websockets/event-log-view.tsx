@@ -1,11 +1,11 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { format } from 'date-fns';
-import React, { FC, useRef } from 'react';
+import React, { type FC, useRef } from 'react';
 import { Cell, Column, Row, Table, TableBody, TableHeader } from 'react-aria-components';
 
-import { CurlEvent } from '../../../main/network/curl';
-import { WebSocketEvent } from '../../../main/network/websocket';
-import { SvgIcon, SvgIconProps } from '../svg-icon';
+import type { CurlEvent } from '../../../main/network/curl';
+import type { WebSocketEvent } from '../../../main/network/websocket';
+import { type IconId, SvgIcon } from '../svg-icon';
 
 const Timestamp: FC<{ time: Date | number }> = ({ time }) => {
   const date = format(time, 'HH:mm:ss');
@@ -18,7 +18,7 @@ interface Props {
   onSelect: (event: WebSocketEvent | CurlEvent) => void;
 }
 
-function getIcon(event: WebSocketEvent | CurlEvent): SvgIconProps['icon'] {
+function getIcon(event: WebSocketEvent | CurlEvent): IconId {
   switch (event.type) {
     case 'message': {
       if (event.direction === 'OUTGOING') {

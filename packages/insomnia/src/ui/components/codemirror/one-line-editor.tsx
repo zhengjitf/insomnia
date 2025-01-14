@@ -2,18 +2,20 @@ import './base-imports';
 
 import classnames from 'classnames';
 import clone from 'clone';
-import CodeMirror, { EditorConfiguration } from 'codemirror';
+import CodeMirror, { type EditorConfiguration, type EditorEventMap } from 'codemirror';
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
 import { useMount, useUnmount } from 'react-use';
 
-import { DEBOUNCE_MILLIS } from '../../../common/constants';
+import { DEBOUNCE_MILLIS, isMac } from '../../../common/constants';
 import * as misc from '../../../common/misc';
-import { KeyCombination } from '../../../common/settings';
+import type { KeyCombination } from '../../../common/settings';
 import { getTagDefinitions } from '../../../templating/index';
-import { NunjucksParsedTag } from '../../../templating/utils';
+import { extractNunjucksTagFromCoords, type NunjucksParsedTag, type nunjucksTagContextMenuOptions } from '../../../templating/utils';
 import { useNunjucks } from '../../context/nunjucks/use-nunjucks';
 import { useEditorRefresh } from '../../hooks/use-editor-refresh';
 import { useRootLoaderData } from '../../routes/root';
+import { showModal } from '../modals';
+import { NunjucksModal } from '../modals/nunjucks-modal';
 import { isKeyCombinationInRegistry } from '../settings/shortcuts';
 export interface OneLineEditorProps {
   defaultValue: string;
@@ -26,8 +28,13 @@ export interface OneLineEditorProps {
   type?: string;
   onPaste?: (text: string) => void;
   onBlur?: (e: FocusEvent) => void;
+  eventListeners?: EditorEventListener<keyof EditorEventMap>[];
 }
 
+export interface EditorEventListener<T extends keyof EditorEventMap> {
+  eventName: T;
+  handler: EditorEventMap[T];
+};
 export interface OneLineEditorHandle {
   selectAll: () => void;
   focusEnd: () => void;
@@ -43,6 +50,7 @@ export const OneLineEditor = forwardRef<OneLineEditorHandle, OneLineEditorProps>
   type,
   onPaste,
   onBlur,
+  eventListeners,
 }, ref) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const codeMirror = useRef<CodeMirror.EditorFromTextArea | null>(null);
@@ -92,6 +100,7 @@ export const OneLineEditor = forwardRef<OneLineEditorHandle, OneLineEditorProps>
       keyMap: !readOnly && settings.editorKeyMap ? settings.editorKeyMap : 'default',
       extraKeys: CodeMirror.normalizeKeyMap({
         'Ctrl-Space': 'autocomplete',
+        [isMac() ? 'Cmd-F' : 'Ctrl-F']: () => { },
       }),
       gutters: [],
       mode: !handleRender ? 'text/plain' : {
@@ -169,30 +178,30 @@ export const OneLineEditor = forwardRef<OneLineEditorHandle, OneLineEditorProps>
         onKeyDown(event, doc.getValue());
       }
     });
-
+    // extra event listeners for editor
+    if (Array.isArray(eventListeners) && eventListeners.length > 0) {
+      eventListeners.forEach(({ eventName, handler }) => {
+        codeMirror.current?.on(eventName, handler);
+      });
+    }
     codeMirror.current.on('blur', () => codeMirror.current?.getTextArea().parentElement?.removeAttribute('data-focused'));
     codeMirror.current.on('focus', () => codeMirror.current?.getTextArea().parentElement?.setAttribute('data-focused', 'on'));
     codeMirror.current.on('keyHandled', (_: CodeMirror.Editor, _keyName: string, event: Event) => event.stopPropagation());
-    // Prevent these things if we're type === "password"
-    const preventDefault = (_: CodeMirror.Editor, event: Event) => type?.toLowerCase() === 'password' && event.preventDefault();
-    codeMirror.current.on('copy', preventDefault);
-    codeMirror.current.on('cut', preventDefault);
-    codeMirror.current.on('dragstart', preventDefault);
-    codeMirror.current.setCursor({ line: -1, ch: -1 });
 
     // Actually set the value
     codeMirror.current?.setValue(defaultValue || '');
     // Clear history so we can't undo the initial set
     codeMirror.current?.clearHistory();
     // Setup nunjucks listeners
-    if (!readOnly && handleRender && !settings.nunjucksPowerUserMode) {
+    if (handleRender && !settings.nunjucksPowerUserMode) {
       codeMirror.current?.enableNunjucksTags(
         handleRender,
         handleGetRenderContext,
         settings.showVariableSourceAndValue,
+        id,
       );
     }
-  }, [defaultValue, getAutocompleteConstants, handleGetRenderContext, handleRender, onBlur, onKeyDown, onPaste, placeholder, readOnly, settings.autocompleteDelay, settings.editorKeyMap, settings.hotKeyRegistry, settings.nunjucksPowerUserMode, settings.showVariableSourceAndValue, type]);
+  }, [defaultValue, getAutocompleteConstants, handleGetRenderContext, handleRender, onBlur, onKeyDown, onPaste, placeholder, readOnly, settings.autocompleteDelay, settings.editorKeyMap, settings.hotKeyRegistry, settings.nunjucksPowerUserMode, settings.showVariableSourceAndValue, eventListeners, id]);
 
   const cleanUpEditor = useCallback(() => {
     codeMirror.current?.toTextArea();
@@ -214,6 +223,30 @@ export const OneLineEditor = forwardRef<OneLineEditorHandle, OneLineEditorProps>
   useEditorRefresh(reinitialize);
 
   useEffect(() => {
+    if (codeMirror.current) {
+      // https://github.com/Kong/insomnia/issues/8265
+      // we have a unique key for request panel, when connect to websocket, unique will change and component will mount again automatically
+      // but when disconnect, the unique key will not change, so we need to update some configurations manually
+      codeMirror.current.setOption('readOnly', readOnly);
+      codeMirror.current.setOption('keyMap', !readOnly && settings.editorKeyMap ? settings.editorKeyMap : 'default');
+    }
+  }, [readOnly, settings.editorKeyMap]);
+
+  useEffect(() => {
+      // Prevent these things if we're type === "password"
+      const preventDefault = (_: CodeMirror.Editor, event: Event) => type?.toLowerCase() === 'password' && event.preventDefault();
+      codeMirror.current?.on('copy', preventDefault);
+      codeMirror.current?.on('cut', preventDefault);
+      codeMirror.current?.on('dragstart', preventDefault);
+
+      return () => {
+        codeMirror.current?.off('copy', preventDefault);
+        codeMirror.current?.off('cut', preventDefault);
+        codeMirror.current?.off('dragstart', preventDefault);
+      };
+  }, [type]);
+
+  useEffect(() => {
     const fn = misc.debounce((doc: CodeMirror.Editor) => {
       if (onChange) {
         onChange(doc.getValue() || '');
@@ -224,8 +257,34 @@ export const OneLineEditor = forwardRef<OneLineEditorHandle, OneLineEditorProps>
   }, [onChange]);
 
   useEffect(() => {
-    const unsubscribe = window.main.on('context-menu-command', (_, { key, tag }) =>
-      id === key && codeMirror.current?.replaceSelection(tag));
+    const unsubscribe = window.main.on('context-menu-command', (_, { key, tag, nunjucksTag }) => {
+      if (id === key) {
+        if (nunjucksTag) {
+          const { type, template, range } = nunjucksTag as nunjucksTagContextMenuOptions;
+          switch (type) {
+            case 'edit':
+              showModal(NunjucksModal, {
+                template: template,
+                onDone: (template: string | null) => {
+                  const { from, to } = range;
+                  codeMirror.current?.replaceRange(template!, from, to);
+                },
+              });
+              return;
+
+            case 'delete':
+              const { from, to } = range;
+              codeMirror.current?.replaceRange('', from, to);
+              return;
+
+            default:
+              return;
+          };
+        } else {
+          codeMirror.current?.replaceSelection(tag);
+        }
+      }
+    });
     return () => {
       unsubscribe();
     };
@@ -254,7 +313,18 @@ export const OneLineEditor = forwardRef<OneLineEditorHandle, OneLineEditorProps>
           return;
         }
         event.preventDefault();
-        window.main.showContextMenu({ key: id });
+        const target = event.target as HTMLElement;
+        // right click on nunjucks tag
+        if (target?.classList?.contains('nunjucks-tag')) {
+          const { clientX, clientY } = event;
+          const nunjucksTag = extractNunjucksTagFromCoords({ left: clientX, top: clientY }, codeMirror);
+          if (nunjucksTag) {
+            // show context menu for nunjucks tag
+            window.main.showContextMenu({ key: id, nunjucksTag });
+          }
+        } else {
+          window.main.showContextMenu({ key: id });
+        }
       }}
     >
       <div className="editor__container input editor--single-line">

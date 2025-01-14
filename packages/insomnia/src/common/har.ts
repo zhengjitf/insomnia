@@ -1,16 +1,18 @@
 import clone from 'clone';
 import fs from 'fs';
-import * as Har from 'har-format';
+import type * as Har from 'har-format';
 import { Cookie as ToughCookie } from 'tough-cookie';
 
 import * as models from '../models';
 import type { Request } from '../models/request';
+import type { RequestGroup } from '../models/request-group';
 import type { Response } from '../models/response';
-import { isWorkspace } from '../models/workspace';
+import { isWorkspace, type Workspace } from '../models/workspace';
 import { getAuthHeader } from '../network/authentication';
 import * as plugins from '../plugins';
 import * as pluginContexts from '../plugins/context/index';
 import { RenderError } from '../templating/index';
+import { parseGraphQLReqeustBody } from '../utils/graph-ql';
 import { smartEncodeUrl } from '../utils/url/querystring';
 import { getAppVersion } from './constants';
 import { jarFromCookies } from './cookies';
@@ -26,7 +28,7 @@ export interface ExportRequest {
 }
 
 export async function exportHarCurrentRequest(request: Request, response: Response): Promise<Har.Har> {
-  const ancestors = await database.withAncestors(request, [
+  const ancestors = await database.withAncestors<Request | RequestGroup | Workspace>(request, [
     models.workspace.type,
     models.requestGroup.type,
   ]);
@@ -175,6 +177,7 @@ export async function exportHarWithRequest(
       renderResult.request,
       renderResult.context,
     );
+    parseGraphQLReqeustBody(renderedRequest);
     return exportHarWithRenderedRequest(renderedRequest, addContentLength);
   } catch (err) {
     if (err instanceof RenderError) {
@@ -257,7 +260,17 @@ export async function exportHarWithRenderedRequest(
 }
 
 function getRequestCookies(renderedRequest: RenderedRequest) {
-  const jar = jarFromCookies(renderedRequest.cookieJar.cookies);
+  // filter out invalid cookies to avoid getCookiesSync complaining
+  const sanitized = renderedRequest.cookieJar.cookies.map(cookie => {
+    if (!cookie.expires) {
+      // TODO: null will make getCookiesSync unhappy
+      // probably it should be `undefined` when types of tough cookie is updated
+      cookie.expires = 'Infinity';
+    }
+    return cookie;
+  });
+
+  const jar = jarFromCookies(sanitized);
   const domainCookies = renderedRequest.url ? jar.getCookiesSync(renderedRequest.url) : [];
   const harCookies: Har.Cookie[] = domainCookies.map(mapCookie);
   return harCookies;
@@ -269,7 +282,7 @@ export function getResponseCookiesFromHeaders(headers: Har.Cookie[]) {
       let cookie: null | undefined | ToughCookie = null;
 
       try {
-        cookie = ToughCookie.parse(harCookie.value || '');
+        cookie = ToughCookie.parse(harCookie.value || '', { loose: true });
       } catch (error) { }
 
       if (cookie === null || cookie === undefined) {

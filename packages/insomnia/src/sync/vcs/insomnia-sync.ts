@@ -1,10 +1,17 @@
 import { showModal } from '../../ui/components/modals';
 import { SyncMergeModal } from '../../ui/components/modals/sync-merge-modal';
 import FileSystemDriver from '../store/drivers/file-system-driver';
-import { MergeConflict } from '../types';
+import type { MergeConflict } from '../types';
 import { VCS } from './vcs';
 
 let vcs: VCS | null = null;
+
+export class UserAbortResolveMergeConflictError extends Error {
+  constructor(msg: string = 'User aborted merge') {
+    super(msg);
+  }
+  name = 'UserAbortResolveMergeConflictError';
+}
 
 export const VCSInstance = () => {
   if (vcs) {
@@ -21,9 +28,9 @@ export const VCSInstance = () => {
         handleDone: (conflicts?: MergeConflict[]) => {
           if (conflicts && conflicts.length) {
             resolve(conflicts);
+          } else {
+            reject(new UserAbortResolveMergeConflictError());
           }
-
-          reject(new Error('User aborted merge'));
         },
       });
     });

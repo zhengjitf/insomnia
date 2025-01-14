@@ -1,11 +1,11 @@
 import React, { Fragment } from 'react';
-import { Heading } from 'react-aria-components';
-import { ActionFunction, redirect, useFetcher, useFetchers, useNavigate } from 'react-router-dom';
+import { Button, Heading } from 'react-aria-components';
+import { type ActionFunction, redirect, useFetcher, useFetchers, useNavigate } from 'react-router-dom';
 
 import { invariant } from '../../utils/invariant';
+import { SegmentEvent } from '../analytics';
 import { getLoginUrl, submitAuthCode } from '../auth-session-provider';
 import { Icon } from '../components/icon';
-import { Button } from '../components/themed-button';
 
 export const action: ActionFunction = async ({
   request,
@@ -13,15 +13,19 @@ export const action: ActionFunction = async ({
   const data = await request.json();
 
   invariant(typeof data?.code === 'string', 'Expected code to be a string');
-  const fetchError = await submitAuthCode(data.code);
-  if (fetchError) {
+  const error = await submitAuthCode(data.code);
+  if (error) {
+    const humanReadableError = error?.message === 'Failed to fetch' ? 'Network failed, please try again. If the problem persists, check your network and proxy settings.' : error?.message;
     return {
       errors: {
-        message: 'Invalid code: ' + fetchError,
+        message: humanReadableError,
       },
     };
   }
   console.log('Login successful');
+  window.main.trackSegmentEvent({
+    event: SegmentEvent.loginSuccess,
+  });
   window.localStorage.setItem('hasUserLoggedInBefore', 'true');
 
   return redirect('/organization');
@@ -136,11 +140,8 @@ const Authorize = () => {
       )}
       <div className='flex justify-center w-full'>
         <Button
-          variant="text"
-          style={{
-            gap: 'var(--padding-xs)',
-          }}
-          onClick={() => {
+          className="flex items-center gap-2"
+          onPress={() => {
             navigate('/auth/login');
           }}
         >

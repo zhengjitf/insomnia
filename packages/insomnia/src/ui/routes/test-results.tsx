@@ -1,10 +1,10 @@
-import React, { FC } from 'react';
+import React, { type FC } from 'react';
 import { Heading } from 'react-aria-components';
-import { LoaderFunction, redirect, useRouteLoaderData } from 'react-router-dom';
+import { type LoaderFunction, redirect, useRouteLoaderData } from 'react-router-dom';
 
 import { database } from '../../common/database';
 import * as models from '../../models';
-import { UnitTestResult } from '../../models/unit-test-result';
+import type { UnitTestResult } from '../../models/unit-test-result';
 import { invariant } from '../../utils/invariant';
 import { Icon } from '../components/icon';
 
@@ -55,7 +55,7 @@ export const TestRunStatus: FC = () => {
       className="w-full flex-1 flex flex-col h-full divide-solid divide-y divide-[--hl-md]"
     >
       <Heading
-        className={`text-lg flex-shrink-0 flex items-center gap-2 w-full p-[--padding-md] ${
+        className={`text-lg flex-shrink-0 flex items-center gap-2 w-full h-[--line-height-sm] p-[--padding-md] ${
           stats.failures > 0
             ? 'text-[--color-danger]'
             : 'text-[--color-success]'
@@ -89,7 +89,7 @@ export const TestRunStatus: FC = () => {
                     {errorMessage ? 'Failed' : 'Passed'}
                   </span>
                 </div>
-                <div className="flex-1 truncate">{test.title}</div>
+                <div className="flex-1 truncate" title={test.title}>{test.title}</div>
                 <div className="flex flex-shrink-0">{test.duration} ms</div>
               </div>
               {errorMessage && (

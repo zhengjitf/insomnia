@@ -1,53 +1,63 @@
+import * as Sentry from '@sentry/electron/renderer';
+import { SENTRY_OPTIONS } from 'insomnia/src/common/sentry';
 import { initInsomniaObject, InsomniaObject } from 'insomnia-sdk';
-import { Console, mergeClientCertificates, mergeCookieJar, mergeRequests, mergeSettings, RequestContext } from 'insomnia-sdk';
+import { Console, mergeClientCertificates, mergeCookieJar, mergeRequests, mergeSettings, type RequestContext } from 'insomnia-sdk';
 import * as _ from 'lodash';
 
-import { invariant } from '../src/utils/invariant';
-
 export interface HiddenBrowserWindowBridgeAPI {
-  runPreRequestScript: (options: { script: string; context: RequestContext }) => Promise<RequestContext>;
+  runScript: (options: { script: string; context: RequestContext }) => Promise<RequestContext>;
 };
+
+Sentry.init({
+  ...SENTRY_OPTIONS,
+});
 
 window.bridge.onmessage(async (data, callback) => {
   window.bridge.setBusy(true);
-  console.log('[hidden-browser-window] recieved message', data);
+
   try {
     const timeout = data.context.timeout || 5000;
     const timeoutPromise = new window.bridge.Promise(resolve => {
       setTimeout(() => {
-        resolve({ error: 'Timeout: Pre-request script took too long' });
+        resolve({ error: 'Timeout: Running script took too long' });
       }, timeout);
     });
-    const result = await window.bridge.Promise.race([timeoutPromise, runPreRequestScript(data)]);
+    const result = await window.bridge.Promise.race([timeoutPromise, runScript(data)]);
     callback(result);
   } catch (err) {
-    console.error('error', err);
-    callback({ error: err.message });
+    const errMessage = err.message ? `message: ${err.message}; stack: ${err.stack}` : err;
+    Sentry.captureException(errMessage, {
+      tags: {
+        source: 'hidden-window',
+      },
+    });
+    callback({ error: errMessage });
   } finally {
     window.bridge.setBusy(false);
   }
 });
 
-const runPreRequestScript = async (
+// as insomnia.test accepts an async function, prepend await to it as user don't write it
+function translateTestHandlers(script: string): string {
+  const replacedTests = script.replace(/insomnia\.test\(/g, 'await insomnia.test(');
+  return replacedTests.replace(/insomnia\.test\.skip\(/g, 'await insomnia.test.skip(');
+}
+
+// This function is duplicated in scriptExecutor.ts to run in nodejs
+// TODO: consider removing this implementation and using only nodejs scripting
+const runScript = async (
   { script, context }: { script: string; context: RequestContext },
 ): Promise<RequestContext> => {
-  console.log(script);
   const scriptConsole = new Console();
 
-  const executionContext = initInsomniaObject(context, scriptConsole.log);
+  const executionContext = await initInsomniaObject(context, scriptConsole.log);
 
-  const evalInterceptor = (script: string) => {
-    invariant(script && typeof script === 'string', 'eval is called with invalid or empty value');
-    const result = eval(script);
-    return result;
-  };
-
+  const translatedScript = translateTestHandlers(script);
   const AsyncFunction = (async () => { }).constructor;
   const executeScript = AsyncFunction(
     'insomnia',
     'require',
     'console',
-    'eval',
     '_',
     'setTimeout',
     // disable these as they are not supported in web or existing implementation
@@ -57,7 +67,7 @@ const runPreRequestScript = async (
     `
       const $ = insomnia;
       window.bridge.resetAsyncTasks(); // exclude unnecessary ones
-      ${script};
+      ${translatedScript};
       window.bridge.stopMonitorAsyncTasks();  // the next one should not be monitored
       await window.bridge.asyncTasksAllSettled();
       return insomnia;`
@@ -67,7 +77,6 @@ const runPreRequestScript = async (
     executionContext,
     window.bridge.requireInterceptor,
     scriptConsole,
-    evalInterceptor,
     _,
     proxiedSetTimeout,
     undefined,
@@ -83,19 +92,34 @@ const runPreRequestScript = async (
   const updatedCertificates = mergeClientCertificates(context.clientCertificates, mutatedContextObject.request);
   const updatedCookieJar = mergeCookieJar(context.cookieJar, mutatedContextObject.cookieJar);
 
-  await window.bridge.writeFile(context.timelinePath, scriptConsole.dumpLogs());
-
-  console.log('mutatedInsomniaObject', mutatedContextObject);
-  console.log('context', context);
-
   return {
     ...context,
-    environment: mutatedContextObject.environment,
-    baseEnvironment: mutatedContextObject.baseEnvironment,
+    environment: {
+      id: context.environment.id,
+      name: context.environment.name,
+      data: mutatedContextObject.environment,
+    },
+    baseEnvironment: {
+      id: context.baseEnvironment.id,
+      name: context.baseEnvironment.name,
+      data: mutatedContextObject.baseEnvironment,
+    },
+    iterationData: context.iterationData ? {
+      name: context.iterationData.name,
+      data: mutatedContextObject.iterationData,
+    } : undefined,
+    transientVariables: {
+      name: context.transientVariables?.name || 'transientVariables',
+      data: mutatedContextObject.variables,
+    },
     request: updatedRequest,
+    execution: mutatedContextObject.execution,
     settings: updatedSettings,
     clientCertificates: updatedCertificates,
     cookieJar: updatedCookieJar,
+    globals: mutatedContextObject.globals,
+    requestTestResults: mutatedContextObject.requestTestResults,
+    logs: scriptConsole.dumpLogsAsArray(),
   };
 };
 

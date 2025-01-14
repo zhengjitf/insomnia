@@ -1,12 +1,38 @@
 {
-  "extends": "./tsconfig.build.json",
+  "compilerOptions": {
+    /* Basic */
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "target": "es2020",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "isolatedModules": true,
+    /* Transpiling Options */
+    "module": "ESNext",
+    "sourceMap": true,
+    /* Runs in the DOM */
+    "lib": [
+      "ES2023",
+      "DOM.Iterable",
+      "DOM"
+    ],
+    "jsx": "react",
+    /* Strictness */
+    "strict": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "useUnknownInCatchVariables": false,
+    "verbatimModuleSyntax": true
+  },
   "include": [
     ".eslintrc.js",
     "config",
     "electron-builder.config.js",
     "esbuild.main.ts",
     "esbuild.sr.ts",
-    "jest.config.js",
     "package.json",
     "scripts",
     "send-request",
@@ -14,7 +40,9 @@
     "tailwind.config.js",
     "postcss.config.js",
     "vite.config.ts",
-    "vite-plugin-electron-node-require"
+    "vite-plugin-electron-node-require",
+    "**/*.d.ts",
+    "setup-vitest.ts",
   ],
   "exclude": [
     "bin",
@@ -25,5 +53,20 @@
     "src/main.min.js",
     "src/preload.js",
     "svgr.config.js",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/__mocks__",
+    "**/__snapshots__",
+    "**/__tests__",
+    "**/main.min.js",
+    "assets",
+    "bin",
+    "config",
+    "node_modules",
+    "src/coverage",
+    "src/main.min.js",
+    "src/preload.js",
+    "src/hidden-window-preload.js",
+    "./src/__mocks__/@getinsomnia/node-libcurl.ts"
   ],
 }

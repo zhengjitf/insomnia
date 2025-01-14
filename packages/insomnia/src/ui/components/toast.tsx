@@ -1,7 +1,6 @@
 import classnames from 'classnames';
 import type { IpcRendererEvent } from 'electron';
-import React, { FC, useEffect, useState } from 'react';
-import styled from 'styled-components';
+import React, { type FC, useEffect, useState } from 'react';
 
 import {
   getAppId,
@@ -11,6 +10,7 @@ import {
   updatesSupported,
 } from '../../common/constants';
 import * as models from '../../models/index';
+import { insomniaFetch } from '../../ui/insomniaFetch';
 import imgSrcCore from '../images/insomnia-logo.svg';
 import { useRootLoaderData } from '../routes/root';
 import { Link } from './base/link';
@@ -23,31 +23,6 @@ export interface ToastNotification {
   cta: string;
   message: string;
 }
-
-const StyledLogo = styled.div`
-  margin: var(--padding-xs) var(--padding-sm) var(--padding-xs) var(--padding-xs);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  img {
-    max-width: 5rem;
-  }
-`;
-const StyledContent = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  padding: 0 var(--padding-xs) 0 var(--padding-xs);
-  max-width: 20rem;
-`;
-const StyledFooter = styled.footer`
-  padding-top: var(--padding-sm);
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  width: 100%;
-`;
 
 type SeenNotifications = Record<string, boolean>;
 
@@ -105,7 +80,7 @@ export const Toast: FC = () => {
         updatesNotSupported: !updatesSupported(),
         version: getAppVersion(),
       };
-      const notificationOrEmpty = await window.main.insomniaFetch<ToastNotification>({
+      const notificationOrEmpty = await insomniaFetch<ToastNotification>({
         method: 'POST',
         path: '/notification',
         data,
@@ -132,14 +107,16 @@ export const Toast: FC = () => {
         'toast--show': visible,
       })}
     >
-      <StyledLogo>
-        <img src={imgSrcCore} alt={productName} />
-      </StyledLogo>
-      <StyledContent>
+      <div className="m-[var(--padding-xs)] mr-[var(--padding-sm)] flex items-center justify-center">
+        <img className="max-w-[5rem]" src={imgSrcCore} alt={productName} />
+      </div>
+      <div className="flex items-center justify-center flex-col px-[var(--padding-xs)] max-w-[20rem]">
+
         <p>{notification?.message || 'Unknown'}</p>
-        <StyledFooter>
+        <footer className="pt-[var(--padding-sm)] flex flex-row justify-between w-full">
+
           <button
-            className="btn btn--super-duper-compact btn--outlined"
+            className="btn btn--super-super-compact btn--outlined"
             onClick={() => {
               if (notification) {
                 // Hide the currently showing notification
@@ -157,7 +134,7 @@ export const Toast: FC = () => {
           &nbsp;&nbsp;
           <Link
             button
-            className="btn btn--super-duper-compact btn--outlined no-wrap"
+            className="btn btn--super-super-compact btn--outlined no-wrap"
             onClick={() => {
               if (notification) {
                 // Hide the currently showing notification
@@ -173,8 +150,8 @@ export const Toast: FC = () => {
           >
             {notification.cta}
           </Link>
-        </StyledFooter>
-      </StyledContent>
+        </footer>
+      </div>
     </div>
   ) : null;
 };

@@ -1,18 +1,17 @@
-import { AxiosResponse } from 'axios';
-import type { GraphQLError } from 'graphql';
-import React, { MouseEvent, useEffect, useState } from 'react';
+import React, { type MouseEvent, useEffect, useState } from 'react';
 import { useInterval, useLocalStorage } from 'react-use';
-import styled from 'styled-components';
 
-import { GitRepository } from '../../../../models/git-repository';
+import { getGitHubRestApiUrl } from '../../../../common/constants';
+import type { GitRepository } from '../../../../models/git-repository';
 import {
   exchangeCodeForToken,
-  generateAuthorizationUrl,
-  GITHUB_GRAPHQL_API_URL,
+  generateAppAuthorizationUrl,
   signOut,
 } from '../../../../sync/git/github-oauth-provider';
+import { insomniaFetch } from '../../../insomniaFetch';
 import { Button } from '../../themed-button';
 import { showAlert, showError } from '..';
+import { GitHubRepositorySelect } from './github-repository-select';
 
 interface Props {
   uri?: string;
@@ -54,73 +53,23 @@ export const GitHubRepositorySetupFormGroup = (props: Props) => {
   );
 };
 
-interface FetchGraphQLInput {
-  query: string;
-  variables?: Record<string, any>;
-  headers: Record<string, any>;
+// this interface is backward-compatible with
+// existing GitHub user info stored in localStorage
+interface GitHubUser {
+  name?: string;
+  login: string;
+  email: string | null;
+  avatarUrl: string;
   url: string;
 }
 
-async function fetchGraphQL<QueryResult>(input: FetchGraphQLInput) {
-  const { headers, query, variables, url } = input;
-  const response: AxiosResponse<{ data: QueryResult; errors: GraphQLError[] }> =
-    await window.main.axiosRequest({
-      url,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...headers,
-      },
-      data: {
-        query,
-        variables,
-      },
-    });
-
-  return response.data;
+interface GitHubUserApiResponse {
+  name: string;
+  login: string;
+  email: string | null;
+  avatar_url: string;
+  url: string;
 }
-
-const GitHubUserInfoQuery = `
-  query getUserInfo {
-    viewer {
-      login
-      email
-      avatarUrl
-      url
-    }
-  }
-`;
-
-interface GitHubUserInfoQueryResult {
-  viewer: {
-    login: string;
-    email: string;
-    avatarUrl: string;
-    url: string;
-  };
-}
-
-const AccountViewContainer = styled.div({
-  display: 'flex',
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  border: '1px solid var(--hl-sm)',
-  borderRadius: 'var(--radius-md)',
-  padding: 'var(--padding-sm)',
-  boxSizing: 'border-box',
-});
-
-const AccountDetails = styled.div({
-  display: 'flex',
-  alignItems: 'center',
-  gap: 'var(--padding-sm)',
-});
-
-const AvatarImg = styled.img({
-  borderRadius: 'var(--radius-md)',
-  width: 16,
-  height: 16,
-});
 
 const Avatar = ({ src }: { src: string }) => {
   const [imageSrc, setImageSrc] = useState('');
@@ -148,28 +97,11 @@ const Avatar = ({ src }: { src: string }) => {
   }, [src]);
 
   return imageSrc ? (
-    <AvatarImg src={imageSrc} />
+    <img src={imageSrc} className="rounded-md w-8 h-8" />
   ) : (
     <i className="fas fa-user-circle" />
   );
 };
-
-const Details = styled.div({
-  display: 'flex',
-  flexDirection: 'column',
-});
-
-const AuthorizationFormContainer = styled.div({
-  display: 'flex',
-  placeContent: 'center',
-  placeItems: 'center',
-  flexDirection: 'column',
-  height: '100%',
-  border: '1px solid var(--hl-sm)',
-  borderRadius: 'var(--radius-md)',
-  padding: 'var(--padding-sm)',
-  boxSizing: 'border-box',
-});
 
 interface GitHubRepositoryFormProps {
   uri?: string;
@@ -186,7 +118,7 @@ const GitHubRepositoryForm = ({
 }: GitHubRepositoryFormProps) => {
   const [error, setError] = useState('');
 
-  const [user, setUser, removeUser] = useLocalStorage<GitHubUserInfoQueryResult['viewer']>(
+  const [user, setUser, removeUser] = useLocalStorage<GitHubUser>(
     'github-user-info',
     undefined
   );
@@ -210,33 +142,52 @@ const GitHubRepositoryForm = ({
     let isMounted = true;
 
     if (token && !user) {
-      fetchGraphQL<GitHubUserInfoQueryResult>({
-        query: GitHubUserInfoQuery,
+      const fetchOptions = {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `token ${token}`,
         },
-        url: GITHUB_GRAPHQL_API_URL,
-      })
-        .then(({ data, errors }) => {
-          if (isMounted) {
-            if (errors) {
-              setError(
-                'Something went wrong when trying to fetch info from GitHub.'
-              );
-            } else if (data) {
-              setUser(data.viewer);
-            }
-          }
-        })
-        .catch((error: unknown) => {
-          if (error instanceof Error) {
-            setError(
-              'Something went wrong when trying to fetch info from GitHub.'
-            );
-          }
+        origin: getGitHubRestApiUrl(),
+        sessionId: '',
+      };
+      Promise.allSettled([
+        // need both requests because the email in GET /user
+        // is the public profile email and may not exist
+        insomniaFetch<{ email: string; primary: boolean }[]>({
+          ...fetchOptions,
+          path: '/user/emails',
+          method: 'GET',
+        }),
+        insomniaFetch<GitHubUserApiResponse>({
+          ...fetchOptions,
+          path: '/user',
+          method: 'GET',
+        }),
+      ]).then(([emailsPromise, userPromise]) => {
+        if (!isMounted) {
+          return;
+        }
+        if (userPromise.status === 'rejected') {
+          setError(
+            'Something went wrong when trying to fetch info from GitHub.'
+          );
+          return;
+        }
+        const userProfileEmail = userPromise.value.email ?? '';
+        const email = emailsPromise.status === 'fulfilled' ? emailsPromise.value.find(e => e.primary)?.email ?? userProfileEmail : userProfileEmail;
+        setUser({
+          ...userPromise.value,
+          // field renamed for backward compatibility
+          avatarUrl: userPromise.value.avatar_url,
+          email,
         });
+      }).catch((error: unknown) => {
+        if (error instanceof Error) {
+          setError(
+            'Something went wrong when trying to fetch info from GitHub.'
+          );
+        }
+      });
     }
-
     return () => {
       isMounted = false;
     };
@@ -246,13 +197,20 @@ const GitHubRepositoryForm = ({
     <form
       id="github"
       className="form-group"
-      style={{ height: '100%' }}
       onSubmit={event => {
         event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        const uri = formData.get('uri') as string;
+        if (!uri) {
+          setError('Please select a repository');
+          return;
+        }
         onSubmit({
-          uri: (new FormData(event.currentTarget).get('uri') as string) ?? '',
+          uri,
           author: {
-            name: user?.login ?? '',
+            // try to use the name from the user info, but fall back to the login (username)
+            name: user?.name ? user?.name : user?.login ?? '',
+            // rfc: fall back to the email from the Insomnia session?
             email: user?.email ?? '',
           },
           credentials: {
@@ -263,48 +221,45 @@ const GitHubRepositoryForm = ({
         });
       }}
     >
-      {token && (
-        <div className="form-control form-control--outlined">
-          <label>
-            GitHub URI (https, including .git suffix)
-            <input
-              className="form-control"
-              defaultValue={uri}
-              type="url"
-              name="uri"
-              autoFocus
-              required
-              disabled={Boolean(uri)}
-              placeholder="https://github.com/org/repo.git"
-            />
-          </label>
+      {user && (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              border: '1px solid var(--hl-sm)',
+              borderRadius: 'var(--radius-md)',
+              padding: 'var(--padding-sm)',
+              boxSizing: 'border-box',
+              marginBottom: 'var(--padding-sm)',
+              alignItems: 'center',
+            }}
+          >
+            <div className="flex gap-2 items-center">
+              <Avatar src={user?.avatarUrl ?? ''} />
+              <div className="flex flex-col">
+                <span
+                  style={{
+                    fontSize: 'var(--font-size-lg)',
+                  }}
+                >
+                  {user?.login}
+                </span>
+                <span
+                  style={{
+                    fontSize: 'var(--font-size-md)',
+                  }}
+                >
+                  {user?.email || 'Signed in'}
+                </span>
+              </div>
+            </div>
+            <Button type="button" onClick={handleSignOut}>
+              Sign out
+            </Button>
         </div>
       )}
-      <AccountViewContainer>
-        <AccountDetails>
-          <Avatar src={user?.avatarUrl ?? ''} />
-          <Details>
-            <span
-              style={{
-                fontSize: 'var(--font-size-lg)',
-              }}
-            >
-              {user?.login}
-            </span>
-            <span
-              style={{
-                fontSize: 'var(--font-size-md)',
-              }}
-            >
-              {user?.email}
-            </span>
-          </Details>
-        </AccountDetails>
-        <Button type="button" onClick={handleSignOut}>
-          Sign out
-        </Button>
-      </AccountViewContainer>
-
+      {token && <GitHubRepositorySelect uri={uri} token={token} />}
       {error && (
         <p className="notice error margin-bottom-sm">
           <button className="pull-right icon" onClick={() => setError('')}>
@@ -323,19 +278,30 @@ interface GitHubSignInFormProps {
 
 const GitHubSignInForm = ({ token }: GitHubSignInFormProps) => {
   const [error, setError] = useState('');
-  const [authUrl, setAuthUrl] = useState(() => generateAuthorizationUrl());
+  const [authUrl, setAuthUrl] = useState(() => generateAppAuthorizationUrl());
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   // When we get a new token we reset the authenticating flag and auth url. This happens because we can use the generated url for only one authorization flow.
   useEffect(() => {
     if (token) {
       setIsAuthenticating(false);
-      setAuthUrl(generateAuthorizationUrl());
+      setAuthUrl(generateAppAuthorizationUrl());
     }
   }, [token]);
 
   return (
-    <AuthorizationFormContainer>
+    <div
+      style={{
+        display: 'flex',
+        placeContent: 'center',
+        placeItems: 'center',
+        flexDirection: 'column',
+        border: '1px solid var(--hl-sm)',
+        borderRadius: 'var(--radius-md)',
+        padding: 'var(--padding-sm)',
+        boxSizing: 'border-box',
+      }}
+    >
       <a
         href={authUrl}
         onClick={() => {
@@ -343,7 +309,7 @@ const GitHubSignInForm = ({ token }: GitHubSignInFormProps) => {
         }}
       >
         <i className="fa fa-github" />
-        {isAuthenticating ? 'Authenticating' : 'Authenticate'} with GitHub
+        {isAuthenticating ? 'Authenticating with GitHub App' : 'Authenticate with GitHub App'}
       </a>
 
       {isAuthenticating && (
@@ -373,6 +339,7 @@ const GitHubSignInForm = ({ token }: GitHubSignInFormProps) => {
               exchangeCodeForToken({
                 code,
                 state,
+                path: '/v1/oauth/github-app',
               }).catch((error: Error) => {
                 showError({
                   error,
@@ -402,6 +369,6 @@ const GitHubSignInForm = ({ token }: GitHubSignInFormProps) => {
           )}
         </form>
       )}
-    </AuthorizationFormContainer>
+    </div>
   );
 };

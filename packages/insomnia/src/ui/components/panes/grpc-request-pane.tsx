@@ -1,31 +1,35 @@
-import React, { FunctionComponent, useRef, useState } from 'react';
+import { readFile } from 'fs/promises';
+import React, { type FunctionComponent, useRef, useState } from 'react';
+import { Tab, TabList, TabPanel, Tabs } from 'react-aria-components';
 import { useParams, useRouteLoaderData } from 'react-router-dom';
 import { useMount } from 'react-use';
-import styled from 'styled-components';
 
 import { getCommonHeaderNames, getCommonHeaderValues } from '../../../common/common-headers';
 import { documentationLinks } from '../../../common/documentation';
 import { generateId } from '../../../common/misc';
-import { getRenderedGrpcRequest, getRenderedGrpcRequestMessage, RENDER_PURPOSE_SEND } from '../../../common/render';
-import { GrpcMethodType } from '../../../main/ipc/grpc';
+import { getRenderedGrpcRequest, getRenderedGrpcRequestMessage } from '../../../common/render';
+import type { GrpcMethodType } from '../../../main/ipc/grpc';
 import * as models from '../../../models';
 import type { GrpcRequestHeader } from '../../../models/grpc-request';
 import { queryAllWorkspaceUrls } from '../../../models/helpers/query-all-workspace-urls';
+import { urlMatchesCertHost } from '../../../network/url-matches-cert-host';
+import { getGrpcConnectionErrorDetails } from '../../../utils/grpc';
 import { tryToInterpolateRequestOrShowRenderErrorModal } from '../../../utils/try-interpolate';
+import { setDefaultProtocol } from '../../../utils/url/protocol';
 import { useRequestPatcher } from '../../hooks/use-request';
 import { useActiveRequestSyncVCSVersion, useGitVCSVersion } from '../../hooks/use-vcs-version';
-import { GrpcRequestState } from '../../routes/debug';
-import { GrpcRequestLoaderData } from '../../routes/request';
-import { WorkspaceLoaderData } from '../../routes/workspace';
-import { PanelContainer, TabItem, Tabs } from '../base/tabs';
+import type { GrpcRequestState } from '../../routes/debug';
+import type { GrpcRequestLoaderData } from '../../routes/request';
+import { useRootLoaderData } from '../../routes/root';
+import type { WorkspaceLoaderData } from '../../routes/workspace';
 import { GrpcSendButton } from '../buttons/grpc-send-button';
-import { CodeEditor, CodeEditorHandle } from '../codemirror/code-editor';
+import { CodeEditor, type CodeEditorHandle } from '../codemirror/code-editor';
 import { OneLineEditor } from '../codemirror/one-line-editor';
 import { GrpcMethodDropdown } from '../dropdowns/grpc-method-dropdown/grpc-method-dropdown';
 import { ErrorBoundary } from '../error-boundary';
 import { KeyValueEditor } from '../key-value-editor/key-value-editor';
 import { useDocBodyKeyboardShortcuts } from '../keydown-binder';
-import { showAlert, showModal } from '../modals';
+import { showAlert, showError, showModal } from '../modals';
 import { ErrorModal } from '../modals/error-modal';
 import { ProtoFilesModal } from '../modals/proto-files-modal';
 import { RequestRenderErrorModal } from '../modals/request-render-error-modal';
@@ -39,27 +43,6 @@ interface Props {
   setGrpcState: (states: GrpcRequestState) => void;
   reloadRequests: (requestIds: string[]) => void;
 }
-
-const StyledUrlBar = styled.div`
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: stretch;
-`;
-
-const StyledUrlEditor = styled.div`
-  flex: 1;
-`;
-
-const StyledDropdownWrapper = styled.div({
-  flex: '1',
-  display: 'flex',
-  alignItems: 'center',
-  paddingRight: 'var(--padding-sm)',
-  gap: 'var(--padding-xs)',
-});
 
 export const canClientStream = (methodType?: GrpcMethodType) => methodType === 'client' || methodType === 'bidi';
 export const GrpcMethodTypeName = {
@@ -75,16 +58,28 @@ export const GrpcRequestPane: FunctionComponent<Props> = ({
   reloadRequests,
 }) => {
   const { activeRequest } = useRouteLoaderData('request/:requestId') as GrpcRequestLoaderData;
-
+  const { settings } = useRootLoaderData();
   const [isProtoModalOpen, setIsProtoModalOpen] = useState(false);
   const { requestMessages, running, methods } = grpcState;
   useMount(async () => {
-    if (!activeRequest.protoFileId) {
-      return;
+    if (activeRequest.protoFileId) {
+      console.log(`[gRPC] loading proto file methods pf=${activeRequest.protoFileId}`);
+      const methods = await window.main.grpc.loadMethods(activeRequest.protoFileId);
+      setGrpcState({ ...grpcState, methods });
+    } else if (activeRequest.url && activeRequest.reflectionApi) {
+      const rendered =
+        await tryToInterpolateRequestOrShowRenderErrorModal({
+          request: activeRequest,
+          environmentId,
+          payload: {
+            url: activeRequest.url,
+            metadata: activeRequest.metadata,
+            reflectionApi: activeRequest.reflectionApi,
+          },
+        });
+      const methods = await window.main.grpc.loadMethodsFromReflection(rendered);
+      setGrpcState({ ...grpcState, methods });
     }
-    console.log(`[gRPC] loading proto file methods pf=${activeRequest.protoFileId}`);
-    const methods = await window.main.grpc.loadMethods(activeRequest.protoFileId);
-    setGrpcState({ ...grpcState, methods });
   });
   const editorRef = useRef<CodeEditorHandle>(null);
   const gitVersion = useGitVCSVersion();
@@ -105,10 +100,22 @@ export const GrpcRequestPane: FunctionComponent<Props> = ({
         const request = await getRenderedGrpcRequest({
           request: activeRequest,
           environment: environmentId,
-          purpose: RENDER_PURPOSE_SEND,
+          purpose: 'send',
           skipBody: canClientStream(methodType),
         });
-        window.main.grpc.start({ request });
+        const workspaceClientCertificates = await models.clientCertificate.findByParentId(workspaceId);
+        const clientCertificate = workspaceClientCertificates.find(c => !c.disabled && urlMatchesCertHost(setDefaultProtocol(c.host, 'grpc:'), request.url, false));
+        const caCertificate = (await models.caCertificate.findByParentId(workspaceId));
+        const caCertificatePath = caCertificate && !caCertificate.disabled ? caCertificate.path : undefined;
+        window.main.grpc.start({
+          request,
+          rejectUnauthorized: settings.validateSSL,
+          ...(request.url.toLowerCase().startsWith('grpcs:') ? {
+            clientCert: clientCertificate?.cert ? await readFile(clientCertificate?.cert || '', 'utf8') : undefined,
+            clientKey: clientCertificate?.key ? await readFile(clientCertificate?.key || '', 'utf8') : undefined,
+            caCertificate: caCertificatePath ? await readFile(caCertificatePath, 'utf8') : undefined,
+          } : {}),
+       });
         setGrpcState({
           ...grpcState,
           requestMessages: [],
@@ -144,13 +151,15 @@ export const GrpcRequestPane: FunctionComponent<Props> = ({
     request_send: handleRequestSend,
   });
 
+  const messageTabs = [{ id: 'body', name: 'Body', text: activeRequest.body.text }, ...requestMessages.sort((a, b) => a.created - b.created).map((msg, index) => ({ ...msg, name: `Stream ${index + 1}` }))];
+
   return (
     <>
       <Pane type="request">
         <PaneHeader>
-          <StyledUrlBar>
+          <div className="w-full h-full flex flex-row justify-between items-stretch">
             <div className="method-grpc pad-right pad-left vertically-center">gRPC</div>
-            <StyledUrlEditor title={activeRequest.url}>
+            <div className='flex-1' title={activeRequest.url}>
               <OneLineEditor
                 id="grpc-url"
                 key={uniquenessKey}
@@ -160,8 +169,8 @@ export const GrpcRequestPane: FunctionComponent<Props> = ({
                 onChange={url => patchRequest(requestId, { url })}
                 getAutocompleteConstants={() => queryAllWorkspaceUrls(workspaceId, models.grpcRequest.type, requestId)}
               />
-            </StyledUrlEditor>
-            <StyledDropdownWrapper>
+            </div>
+            <div className="flex-1 flex items-center pr-[--padding-sm] gap-[--padding-xs]">
               <GrpcMethodDropdown
                 disabled={running}
                 methods={methods}
@@ -197,7 +206,7 @@ export const GrpcRequestPane: FunctionComponent<Props> = ({
                 disabled={!activeRequest.url}
                 onClick={async () => {
                   try {
-                    const rendered =
+                    let rendered =
                       await tryToInterpolateRequestOrShowRenderErrorModal({
                         request: activeRequest,
                         environmentId,
@@ -207,11 +216,26 @@ export const GrpcRequestPane: FunctionComponent<Props> = ({
                           reflectionApi: activeRequest.reflectionApi,
                         },
                       });
+                    const workspaceClientCertificates = await models.clientCertificate.findByParentId(workspaceId);
+                    const clientCertificate = workspaceClientCertificates.find(c => !c.disabled && urlMatchesCertHost(setDefaultProtocol(c.host, 'grpc:'), rendered.url, false));
+                    const caCertificate = (await models.caCertificate.findByParentId(workspaceId));
+                    const caCertificatePath = caCertificate && !caCertificate.disabled ? caCertificate.path : undefined;
+                    const clientCert = clientCertificate?.cert ? await readFile(clientCertificate?.cert, 'utf8') : undefined;
+                    const clientKey = clientCertificate?.key ? await readFile(clientCertificate?.key, 'utf8') : undefined;
+                    rendered = {
+                      ...rendered,
+                      rejectUnauthorized: settings.validateSSL,
+                      ...(activeRequest.url.toLowerCase().startsWith('grpcs:') ? {
+                      clientCert,
+                      clientKey,
+                      caCertificate: caCertificatePath ? await readFile(caCertificatePath, 'utf8') : undefined,
+                      } : {}),
+                    };
                     const methods = await window.main.grpc.loadMethodsFromReflection(rendered);
                     setGrpcState({ ...grpcState, methods });
                     patchRequest(requestId, { protoFileId: '', protoMethodName: '' });
                   } catch (error) {
-                    showModal(ErrorModal, { error });
+                    showModal(ErrorModal, { error, ...getGrpcConnectionErrorDetails(error) });
                   }
                 }}
               >
@@ -228,7 +252,7 @@ export const GrpcRequestPane: FunctionComponent<Props> = ({
                   <i className="fa fa-file-code-o" />
                 </Tooltip>
               </Button>
-            </StyledDropdownWrapper>
+            </div>
             <div className='flex p-1'>
               <GrpcSendButton
                 running={running}
@@ -237,22 +261,33 @@ export const GrpcRequestPane: FunctionComponent<Props> = ({
                 handleStart={handleRequestSend}
               />
             </div>
-          </StyledUrlBar>
+          </div>
         </PaneHeader>
         <PaneBody>
           {methodType && (
-            <Tabs aria-label="Grpc request pane tabs">
-              <TabItem key="method-type" title={GrpcMethodTypeName[methodType]}>
+            <Tabs aria-label='Grpc request pane tabs' className="flex-1 w-full h-full flex flex-col">
+              <TabList className='w-full flex-shrink-0  overflow-x-auto border-solid scro border-b border-b-[--hl-md] bg-[--color-bg] flex items-center h-[--line-height-sm]' aria-label='Request pane tabs'>
+                <Tab
+                  className='flex-shrink-0 h-full flex items-center justify-between cursor-pointer gap-2 outline-none select-none px-3 py-1 text-[--hl] aria-selected:text-[--color-font]  hover:bg-[--hl-sm] hover:text-[--color-font] aria-selected:bg-[--hl-xs] aria-selected:focus:bg-[--hl-sm] aria-selected:hover:bg-[--hl-sm] focus:bg-[--hl-sm] transition-colors duration-300'
+                  id='method-type'
+                >
+                  {GrpcMethodTypeName[methodType]}
+                </Tab>
+                <Tab className='flex-shrink-0 h-full flex items-center justify-between cursor-pointer gap-2 outline-none select-none px-3 py-1 text-[--hl] aria-selected:text-[--color-font]  hover:bg-[--hl-sm] hover:text-[--color-font] aria-selected:bg-[--hl-xs] aria-selected:focus:bg-[--hl-sm] aria-selected:hover:bg-[--hl-sm] focus:bg-[--hl-sm] transition-colors duration-300' id='headers'>
+                  Headers
+                </Tab>
+              </TabList>
+              <TabPanel className={'w-full h-full overflow-y-auto'} id='method-type'>
                 <>
                   {running && canClientStream(methodType) && (
-                    <ActionButtonsContainer>
+                    <div className="flex flex-row justify-end box-border h-[var(--line-height-sm)] border-b border-[var(--hl-lg)] p-1">
                       <button
                         className='btn btn--compact btn--clicky-small margin-left-sm bg-default'
                         onClick={async () => {
                           const requestBody = await getRenderedGrpcRequestMessage({
                             request: activeRequest,
                             environment: environmentId,
-                            purpose: RENDER_PURPOSE_SEND,
+                            purpose: 'send',
                           });
                           const preparedMessage = {
                             body: requestBody,
@@ -276,53 +311,59 @@ export const GrpcRequestPane: FunctionComponent<Props> = ({
                       >
                         Commit <i className='fa fa-arrow-right' />
                       </button>
-                    </ActionButtonsContainer>
+                    </div>
                   )}
-                  <Tabs key={uniquenessKey} aria-label="Grpc tabbed messages tabs" isNested>
-                    {[
-                      <TabItem key="body" title="Body">
+                  <Tabs key={uniquenessKey} aria-label="Grpc tabbed messages tabs" className="flex-1 w-full h-full flex flex-col">
+                    <TabList items={messageTabs} className='w-full flex-shrink-0  overflow-x-auto border-solid scro border-b border-b-[--hl-md] bg-[--color-bg] flex items-center h-[--line-height-sm]'>
+                      {item => (
+                        <Tab
+                          className='flex-shrink-0 h-full flex items-center justify-between cursor-pointer gap-2 outline-none select-none px-3 py-1 text-[--hl] aria-selected:text-[--color-font]  hover:bg-[--hl-sm] hover:text-[--color-font] aria-selected:bg-[--hl-xs] aria-selected:focus:bg-[--hl-sm] aria-selected:hover:bg-[--hl-sm] focus:bg-[--hl-sm] transition-colors duration-300'
+                          id={item.id}
+                        >
+                          {item.name}
+                        </Tab>
+                      )}
+                    </TabList>
+                    <TabPanel id="body" className='w-full h-full overflow-y-auto'>
+                      <CodeEditor
+                        id="grpc-request-editor"
+                        ref={editorRef}
+                        defaultValue={activeRequest.body.text}
+                        onChange={text => patchRequest(requestId, { body: { text } })}
+                        mode="application/json"
+                        enableNunjucks
+                        showPrettifyButton={true}
+                      />
+                    </TabPanel>
+                    {messageTabs.filter(msg => msg.id !== 'body').map(m => (
+                      <TabPanel key={m.id} id={m.id} className='w-full h-full overflow-y-auto'>
                         <CodeEditor
-                          id="grpc-request-editor"
-                          ref={editorRef}
-                          defaultValue={activeRequest.body.text}
-                          onChange={text => patchRequest(requestId, { body: { text } })}
+                          id={'grpc-request-editor-tab' + m.id}
+                          defaultValue={m.text}
                           mode="application/json"
                           enableNunjucks
-                          showPrettifyButton={true}
+                          readOnly
+                          autoPrettify
                         />
-                      </TabItem>,
-                      ...requestMessages.sort((a, b) => a.created - b.created).map((m, index) => (
-                        <TabItem key={m.id} title={`Stream ${index + 1}`}>
-                          <CodeEditor
-                            id={'grpc-request-editor-tab' + m.id}
-                            defaultValue={m.text}
-                            mode="application/json"
-                            enableNunjucks
-                            readOnly
-                            autoPrettify
-                          />
-                        </TabItem>
-                      )),
-                    ]}
+                      </TabPanel>
+                    ))}
                   </Tabs>
                 </>
-              </TabItem>
-              <TabItem key="headers" title="Headers">
-                <PanelContainer className="tall wide">
-                  <ErrorBoundary key={uniquenessKey} errorClassName="font-error pad text-center">
-                    <KeyValueEditor
-                      namePlaceholder="header"
-                      valuePlaceholder="value"
-                      descriptionPlaceholder="description"
-                      pairs={activeRequest.metadata}
-                      isDisabled={running}
-                      handleGetAutocompleteNameConstants={getCommonHeaderNames}
-                      handleGetAutocompleteValueConstants={getCommonHeaderValues}
-                      onChange={(metadata: GrpcRequestHeader[]) => patchRequest(requestId, { metadata })}
-                    />
-                  </ErrorBoundary>
-                </PanelContainer>
-              </TabItem>
+              </TabPanel>
+              <TabPanel className={'w-full h-full overflow-y-auto'} id='headers'>
+                <ErrorBoundary key={uniquenessKey} errorClassName="font-error pad text-center">
+                  <KeyValueEditor
+                    namePlaceholder="header"
+                    valuePlaceholder="value"
+                    descriptionPlaceholder="description"
+                    pairs={activeRequest.metadata}
+                    isDisabled={running}
+                    handleGetAutocompleteNameConstants={getCommonHeaderNames}
+                    handleGetAutocompleteValueConstants={getCommonHeaderValues}
+                    onChange={(metadata: GrpcRequestHeader[]) => patchRequest(requestId, { metadata })}
+                  />
+                </ErrorBoundary>
+              </TabPanel>
             </Tabs>
           )}
           {!methodType && (
@@ -341,23 +382,23 @@ export const GrpcRequestPane: FunctionComponent<Props> = ({
         onHide={() => setIsProtoModalOpen(false)}
         onSave={async (protoFileId: string) => {
           if (activeRequest.protoFileId !== protoFileId) {
-            patchRequest(requestId, { protoFileId, protoMethodName: '' });
-            const methods = await window.main.grpc.loadMethods(protoFileId);
-            setGrpcState({ ...grpcState, methods });
+            try {
+              const methods = await window.main.grpc.loadMethods(protoFileId);
+              patchRequest(requestId, { protoFileId, protoMethodName: '' });
+              setGrpcState({ ...grpcState, methods });
+              setIsProtoModalOpen(false);
+            } catch (error) {
+              showError({
+                title: 'Invalid Proto File',
+                message: 'The proto file could not be parsed',
+                error,
+              });
+            }
+          } else {
             setIsProtoModalOpen(false);
           }
-          setIsProtoModalOpen(false);
         }}
       />}
     </>
   );
 };
-const ActionButtonsContainer = styled.div({
-  display: 'flex',
-  flexDirection: 'row',
-  justifyContent: 'flex-end',
-  boxSizing: 'border-box',
-  height: 'var(--line-height-sm)',
-  borderBottom: '1px solid var(--hl-lg)',
-  padding: 3,
-});

@@ -4,36 +4,40 @@ import { Url, UrlMatchPattern, UrlMatchPatternList } from './urls';
 export interface ProxyConfigOptions {
     match: string;
     host: string;
-    port: number;
+    port?: number;
     tunnel: boolean;
     disabled?: boolean;
     authenticate: boolean;
     username: string;
     password: string;
+    // follows are for compatibility with Insomnia
     bypass?: string[];
+    protocol: string;
 }
 
 export class ProxyConfig extends Property {
-    _kind: string = 'ProxyConfig';
+    override _kind: string = 'ProxyConfig';
     type: string;
 
     host: string;
     match: string;
-    port: number;
+    port?: number;
     tunnel: boolean;
     authenticate: boolean;
     username: string;
     password: string;
     bypass: string[]; // it is for compatibility with Insomnia's bypass list
+    protocol: string;
 
     static authenticate: boolean = false;
     static bypass: UrlMatchPatternList<UrlMatchPattern> = new UrlMatchPatternList<UrlMatchPattern>(undefined, []);
     static host: string = '';
     static match: string = '';
     static password: string = '';
-    static port: number = 0;
+    static port?: number = undefined;
     static tunnel: boolean = false; // unsupported
     static username: string = '';
+    static protocol: string = 'https:';
 
     constructor(def: {
         id?: string;
@@ -42,13 +46,14 @@ export class ProxyConfig extends Property {
 
         match: string;
         host: string;
-        port: number;
+        port?: number;
         tunnel: boolean;
         disabled?: boolean;
         authenticate: boolean;
         username: string;
         password: string;
         bypass?: string[];
+        protocol: string;
     }) {
         super();
 
@@ -65,9 +70,10 @@ export class ProxyConfig extends Property {
         this.username = def.username;
         this.password = def.password;
         this.bypass = def.bypass || [];
+        this.protocol = def.protocol;
     }
 
-    static _index: string = 'key';
+    static override _index: string = 'key';
 
     static isProxyConfig(obj: object) {
         return '_kind' in obj && obj._kind === 'ProxyConfig';
@@ -81,11 +87,13 @@ export class ProxyConfig extends Property {
 
     getProxyUrl(): string {
         // http://proxy_username:proxy_password@proxy.com:8080
-        // TODO: check if port is not given
+        const portSegment = this.port === undefined ? '' : `:${this.port}`;
+
         if (this.authenticate) {
-            return `${this.username}:${this.password}@${this.host}:${this.port}`;
+            return `${this.protocol}//${this.username}:${this.password}@${this.host}${portSegment}`;
         }
-        return `${this.host}:${this.port}`;
+        return `${this.protocol}//${this.host}${portSegment}`;
+
     }
 
     test(url?: string) {
@@ -104,7 +112,7 @@ export class ProxyConfig extends Property {
     update(options: {
         host: string;
         match: string;
-        port: number;
+        port?: number;
         tunnel: boolean;
         authenticate: boolean;
         username: string;
@@ -119,17 +127,15 @@ export class ProxyConfig extends Property {
         this.password = options.password;
     }
 
-    updateProtocols(protocols: string[]) {
-        const protoSeparator = this.match.indexOf('://');
-        if (protoSeparator <= 0 || protoSeparator >= this.match.length) {
-            throw Error('updateProtocols: invalid protocols, no protocol is detected');
-        }
-
-        this.match = protocols.join('+') + this.match.slice(protoSeparator);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    updateProtocols(_protocols: string[]) {
+        // In Insomnia there is no whitelist while there is a blacklist
+        throw Error('updateProtocols is not supported in Insomnia');
     }
 }
 
-// myProxyConfig = new ProxyConfigList({}, [
+// example:
+// myProxyConfigs = new ProxyConfigList({}, [
 //     {match: 'https://example.com/*', host: 'proxy.com', port: 8080, tunnel: true},
 //     {match: 'http+https://example2.com/*', host: 'proxy2.com'},
 // ]);
@@ -165,6 +171,59 @@ export class ProxyConfigList<T extends ProxyConfig> extends PropertyList<T> {
         }
         return null;
     }
+}
 
-    // toObject(excludeDisabledopt, nullable, caseSensitiveopt, nullable, multiValueopt, nullable, sanitizeKeysopt) → {Object}
+export function transformToSdkProxyOptions(
+    httpProxy: string,
+    httpsProxy: string,
+    proxyEnabled: boolean,
+    noProxy: string,
+) {
+    const bestProxy = httpsProxy || httpProxy || '';
+    const enabledProxy = proxyEnabled && bestProxy.trim() !== '';
+    const bypassProxyList = noProxy ?
+        noProxy
+            .split(',')
+            .map(urlStr => urlStr.trim()) :
+        [];
+    const proxy: ProxyConfigOptions = {
+        disabled: !enabledProxy,
+        match: '<all_urls>',
+        bypass: bypassProxyList,
+        host: '',
+        port: undefined,
+        tunnel: false,
+        authenticate: false,
+        username: '',
+        password: '',
+        protocol: 'http',
+    };
+
+    if (bestProxy !== '') {
+        let sanitizedProxy = bestProxy;
+        if (bestProxy.indexOf('://') === -1) {
+            console.warn(`The protocol is missing and adding 'https:' protocol: ${bestProxy}`);
+            sanitizedProxy = 'https://' + bestProxy;
+        }
+
+        try {
+            const sanitizedProxyUrlOptions = new URL(sanitizedProxy); // it should just work in node and browser
+
+            if (sanitizedProxyUrlOptions.port !== '') {
+                proxy.port = parseInt(sanitizedProxyUrlOptions.port, 10);
+            }
+
+            proxy.protocol = sanitizedProxyUrlOptions.protocol;
+            proxy.host = sanitizedProxyUrlOptions.hostname;
+            proxy.username = sanitizedProxyUrlOptions.username;
+            proxy.password = sanitizedProxyUrlOptions.password;
+            if (proxy.username || proxy.password) {
+                proxy.authenticate = true;
+            }
+        } catch (e) {
+            throw `Failed to parse proxy (${sanitizedProxy}): ${e.message}`;
+        }
+    }
+
+    return proxy;
 }

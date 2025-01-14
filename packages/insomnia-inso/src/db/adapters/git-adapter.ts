@@ -7,8 +7,18 @@ import { emptyDb } from '../index';
 
 const gitAdapter: DbAdapter = async (dir, filterTypes) => {
   // Confirm if model directories exist
-  dir = path.join(dir, '.insomnia');
-  if (!fs.existsSync(path.join(dir, 'Workspace'))) {
+  if (!dir) {
+    return null;
+  }
+  const insomniaFolder = path.join(dir, '.insomnia');
+  let files = null;
+  try {
+    files = await fs.promises.readdir(insomniaFolder);
+  } catch (error) {
+    if (files?.length === 0) {
+      console.error(`.insomnia folder found at "${insomniaFolder}"
+        but no files found inside. Ensure your workingDir is correct.`);
+    }
     return null;
   }
 
@@ -19,8 +29,14 @@ const gitAdapter: DbAdapter = async (dir, filterTypes) => {
     fileName: string,
   ): Promise<void> => {
     // Get contents of each file in type dir and insert into data
-    const contents = await fs.promises.readFile(fileName);
-    const obj = YAML.parse(contents.toString());
+    let contents = '';
+    try {
+      contents = await fs.promises.readFile(fileName, 'utf8');
+    } catch (error) {
+      console.error(`Failed to read "${fileName}"`, error);
+      return;
+    }
+    const obj = YAML.parse(contents);
     (db[type] as {}[]).push(obj);
   };
 
@@ -28,17 +44,18 @@ const gitAdapter: DbAdapter = async (dir, filterTypes) => {
   await Promise.all(
     types.map(async t => {
       // Get all files in type dir
-      const typeDir = path.join(dir, t);
-
-      if (!fs.existsSync(typeDir)) {
+      const typeDir = path.join(dir, '.insomnia', t);
+      let files: string[] = [];
+      try {
+        files = await fs.promises.readdir(typeDir);
+      } catch (error) {
+        console.error(`Failed to read "${typeDir}"`, error);
         return;
       }
-
-      const files = await fs.promises.readdir(typeDir);
       return Promise.all(
         // Insert each file from each type
         files.map(file =>
-          readAndInsertDoc(t, path.join(dir, t, file)),
+          readAndInsertDoc(t, path.join(dir, '.insomnia', t, file)),
         ),
       );
     }),

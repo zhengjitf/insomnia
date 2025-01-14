@@ -9,6 +9,7 @@ import {
   EXPORT_TYPE_PROTO_FILE,
   EXPORT_TYPE_REQUEST,
   EXPORT_TYPE_REQUEST_GROUP,
+  EXPORT_TYPE_RUNNER_TEST_RESULT,
   EXPORT_TYPE_UNIT_TEST,
   EXPORT_TYPE_UNIT_TEST_SUITE,
   EXPORT_TYPE_WEBSOCKET_PAYLOAD,
@@ -37,6 +38,7 @@ import * as _requestGroupMeta from './request-group-meta';
 import * as _requestMeta from './request-meta';
 import * as _requestVersion from './request-version';
 import * as _response from './response';
+import * as _runnerTestResult from './runner-test-result';
 import * as _settings from './settings';
 import * as _stats from './stats';
 import * as _unitTest from './unit-test';
@@ -78,6 +80,7 @@ export const requestGroup = _requestGroup;
 export const requestGroupMeta = _requestGroupMeta;
 export const requestMeta = _requestMeta;
 export const requestVersion = _requestVersion;
+export const runnerTestResult = _runnerTestResult;
 export const response = _response;
 export const settings = _settings;
 export const project = _project;
@@ -130,6 +133,7 @@ export function all() {
     protoDirectory,
     grpcRequest,
     grpcRequestMeta,
+    runnerTestResult,
     webSocketPayload,
     webSocketRequest,
     webSocketResponse,
@@ -206,9 +210,12 @@ export async function initModel<T extends BaseModel>(type: string, ...sources: R
   // Migrate the model
   // NOTE: Do migration before pruning because we might need to look at those fields
   const migratedDoc = model.migrate(fullObject);
+  // optional keys do not generated in init method but should allow update.
+  // If we put those keys in init method, all related models will show as modified in git sync.
+  const modelOptionalKeys: string[] = 'optionalKeys' in model ? model.optionalKeys || [] : [];
   // Prune extra keys from doc
   for (const key of Object.keys(migratedDoc)) {
-    if (!objectDefaults.hasOwnProperty(key)) {
+    if (!objectDefaults.hasOwnProperty(key) && !modelOptionalKeys.includes(key)) {
       // @ts-expect-error -- mapping unsoundness
       delete migratedDoc[key];
     }
@@ -225,6 +232,7 @@ export const MODELS_BY_EXPORT_TYPE: Record<string, any> = {
   [EXPORT_TYPE_MOCK_SERVER]: mockServer,
   [EXPORT_TYPE_MOCK_ROUTE]: mockRoute,
   [EXPORT_TYPE_GRPC_REQUEST]: grpcRequest,
+  [EXPORT_TYPE_RUNNER_TEST_RESULT]: runnerTestResult,
   [EXPORT_TYPE_REQUEST_GROUP]: requestGroup,
   [EXPORT_TYPE_UNIT_TEST_SUITE]: unitTestSuite,
   [EXPORT_TYPE_UNIT_TEST]: unitTest,

@@ -1,11 +1,12 @@
 import type { IconName } from '@fortawesome/fontawesome-svg-core';
 import React, { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Breadcrumb, Breadcrumbs, Button, GridList, GridListItem, Menu, MenuTrigger, Popover } from 'react-aria-components';
-import { ImperativePanelGroupHandle, Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
-import { LoaderFunction, NavLink, Route, Routes, useFetcher, useLoaderData, useNavigate, useParams } from 'react-router-dom';
+import { Breadcrumb, Breadcrumbs, Button, GridList, GridListItem, Menu, MenuItem, MenuTrigger, Popover } from 'react-aria-components';
+import { type ImperativePanelGroupHandle, Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import { type LoaderFunction, NavLink, Route, Routes, useFetcher, useLoaderData, useNavigate, useParams } from 'react-router-dom';
 
+import { DEFAULT_SIDEBAR_SIZE } from '../../common/constants';
 import * as models from '../../models';
-import { MockRoute } from '../../models/mock-route';
+import type { MockRoute } from '../../models/mock-route';
 import { invariant } from '../../utils/invariant';
 import { WorkspaceDropdown } from '../components/dropdowns/workspace-dropdown';
 import { WorkspaceSyncDropdown } from '../components/dropdowns/workspace-sync-dropdown';
@@ -70,11 +71,12 @@ const MockServerRoute = () => {
             defaultValue: mockRoutes.find(s => s._id === id)?.name,
             submitName: 'Rename',
             onComplete: name => {
-              const hasRouteInServer = mockRoutes.filter(m => m._id !== id).find(m => m.name === name);
+              const hasRouteInServer = mockRoutes.filter(m => m._id !== id)
+                .find(m => m.name === name && m.method.toUpperCase() === mockRoutes.find(m => m._id !== id)?.method.toUpperCase());
               if (hasRouteInServer) {
                 showModal(AlertModal, {
                   title: 'Error',
-                  message: `Path "${name}" must be unique. Please enter a different name.`,
+                  message: `Path "${name}" and method must be unique. Please enter a different name.`,
                 });
                 return;
               };
@@ -132,7 +134,7 @@ const MockServerRoute = () => {
     if (layout && layout[0] > 0) {
       layout[0] = 0;
     } else {
-      layout[0] = 30;
+      layout[0] = DEFAULT_SIDEBAR_SIZE;
     }
 
     sidebarPanelRef.current?.setLayout(layout);
@@ -172,7 +174,7 @@ const MockServerRoute = () => {
 
   return (
     <PanelGroup ref={sidebarPanelRef} autoSaveId="insomnia-sidebar" id="wrapper" className='new-sidebar w-full h-full text-[--color-font]' direction='horizontal'>
-      <Panel id="sidebar" className='sidebar theme--sidebar' maxSize={40} minSize={20} collapsible>
+      <Panel id="sidebar" className='sidebar theme--sidebar' defaultSize={DEFAULT_SIDEBAR_SIZE} maxSize={40} minSize={10} collapsible>
       <div className="flex flex-1 flex-col overflow-hidden divide-solid divide-y divide-[--hl-md]">
         <div className="flex flex-col items-start gap-2 justify-between p-[--padding-sm]">
           <Breadcrumbs className='flex list-none items-center m-0 p-0 gap-2 font-bold w-full'>
@@ -197,11 +199,11 @@ const MockServerRoute = () => {
                 submitName: 'Create',
                 placeholder: '/path/to/resource',
                 onComplete: name => {
-                  const hasRouteInServer = mockRoutes.find(m => m.name === name);
+                  const hasRouteInServer = mockRoutes.find(m => m.name === name && m.method.toUpperCase() === 'GET');
                   if (hasRouteInServer) {
                     showModal(AlertModal, {
                       title: 'Error',
-                      message: `Path "${name}" must be unique. Please enter a different name.`,
+                      message: `Path "${name}" and must be unique. Please enter a different name.`,
                     });
                     return;
                   };
@@ -281,17 +283,13 @@ const MockServerRoute = () => {
                     value={item.name}
                     name="name"
                     ariaLabel="Mock route name"
-                    onSingleClick={() => {
-                      navigate({
-                        pathname: `/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/mock-server/mock-route/${item._id}`,
-                      });
-                    }}
+                    className='hover:!bg-transparent'
                     onSubmit={name => {
-                      const hasRouteInServer = mockRoutes.filter(m => m._id !== item._id).find(m => m.name === name);
+                      const hasRouteInServer = mockRoutes.filter(m => m._id !== item._id).find(m => m.name === name && m.method.toUpperCase() === item.method.toUpperCase());
                       if (hasRouteInServer) {
                         showModal(AlertModal, {
                           title: 'Error',
-                          message: `Path "${name}" must be unique. Please enter a different name.`,
+                          message: `Path "${name}" and method must be unique. Please enter a different name.`,
                         });
                         return;
                       };
@@ -315,14 +313,14 @@ const MockServerRoute = () => {
                   <span className="flex-1" />
                   <MenuTrigger>
                     <Button
-                      aria-label="Project Actions"
+                      aria-label="Mock Route Actions"
                       className="opacity-0 items-center hover:opacity-100 focus:opacity-100 data-[pressed]:opacity-100 flex group-focus:opacity-100 group-hover:opacity-100 justify-center h-6 aspect-square data-[pressed]:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm"
                     >
                       <Icon icon="caret-down" />
                     </Button>
-                    <Popover className="min-w-max">
+                    <Popover className="min-w-max overflow-y-hidden flex flex-col">
                       <Menu
-                        aria-label="Project Actions Menu"
+                        aria-label="Mock Route Action Menu"
                         selectionMode="single"
                         onAction={key => {
                           mockRouteActionList
@@ -330,10 +328,10 @@ const MockServerRoute = () => {
                             ?.action(item._id, item.name);
                         }}
                         items={mockRouteActionList}
-                        className="border select-none text-sm min-w-max border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] py-2 rounded-md overflow-y-auto max-h-[85vh] focus:outline-none"
+                        className="border select-none text-sm min-w-max border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] py-2 rounded-md overflow-y-auto focus:outline-none"
                       >
                         {item => (
-                          <Breadcrumb
+                          <MenuItem
                             key={item.id}
                             id={item.id}
                             className="flex gap-2 px-[--padding-md] aria-selected:font-bold items-center text-[--color-font] h-[--line-height-xs] w-full text-md whitespace-nowrap bg-transparent hover:bg-[--hl-sm] disabled:cursor-not-allowed focus:bg-[--hl-xs] focus:outline-none transition-colors"
@@ -341,7 +339,7 @@ const MockServerRoute = () => {
                           >
                             <Icon icon={item.icon} />
                             <span>{item.name}</span>
-                          </Breadcrumb>
+                          </MenuItem>
                         )}
                       </Menu>
                     </Popover>
@@ -358,7 +356,7 @@ const MockServerRoute = () => {
       <PanelResizeHandle className='h-full w-[1px] bg-[--hl-md]' />
       <Panel>
         <PanelGroup autoSaveId="insomnia-panels" direction={direction}>
-          <Panel id="pane-one" className='pane-one theme--pane'>
+          <Panel id="pane-one" minSize={10} className='pane-one theme--pane'>
             <Routes>
       <Route
         path={'mock-route/:mockRouteId/*'}
@@ -374,14 +372,14 @@ const MockServerRoute = () => {
           <EmptyStatePane
             icon={<SvgIcon icon="bug" />}
             documentationLinks={[]}
-            title="Select or create a route to configured response here"
+            title="Create a route to configure mock response here"
           />
         }
       />
             </Routes>
           </Panel>
           <PanelResizeHandle className={direction === 'horizontal' ? 'h-full w-[1px] bg-[--hl-md]' : 'w-full h-[1px] bg-[--hl-md]'} />
-          <Panel id="pane-two" className='pane-two theme--pane'>
+          <Panel id="pane-two" minSize={10} className='pane-two theme--pane'>
             <Routes>
       <Route
         path={'mock-route/:mockRouteId/*'}
@@ -397,7 +395,7 @@ const MockServerRoute = () => {
           <EmptyStatePane
             icon={<SvgIcon icon="bug" />}
             documentationLinks={[]}
-            title="Select or create a route to see activity here"
+            title="Create a route to see mock server activity here"
           />
         }
       />

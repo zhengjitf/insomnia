@@ -2,36 +2,45 @@ import { createWriteStream } from 'node:fs';
 import path from 'node:path';
 
 import * as contentDisposition from 'content-disposition';
+import fs from 'fs';
+import { GRAPHQL_TRANSPORT_WS_PROTOCOL, MessageType } from 'graphql-ws';
+import type { RequestTestResult } from 'insomnia-sdk';
 import { extension as mimeExtension } from 'mime-types';
-import { ActionFunction, LoaderFunction, redirect } from 'react-router-dom';
+import { type ActionFunction, type LoaderFunction, redirect } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 
 import { version } from '../../../package.json';
 import { CONTENT_TYPE_EVENT_STREAM, CONTENT_TYPE_GRAPHQL, CONTENT_TYPE_JSON, METHOD_GET, METHOD_POST } from '../../common/constants';
-import { ChangeBufferEvent, database } from '../../common/database';
+import { type ChangeBufferEvent, database } from '../../common/database';
 import { getContentDispositionHeader } from '../../common/misc';
-import { RENDER_PURPOSE_SEND, RenderedRequest } from '../../common/render';
-import { ResponsePatch } from '../../main/network/libcurl-promise';
+import { type RenderedRequest } from '../../common/render';
+import type { ResponsePatch } from '../../main/network/libcurl-promise';
+import type { TimingStep } from '../../main/network/request-timing';
+import type { BaseModel } from '../../models';
 import * as models from '../../models';
-import { BaseModel } from '../../models';
-import { CookieJar } from '../../models/cookie-jar';
-import { GrpcRequest, isGrpcRequestId } from '../../models/grpc-request';
-import { GrpcRequestMeta } from '../../models/grpc-request-meta';
+import type { CookieJar } from '../../models/cookie-jar';
+import type { Environment, UserUploadEnvironment } from '../../models/environment';
+import { type GrpcRequest, isGrpcRequestId } from '../../models/grpc-request';
+import type { GrpcRequestMeta } from '../../models/grpc-request-meta';
 import * as requestOperations from '../../models/helpers/request-operations';
-import { MockRoute } from '../../models/mock-route';
-import { MockServer } from '../../models/mock-server';
-import { getPathParametersFromUrl, isEventStreamRequest, isRequest, Request, RequestAuthentication, RequestBody, RequestHeader, RequestParameter } from '../../models/request';
-import { isRequestMeta, RequestMeta } from '../../models/request-meta';
-import { RequestVersion } from '../../models/request-version';
-import { Response } from '../../models/response';
-import { isWebSocketRequest, isWebSocketRequestId, WebSocketRequest } from '../../models/websocket-request';
-import { WebSocketResponse } from '../../models/websocket-response';
+import type { MockRoute } from '../../models/mock-route';
+import type { MockServer } from '../../models/mock-server';
+import { isGraphqlSubscriptionRequest } from '../../models/request';
+import { getPathParametersFromUrl, isEventStreamRequest, isRequest, type Request, type RequestAuthentication, type RequestBody, type RequestHeader, type RequestParameter } from '../../models/request';
+import { isRequestMeta, type RequestMeta } from '../../models/request-meta';
+import type { RequestVersion } from '../../models/request-version';
+import type { Response } from '../../models/response';
+import type { ResponseInfo, RunnerResultPerRequestPerIteration } from '../../models/runner-test-result';
+import { isWebSocketRequest, isWebSocketRequestId, type WebSocketRequest } from '../../models/websocket-request';
+import { isWebSocketResponse, type WebSocketResponse } from '../../models/websocket-response';
 import { getAuthHeader } from '../../network/authentication';
-import { fetchRequestData, responseTransform, sendCurlAndWriteTimeline, tryToExecutePreRequestScript, tryToInterpolateRequest, tryToTransformRequestWithPlugins } from '../../network/network';
+import { fetchRequestData, responseTransform, sendCurlAndWriteTimeline, tryToExecuteAfterResponseScript, tryToExecutePreRequestScript, tryToInterpolateRequest, tryToTransformRequestWithPlugins } from '../../network/network';
 import { RenderErrorSubType } from '../../templating';
+import { parseGraphQLReqeustBody } from '../../utils/graph-ql';
 import { invariant } from '../../utils/invariant';
 import { SegmentEvent } from '../analytics';
 import { updateMimeType } from '../components/dropdowns/content-type-dropdown';
-import { CreateRequestType } from '../hooks/use-request';
+import type { CreateRequestType } from '../hooks/use-request';
 
 export interface WebSocketRequestLoaderData {
   activeRequest: WebSocketRequest;
@@ -56,6 +65,12 @@ export interface RequestLoaderData {
   mockServerAndRoutes: (MockServer & { routes: MockRoute[] })[];
 }
 
+export const defaultSendActionRuntime = {
+  appendTimeline: async (timelinePath: string, logs: string[]) => {
+    await fs.promises.appendFile(timelinePath, logs.join('\n'));
+  },
+};
+
 export const loader: LoaderFunction = async ({ params }): Promise<RequestLoaderData | WebSocketRequestLoaderData | GrpcRequestLoaderData> => {
   const { organizationId, projectId, requestId, workspaceId } = params;
   invariant(requestId, 'Request ID is required');
@@ -68,7 +83,7 @@ export const loader: LoaderFunction = async ({ params }): Promise<RequestLoaderD
   const activeWorkspaceMeta = await models.workspaceMeta.getByParentId(workspaceId);
   invariant(activeWorkspaceMeta, 'Active workspace meta not found');
   // NOTE: loaders shouldnt mutate data, this should be moved somewhere else
-  await models.workspaceMeta.update(activeWorkspaceMeta, { activeRequestId: requestId });
+  await models.workspaceMeta.updateByParentId(workspaceId, { activeRequestId: requestId });
   if (isGrpcRequestId(requestId)) {
     return {
       activeRequest,
@@ -81,8 +96,9 @@ export const loader: LoaderFunction = async ({ params }): Promise<RequestLoaderD
   const activeRequestMeta = await models.requestMeta.updateOrCreateByParentId(requestId, { lastActive: Date.now() });
   invariant(activeRequestMeta, 'Request meta not found');
   const { filterResponsesByEnv } = await models.settings.get();
+  const isGraphqlWsRequest = isGraphqlSubscriptionRequest(activeRequest);
 
-  const responseModelName = isWebSocketRequestId(requestId) ? 'webSocketResponse' : 'response';
+  const responseModelName = isWebSocketRequestId(requestId) || isGraphqlWsRequest ? 'webSocketResponse' : 'response';
   const activeResponse = activeRequestMeta.activeResponseId
     ? await models[responseModelName].getById(activeRequestMeta.activeResponseId)
     : await models[responseModelName].getLatestForRequest(requestId, activeWorkspaceMeta.activeEnvironmentId);
@@ -99,6 +115,17 @@ export const loader: LoaderFunction = async ({ params }): Promise<RequestLoaderD
     ...mockServer,
     routes: mockRoutes.filter(route => route.parentId === mockServer._id),
   }));
+  // set empty activeResponse if graphql websocket request and activeResponse is not websocket response
+  if (isGraphqlWsRequest && activeResponse && !isWebSocketResponse(activeResponse)) {
+    return {
+      activeRequest,
+      activeRequestMeta,
+      activeResponse: null,
+      responses: [],
+      requestVersions: [],
+      mockServerAndRoutes,
+    } as RequestLoaderData | WebSocketRequestLoaderData;
+  }
   return {
     activeRequest,
     activeRequestMeta,
@@ -114,13 +141,16 @@ export const createRequestAction: ActionFunction = async ({ request, params }) =
   invariant(typeof workspaceId === 'string', 'Workspace ID is required');
   const { requestType, parentId, req } = await request.json() as { requestType: CreateRequestType; parentId?: string; req?: Request };
 
+  const settings = await models.settings.getOrCreate();
+  const defaultHeaders = settings.disableAppVersionUserAgent ? [] : [{ name: 'User-Agent', value: `insomnia/${version}` }];
+
   let activeRequestId;
   if (requestType === 'HTTP') {
     activeRequestId = (await models.request.create({
       parentId: parentId || workspaceId,
       method: METHOD_GET,
       name: 'New Request',
-      headers: [{ name: 'User-Agent', value: `insomnia/${version}` }],
+      headers: defaultHeaders,
     }))._id;
   }
   if (requestType === 'gRPC') {
@@ -130,11 +160,12 @@ export const createRequestAction: ActionFunction = async ({ request, params }) =
     }))._id;
   }
   if (requestType === 'GraphQL') {
+
     activeRequestId = (await models.request.create({
       parentId: parentId || workspaceId,
       method: METHOD_POST,
       headers: [
-        { name: 'User-Agent', value: `insomnia/${version}` },
+        ...defaultHeaders,
         { name: 'Content-Type', value: CONTENT_TYPE_JSON },
       ],
       body: {
@@ -150,7 +181,7 @@ export const createRequestAction: ActionFunction = async ({ request, params }) =
       method: METHOD_GET,
       url: '',
       headers: [
-        { name: 'User-Agent', value: `insomnia/${version}` },
+        ...defaultHeaders,
         { name: 'Accept', value: CONTENT_TYPE_EVENT_STREAM },
       ],
       name: 'New Event Stream',
@@ -160,7 +191,7 @@ export const createRequestAction: ActionFunction = async ({ request, params }) =
     activeRequestId = (await models.webSocketRequest.create({
       parentId: parentId || workspaceId,
       name: 'New WebSocket Request',
-      headers: [{ name: 'User-Agent', value: `insomnia/${version}` }],
+      headers: defaultHeaders,
     }))._id;
   }
   if (requestType === 'From Curl') {
@@ -235,7 +266,9 @@ export const deleteRequestAction: ActionFunction = async ({ request, params }) =
   invariant(workspaceMeta, 'Workspace meta not found');
   if (workspaceMeta.activeRequestId === id) {
     await models.workspaceMeta.updateByParentId(workspaceId, { activeRequestId: null });
-    return redirect(`/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/debug`);
+    if (request.url.includes(id)) {
+      return redirect(`/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/debug`);
+    }
   }
   return null;
 };
@@ -289,12 +322,36 @@ export const connectAction: ActionFunction = async ({ request, params }) => {
   invariant(req, 'Request not found');
   invariant(workspaceId, 'Workspace ID is required');
   const rendered = await request.json() as ConnectActionParams;
+
   if (isWebSocketRequestId(requestId)) {
     window.main.webSocket.open({
       requestId,
       workspaceId,
       url: rendered.url,
       headers: rendered.headers,
+      authentication: rendered.authentication,
+      cookieJar: rendered.cookieJar,
+    });
+  }
+  if (isGraphqlSubscriptionRequest(req)) {
+    window.main.webSocket.open({
+      requestId,
+      workspaceId,
+      // replace url with ws/wss for graphql subscriptions
+      url: rendered.url.replace('http', 'ws').replace('https', 'wss'),
+      headers: [
+        ...rendered.headers,
+        // add graphql-transport-ws protocol for graphql subscription
+        {
+          name: 'sec-websocket-protocol',
+          value: GRAPHQL_TRANSPORT_WS_PROTOCOL,
+        },
+      ],
+      isGraphqlSubscriptionRequest: true,
+      // graphql-ws protocol needs to send ConnectionInit message first. Refer: https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md
+      initialPayload: JSON.stringify({
+        type: MessageType.ConnectionInit,
+      }),
       authentication: rendered.authentication,
       cookieJar: rendered.cookieJar,
     });
@@ -349,7 +406,6 @@ const writeToDownloadPath = (downloadPathAndName: string, responsePatch: Respons
       resolve(null);
     });
   });
-
 };
 
 export interface SendActionParams {
@@ -358,124 +414,273 @@ export interface SendActionParams {
   ignoreUndefinedEnvVariable?: boolean;
 }
 
+export interface SendActionRuntime {
+  appendTimeline: (timelinePath: string, logs: string[]) => Promise<void>;
+}
+
 export const sendAction: ActionFunction = async ({ request, params }) => {
   const { requestId, workspaceId } = params;
   invariant(typeof requestId === 'string', 'Request ID is required');
   invariant(workspaceId, 'Workspace ID is required');
-
-  const req = await requestOperations.getById(requestId) as Request;
-  invariant(req, 'Request not found');
-
-  const {
-    environment,
-    settings,
-    clientCertificates,
-    caCert,
-    activeEnvironmentId,
-    timelinePath,
-    responseId,
-  } = await fetchRequestData(requestId);
-  const baseEnvironment = await models.environment.getOrCreateForParentId(workspaceId);
-  const cookieJar = await models.cookieJar.getOrCreateForParentId(workspaceId);
+  const { shouldPromptForPathAfterResponse, ignoreUndefinedEnvVariable } = await request.json() as SendActionParams;
 
   try {
-    const { shouldPromptForPathAfterResponse, ignoreUndefinedEnvVariable } = await request.json() as SendActionParams;
-    const mutatedContext = await tryToExecutePreRequestScript(
-      req,
-      environment,
-      timelinePath,
-      responseId,
-      baseEnvironment,
-      clientCertificates,
-      cookieJar,
-    );
-    if (!mutatedContext?.request) {
-      // exiy early if there was a problem with the pre-request script
-      // TODO: improve error message?
-      return null;
-    } else {
-      // persist updated cookieJar if needed
-      if (mutatedContext.cookieJar) {
-        await models.cookieJar.update(
-          mutatedContext.cookieJar,
-          { cookies: mutatedContext.cookieJar.cookies },
-        );
-      }
-    }
-
-    const renderedResult = await tryToInterpolateRequest(
-      mutatedContext.request,
-      mutatedContext.environment || environment._id,
-      RENDER_PURPOSE_SEND,
-      undefined,
-      mutatedContext.baseEnvironment,
+    return await sendActionImplementation({
+      requestId,
+      shouldPromptForPathAfterResponse,
       ignoreUndefinedEnvVariable,
-    );
-    const renderedRequest = await tryToTransformRequestWithPlugins(renderedResult);
+    });
+  } catch (err) {
+    console.log('[request] Failed to send request', err);
+    const e = err.error || err;
 
-    // TODO: remove this temporary hack to support GraphQL variables in the request body properly
-    if (renderedRequest && renderedRequest.body?.text && renderedRequest.body?.mimeType === 'application/graphql') {
-      try {
-        const parsedBody = JSON.parse(renderedRequest.body.text);
-        if (typeof parsedBody.variables === 'string') {
-          parsedBody.variables = JSON.parse(parsedBody.variables);
-          renderedRequest.body.text = JSON.stringify(parsedBody, null, 2);
-        }
-      } catch (e) {
-        console.error('Failed to parse GraphQL variables', e);
+    // when after-script error, there is no error in response, we need to set error info into response, so that we can show it in response viewer
+    if (err.response && err.requestMeta && err.response._id) {
+      if (!err.response.error) {
+        err.response.error = e;
+        err.response.statusMessage = 'Error';
+        err.response.statusCode = 0;
       }
+      // this part is for persisting useful info (e.g. timeline) for debugging, even there is an error
+      const existingResponse = await models.response.getById(err.response._id);
+      const response = existingResponse || await models.response.create(err.response, err.maxHistoryResponses);
+      await models.requestMeta.update(err.requestMeta, { activeResponseId: response._id });
     }
 
-    const response = await sendCurlAndWriteTimeline(
-      renderedRequest,
-      mutatedContext.clientCertificates || clientCertificates,
-      caCert,
-      mutatedContext.settings || settings,
-      timelinePath,
-      responseId
-    );
-
-    const requestMeta = await models.requestMeta.getByParentId(requestId);
-    invariant(requestMeta, 'RequestMeta not found');
-    const responsePatch = await responseTransform(response, activeEnvironmentId, renderedRequest, renderedResult.context);
-    const is2XXWithBodyPath = responsePatch.statusCode && responsePatch.statusCode >= 200 && responsePatch.statusCode < 300 && responsePatch.bodyPath;
-    const shouldWriteToFile = shouldPromptForPathAfterResponse && is2XXWithBodyPath;
-    if (!shouldWriteToFile) {
-      const response = await models.response.create(responsePatch, settings.maxHistoryResponses);
-      await models.requestMeta.update(requestMeta, { activeResponseId: response._id });
-      // setLoading(false);
-      return null;
-    }
-    if (requestMeta.downloadPath) {
-      const header = getContentDispositionHeader(responsePatch.headers || []);
-      const name = header
-        ? contentDisposition.parse(header.value).parameters.filename
-        : `${req.name.replace(/\s/g, '-').toLowerCase()}.${responsePatch.contentType && mimeExtension(responsePatch.contentType) || 'unknown'}`;
-      return writeToDownloadPath(path.join(requestMeta.downloadPath, name), responsePatch, requestMeta, settings.maxHistoryResponses);
-    } else {
-      const defaultPath = window.localStorage.getItem('insomnia.sendAndDownloadLocation');
-      const { filePath } = await window.dialog.showSaveDialog({
-        title: 'Select Download Location',
-        buttonLabel: 'Save',
-        // NOTE: An error will be thrown if defaultPath is supplied but not a String
-        ...(defaultPath ? { defaultPath } : {}),
-      });
-      if (!filePath) {
-        // setLoading(false);
-        return null;
-      }
-      window.localStorage.setItem('insomnia.sendAndDownloadLocation', filePath);
-      return writeToDownloadPath(filePath, responsePatch, requestMeta, settings.maxHistoryResponses);
-    }
-  } catch (e) {
-    console.log('Failed to send request', e);
+    window.main.completeExecutionStep({ requestId });
     const url = new URL(request.url);
     url.searchParams.set('error', e);
     if (e?.extraInfo && e?.extraInfo?.subType === RenderErrorSubType.EnvironmentVariable) {
       url.searchParams.set('envVariableMissing', '1');
-      url.searchParams.set('missingKey', e?.extraInfo?.missingKey);
+      url.searchParams.set('undefinedEnvironmentVariables', e?.extraInfo?.undefinedEnvironmentVariables);
     }
     return redirect(`${url.pathname}?${url.searchParams}`);
+  }
+};
+
+export type RunnerSource = 'runner';
+export interface CollectionRunnerContext {
+  source: RunnerSource;
+  environmentId: string;
+  iterationCount: number;
+  iterationData: object;
+  duration: number; // millisecond
+  testCount: number;
+  avgRespTime: number; // millisecond
+  iterationResults: RunnerResultPerRequestPerIteration;
+  done: boolean;
+  responsesInfo: ResponseInfo[];
+  transientVariables: Environment;
+}
+
+export interface RunnerContextForRequest {
+  requestId: string;
+  requestName: string;
+  requestUrl: string;
+  statusCode: number;
+  duration: number; // millisecond
+  size: number;
+  results: RequestTestResult[];
+  responseId: string;
+}
+
+export const sendActionImplementation = async (options: {
+    requestId: string;
+    shouldPromptForPathAfterResponse: boolean | undefined;
+    ignoreUndefinedEnvVariable: boolean | undefined;
+    testResultCollector?: RunnerContextForRequest;
+    iteration?: number;
+    iterationCount?: number;
+    userUploadEnvironment?: UserUploadEnvironment;
+    transientVariables?: Environment;
+    runtime?: SendActionRuntime;
+}) => {
+  const {
+    requestId,
+    userUploadEnvironment,
+    shouldPromptForPathAfterResponse,
+    ignoreUndefinedEnvVariable,
+    testResultCollector,
+    iteration,
+    iterationCount,
+    transientVariables: nullableTransientVariables,
+    runtime = defaultSendActionRuntime,
+  } = options;
+
+  window.main.startExecution({ requestId });
+  const requestData = await fetchRequestData(requestId);
+  const requestMeta = await models.requestMeta.getByParentId(requestId);
+  const transientVariables = nullableTransientVariables || {
+    ...models.environment.init(),
+    _id: uuidv4(),
+    type: models.environment.type,
+    parentId: requestData.environment.parentId,
+    modified: 0,
+    created: Date.now(),
+    name: 'Transient Environment',
+    data: {},
+  };
+
+  window.main.addExecutionStep({ requestId, stepName: 'Executing pre-request script' });
+  const mutatedContext = await tryToExecutePreRequestScript(requestData, transientVariables, userUploadEnvironment, iteration, iterationCount, runtime);
+  if ('error' in mutatedContext) {
+    throw {
+      // create response with error info, so that we can store response in db and show it in response viewer
+      response: {
+        _id: requestData.responseId,
+        parentId: requestId,
+        environemntId: requestData.environment,
+        statusMessage: 'Error',
+        error: mutatedContext.error,
+      },
+      maxHistoryResponses: requestData.settings.maxHistoryResponses,
+      requestMeta,
+      error: mutatedContext.error,
+    };
+  }
+  if (mutatedContext.execution?.skipRequest) {
+    // cancel request running if skipRequest in pre-request script
+    const responseId = requestData.responseId;
+    const responsePatch = {
+      _id: responseId,
+      parentId: requestId,
+      environemntId: requestData.environment,
+      statusMessage: 'Cancelled',
+      error: 'Request was cancelled by pre-request script',
+    };
+    // create and update response to activeResponse
+    await models.response.create(responsePatch, requestData.settings.maxHistoryResponses);
+    await models.requestMeta.updateOrCreateByParentId(requestId, { activeResponseId: responseId });
+    window.main.completeExecutionStep({ requestId });
+    return mutatedContext;
+  }
+
+  window.main.completeExecutionStep({ requestId });
+
+  // disable after-response script here to avoiding rendering it
+  // @TODO This should be handled in a better way. Maybe remove the key from the request object we pass in tryToInterpolateRequest
+  const afterResponseScript = mutatedContext.request.afterResponseScript ? `${mutatedContext.request.afterResponseScript}` : undefined;
+  mutatedContext.request.afterResponseScript = '';
+
+  window.main.addExecutionStep({ requestId, stepName: 'Rendering request' });
+  const renderedResult = await tryToInterpolateRequest({
+    request: mutatedContext.request,
+    environment: mutatedContext.environment,
+    purpose: 'send',
+    extraInfo: undefined,
+    baseEnvironment: mutatedContext.baseEnvironment,
+    userUploadEnvironment: mutatedContext.userUploadEnvironment,
+    transientVariables: mutatedContext.transientVariables,
+    ignoreUndefinedEnvVariable,
+  });
+  const renderedRequest = await tryToTransformRequestWithPlugins(renderedResult);
+  window.main.completeExecutionStep({ requestId });
+
+  // TODO: remove this temporary hack to support GraphQL variables in the request body properly
+  parseGraphQLReqeustBody(renderedRequest);
+
+  invariant(requestMeta, 'RequestMeta not found');
+
+  window.main.addExecutionStep({ requestId, stepName: 'Sending request' });
+  const response = await sendCurlAndWriteTimeline(
+    renderedRequest,
+    mutatedContext.clientCertificates,
+    requestData.caCert,
+    mutatedContext.settings,
+    requestData.timelinePath,
+    requestData.responseId,
+    runtime,
+  );
+  window.main.completeExecutionStep({ requestId });
+  if ('error' in response) {
+    throw {
+      response: await responseTransform(response, requestData.activeEnvironmentId, renderedRequest, renderedResult.context),
+      maxHistoryResponses: requestData.settings.maxHistoryResponses,
+      requestMeta,
+      error: response.error,
+    };
+  }
+
+  const baseResponsePatch = await responseTransform(response, requestData.activeEnvironmentId, renderedRequest, renderedResult.context);
+  const is2XXWithBodyPath = baseResponsePatch.statusCode && baseResponsePatch.statusCode >= 200 && baseResponsePatch.statusCode < 300 && baseResponsePatch.bodyPath;
+  const shouldWriteToFile = shouldPromptForPathAfterResponse && is2XXWithBodyPath;
+
+  mutatedContext.request.afterResponseScript = afterResponseScript;
+  window.main.addExecutionStep({ requestId, stepName: 'Executing after-response script' });
+  const postMutatedContext = await tryToExecuteAfterResponseScript({
+    ...requestData,
+    ...mutatedContext,
+    transientVariables: mutatedContext.transientVariables || transientVariables,
+    response,
+    iteration,
+    iterationCount,
+    runtime,
+  });
+  if ('error' in postMutatedContext) {
+    throw {
+      response: await responseTransform(response, requestData.activeEnvironmentId, renderedRequest, renderedResult.context),
+      maxHistoryResponses: requestData.settings.maxHistoryResponses,
+      requestMeta,
+      error: postMutatedContext.error,
+    };
+  }
+
+  window.main.completeExecutionStep({ requestId });
+
+  const preTestResults = (mutatedContext.requestTestResults || []).map(
+    (result: RequestTestResult): RequestTestResult => ({ ...result, category: 'pre-request' }),
+  );
+  const postTestResults = (postMutatedContext?.requestTestResults || []).map(
+    (result: RequestTestResult): RequestTestResult => ({ ...result, category: 'after-response' }),
+  ) || [];
+  if (testResultCollector) {
+    testResultCollector.results = [
+      ...testResultCollector.results,
+      ...preTestResults,
+      ...postTestResults,
+    ];
+    const timingSteps = await window.main.getExecution({ requestId });
+    testResultCollector.duration = timingSteps.reduce((acc: number, cur: TimingStep) => {
+      return acc + (cur.duration || 0);
+    }, 0);
+    testResultCollector.responseId = response._id;
+  }
+  const responsePatch = postMutatedContext ?
+    {
+      ...baseResponsePatch,
+      // both pre-request and after-response test results are collected
+      requestTestResults: [
+        ...preTestResults,
+        ...postTestResults,
+      ],
+    }
+    : baseResponsePatch;
+
+  if (!shouldWriteToFile) {
+    const response = await models.response.create(responsePatch, requestData.settings.maxHistoryResponses);
+    await models.requestMeta.update(requestMeta, { activeResponseId: response._id });
+    return postMutatedContext;
+  }
+
+  if (requestMeta.downloadPath) {
+    const header = getContentDispositionHeader(responsePatch.headers || []);
+    const name = header
+      ? contentDisposition.parse(header.value).parameters.filename
+      : `${requestData.request.name.replace(/\s/g, '-').toLowerCase()}.${responsePatch.contentType && mimeExtension(responsePatch.contentType) || 'unknown'}`;
+    return writeToDownloadPath(path.join(requestMeta.downloadPath, name), responsePatch, requestMeta, requestData.settings.maxHistoryResponses);
+  } else {
+    const defaultPath = window.localStorage.getItem('insomnia.sendAndDownloadLocation');
+    const { filePath } = await window.dialog.showSaveDialog({
+      title: 'Select Download Location',
+      buttonLabel: 'Save',
+      // NOTE: An error will be thrown if defaultPath is supplied but not a String
+      ...(defaultPath ? { defaultPath } : {}),
+    });
+    if (!filePath) {
+      return null;
+    }
+    window.localStorage.setItem('insomnia.sendAndDownloadLocation', filePath);
+    return writeToDownloadPath(filePath, responsePatch, requestMeta, requestData.settings.maxHistoryResponses);
   }
 };
 
@@ -501,9 +706,22 @@ export const createAndSendToMockbinAction: ActionFunction = async ({ request }) 
     timelinePath,
     responseId,
   } = await fetchRequestData(req._id);
+  window.main.startExecution({ requestId: req._id });
+  window.main.addExecutionStep({
+    requestId: req._id,
+    stepName: 'Rendering request',
+  }
+  );
 
-  const renderResult = await tryToInterpolateRequest(req, environment._id, RENDER_PURPOSE_SEND);
+  const renderResult = await tryToInterpolateRequest({ request: req, environment: environment._id, purpose: 'send' });
   const renderedRequest = await tryToTransformRequestWithPlugins(renderResult);
+
+  window.main.completeExecutionStep({ requestId: req._id });
+  window.main.addExecutionStep({
+    requestId: req._id,
+    stepName: 'Sending request',
+  });
+
   const res = await sendCurlAndWriteTimeline(
     renderedRequest,
     clientCertificates,
@@ -512,8 +730,10 @@ export const createAndSendToMockbinAction: ActionFunction = async ({ request }) 
     timelinePath,
     responseId,
   );
+
   const response = await responseTransform(res, activeEnvironmentId, renderedRequest, renderResult.context);
   await models.response.create(response);
+  window.main.completeExecutionStep({ requestId: req._id });
   return null;
 };
 export const deleteAllResponsesAction: ActionFunction = async ({ params }) => {

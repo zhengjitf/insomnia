@@ -1,15 +1,13 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { describe, expect, it, vi } from 'vitest';
 
-import { globalBeforeEach } from '../../__jest__/before-each';
 import { CONTENT_TYPE_GRAPHQL } from '../../common/constants';
 import { newBodyGraphQL, updateMimeType } from '../../ui/components/dropdowns/content-type-dropdown';
 import * as models from '../index';
 
 describe('init()', () => {
-  beforeEach(globalBeforeEach);
 
   it('contains all required fields', async () => {
-    Date.now = jest.fn().mockReturnValue(1478795580200);
+    Date.now = vi.fn().mockReturnValue(1478795580200);
     expect(models.request.init()).toEqual({
       isPrivate: false,
       authentication: {},
@@ -20,8 +18,9 @@ describe('init()', () => {
       name: 'New Request',
       description: '',
       parameters: [],
-      pathParameters: [],
-      preRequestScript: '',
+      pathParameters: undefined,
+      preRequestScript: undefined,
+      afterResponseScript: undefined,
       url: '',
       settingStoreCookies: true,
       settingSendCookies: true,
@@ -34,10 +33,9 @@ describe('init()', () => {
 });
 
 describe('create()', () => {
-  beforeEach(globalBeforeEach);
 
   it('creates a valid request', async () => {
-    Date.now = jest.fn().mockReturnValue(1478795580200);
+    Date.now = vi.fn().mockReturnValue(1478795580200);
     const request = await models.request.create({
       name: 'Test Request',
       parentId: 'fld_124',
@@ -58,8 +56,9 @@ describe('create()', () => {
       method: 'GET',
       name: 'Test Request',
       parameters: [],
-      pathParameters: [],
-      preRequestScript: '',
+      pathParameters: undefined,
+      preRequestScript: undefined,
+      afterResponseScript: undefined,
       url: '',
       settingStoreCookies: true,
       settingSendCookies: true,
@@ -73,7 +72,7 @@ describe('create()', () => {
   });
 
   it('fails when missing parentId', async () => {
-    Date.now = jest.fn().mockReturnValue(1478795580200);
+    Date.now = vi.fn().mockReturnValue(1478795580200);
     expect(() =>
       models.request.create({
         name: 'Test Request',
@@ -83,7 +82,6 @@ describe('create()', () => {
 });
 
 describe('updateMimeType()', () => {
-  beforeEach(globalBeforeEach);
 
   it('adds header when does not exist', async () => {
     const request = await models.request.create({
@@ -177,7 +175,6 @@ describe('updateMimeType()', () => {
 });
 
 describe('migrate()', () => {
-  beforeEach(globalBeforeEach);
 
   it('migrates basic case', () => {
     const original = {
@@ -372,7 +369,7 @@ describe('migrate()', () => {
   });
 
   it('migrates from initModel()', async () => {
-    Date.now = jest.fn().mockReturnValue(1478795580200);
+    Date.now = vi.fn().mockReturnValue(1478795580200);
     const original = {
       _id: 'req_123',
       headers: [],
@@ -392,8 +389,9 @@ describe('migrate()', () => {
       headers: [],
       authentication: {},
       parameters: [],
-      pathParameters: [],
-      preRequestScript: '',
+      pathParameters: undefined,
+      preRequestScript: undefined,
+      afterResponseScript: undefined,
       parentId: null,
       body: {
         mimeType: '',

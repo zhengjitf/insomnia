@@ -1,9 +1,9 @@
-import React, { FC, useCallback } from 'react';
+import React, { type FC, useCallback } from 'react';
 import { useParams, useRouteLoaderData } from 'react-router-dom';
 
-import { RequestParameter } from '../../../models/request';
+import type { RequestParameter } from '../../../models/request';
 import { useRequestPatcher } from '../../hooks/use-request';
-import { RequestLoaderData, WebSocketRequestLoaderData } from '../../routes/request';
+import type { RequestLoaderData, WebSocketRequestLoaderData } from '../../routes/request';
 import { CodeEditor } from '../codemirror/code-editor';
 import { KeyValueEditor } from '../key-value-editor/key-value-editor';
 
@@ -65,7 +65,7 @@ export const RequestParametersEditor: FC<Props> = ({
     return (
       <CodeEditor
         id="request-parameters-editor"
-        className='min-h-[8rem]'
+        className='flex-1'
         onChange={handleBulkUpdate}
         defaultValue={paramsString}
         enableNunjucks

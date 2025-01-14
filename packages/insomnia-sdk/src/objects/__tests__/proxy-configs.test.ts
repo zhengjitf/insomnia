@@ -1,6 +1,6 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it } from 'vitest';
 
-import { ProxyConfig, ProxyConfigList } from '../proxy-configs';
+import { ProxyConfig, ProxyConfigList, transformToSdkProxyOptions } from '../proxy-configs';
 import { Url } from '../urls';
 
 describe('test ProxyConfig object', () => {
@@ -15,6 +15,7 @@ describe('test ProxyConfig object', () => {
             authenticate: true,
             username: 'proxy_username',
             password: 'proxy_password',
+            protocol: 'https:',
         });
 
         expect(
@@ -23,15 +24,8 @@ describe('test ProxyConfig object', () => {
             ['http', 'https']
         );
 
-        proxyConfig.updateProtocols(['http']);
-        expect(
-            proxyConfig.getProtocols()
-        ).toEqual(
-            ['http']
-        );
-
         expect(proxyConfig.getProxyUrl()).toEqual(
-            'proxy_username:proxy_password@proxy.com:8080'
+            'https://proxy_username:proxy_password@proxy.com:8080'
         );
 
         expect(
@@ -49,9 +43,26 @@ describe('test ProxyConfig object', () => {
             authenticate: true,
             username: 'proxy_username',
             password: 'proxy_password',
+            protocol: 'https:',
         }));
 
         const matchedProxyConfigDef = configList.resolve(new Url('http://sub.example.com:80/path'));
         expect(matchedProxyConfigDef?.host).toEqual('proxy.com');
+    });
+
+    const proxyUrls = [
+        'http://wormhole',
+        'http://wormhole:0',
+        'https://localhost',
+        'http://user:pass@localhost:666',
+        'http://user:pass@localhost:0',
+        'http://user:pass@localhost',
+    ];
+
+    proxyUrls.forEach(url => {
+        it(`test proxy transforming: ${url}`, () => {
+            const proxy = new ProxyConfig(transformToSdkProxyOptions(url, '', true, ''));
+            expect(proxy.getProxyUrl()).toEqual(url);
+        });
     });
 });

@@ -1,4 +1,5 @@
-import React, { Fragment, useEffect, useState } from 'react';
+import * as Sentry from '@sentry/electron/renderer';
+import React, { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import {
   Button,
   Link,
@@ -12,14 +13,14 @@ import {
   TooltipTrigger,
 } from 'react-aria-components';
 import {
-  ActionFunction,
-  LoaderFunction,
+  type ActionFunction,
+  type LoaderFunction,
   NavLink,
   Outlet,
   redirect,
-  ShouldRevalidateFunction,
   useFetcher,
   useLoaderData,
+  useLocation,
   useNavigate,
   useParams,
   useRouteLoaderData,
@@ -29,14 +30,17 @@ import { useLocalStorage } from 'react-use';
 import * as session from '../../account/session';
 import { getAppWebsiteBaseURL } from '../../common/constants';
 import { database } from '../../common/database';
+import { SentryMetrics } from '../../common/sentry';
 import { userSession } from '../../models';
 import { updateLocalProjectToRemote } from '../../models/helpers/project';
-import { isOwnerOfOrganization, isPersonalOrganization, isScratchpadOrganizationId, Organization } from '../../models/organization';
-import { Project } from '../../models/project';
+import { findPersonalOrganization, isOwnerOfOrganization, isPersonalOrganization, isScratchpadOrganizationId, type Organization } from '../../models/organization';
+import { type Project, type as ProjectType } from '../../models/project';
 import { isDesign, isScratchpad } from '../../models/workspace';
 import { VCSInstance } from '../../sync/vcs/insomnia-sync';
 import { migrateProjectsIntoOrganization, shouldMigrateProjectUnderOrganization } from '../../sync/vcs/migrate-projects-into-organization';
+import { insomniaFetch } from '../../ui/insomniaFetch';
 import { invariant } from '../../utils/invariant';
+import { AsyncTask, getInitialRouteForOrganization } from '../../utils/router';
 import { getLoginUrl } from '../auth-session-provider';
 import { Avatar } from '../components/avatar';
 import { CommandPalette } from '../components/command-palette';
@@ -46,15 +50,18 @@ import { Icon } from '../components/icon';
 import { InsomniaAI } from '../components/insomnia-ai-icon';
 import { InsomniaLogo } from '../components/insomnia-icon';
 import { showAlert, showModal } from '../components/modals';
+import { InviteModalContainer } from '../components/modals/invite-modal/invite-modal';
 import { SettingsModal, showSettingsModal } from '../components/modals/settings-modal';
 import { OrganizationAvatar } from '../components/organization-avatar';
 import { PresentUsers } from '../components/present-users';
 import { Toast } from '../components/toast';
 import { useAIContext } from '../context/app/ai-context';
 import { InsomniaEventStreamProvider } from '../context/app/insomnia-event-stream-context';
+import { useOrganizationPermissions } from '../hooks/use-organization-features';
+import { syncProjects } from './project';
 import { useRootLoaderData } from './root';
-import { UntrackedProjectsLoaderData } from './untracked-projects';
-import { WorkspaceLoaderData } from './workspace';
+import type { UntrackedProjectsLoaderData } from './untracked-projects';
+import type { WorkspaceLoaderData } from './workspace';
 
 export interface OrganizationsResponse {
   start: number;
@@ -83,11 +90,11 @@ type PersonalPlanType = 'free' | 'individual' | 'team' | 'enterprise' | 'enterpr
 const formatCurrentPlanType = (type: PersonalPlanType) => {
   switch (type) {
     case 'free':
-      return 'Free';
+      return 'Hobby';
     case 'individual':
       return 'Individual';
     case 'team':
-      return 'Team';
+      return 'Pro';
     case 'enterprise':
       return 'Enterprise';
     case 'enterprise-member':
@@ -98,19 +105,14 @@ const formatCurrentPlanType = (type: PersonalPlanType) => {
 };
 type PaymentSchedules = 'month' | 'year';
 
-interface CurrentPlan {
+export interface CurrentPlan {
   isActive: boolean;
   period: PaymentSchedules;
   planId: string;
   price: number;
   quantity: number;
   type: PersonalPlanType;
-};
-
-export const organizationsData: OrganizationLoaderData = {
-  organizations: [],
-  user: undefined,
-  currentPlan: undefined,
+  planName: string;
 };
 
 function sortOrganizations(accountId: string, organizations: Organization[]): Organization[] {
@@ -133,80 +135,146 @@ function sortOrganizations(accountId: string, organizations: Organization[]): Or
   ];
 }
 
-export const indexLoader: LoaderFunction = async () => {
-  const { id: sessionId, accountId } = await userSession.getOrCreate();
-  if (sessionId) {
-    try {
-      const organizationsResult = await window.main.insomniaFetch<OrganizationsResponse | void>({
+async function syncOrganizations(sessionId: string, accountId: string) {
+  try {
+    const [organizationsResult, user, currentPlan] = await Promise.all([
+      insomniaFetch<OrganizationsResponse | void>({
         method: 'GET',
         path: '/v1/organizations',
         sessionId,
-      });
-
-      const user = await window.main.insomniaFetch<UserProfileResponse | void>({
+      }),
+      insomniaFetch<UserProfileResponse | void>({
         method: 'GET',
         path: '/v1/user/profile',
         sessionId,
-      });
-
-      const currentPlan = await window.main.insomniaFetch<CurrentPlan | void>({
+      }),
+      insomniaFetch<CurrentPlan | void>({
         method: 'GET',
         path: '/v1/billing/current-plan',
         sessionId,
+      }),
+    ]);
+
+    invariant(organizationsResult && organizationsResult.organizations, 'Failed to load organizations');
+    invariant(user && user.id, 'Failed to load user');
+    invariant(currentPlan && currentPlan.planId, 'Failed to load current plan');
+
+    const { organizations } = organizationsResult;
+
+    invariant(accountId, 'Account ID is not defined');
+
+    localStorage.setItem(`${accountId}:organizations`, JSON.stringify(sortOrganizations(accountId, organizations)));
+    localStorage.setItem(`${accountId}:user`, JSON.stringify(user));
+    localStorage.setItem(`${accountId}:currentPlan`, JSON.stringify(currentPlan));
+  } catch (error) {
+    console.log('[organization] Failed to load Organizations', error);
+  }
+}
+
+interface SyncOrgsAndProjectsActionRequest {
+  organizationId: string;
+  asyncTaskList: AsyncTask[];
+  projectId?: string;
+}
+
+// this action is used to run task that we dont want to block the UI
+export const syncOrgsAndProjectsAction: ActionFunction = async ({ request }) => {
+  try {
+    const { organizationId, projectId, asyncTaskList = [] } = await request.json() as SyncOrgsAndProjectsActionRequest;
+    const { id: sessionId, accountId } = await userSession.getOrCreate();
+
+    const taskPromiseList = [];
+    if (asyncTaskList.includes(AsyncTask.SyncOrganization)) {
+      invariant(sessionId, 'sessionId is required');
+      invariant(accountId, 'accountId is required');
+      taskPromiseList.push(syncOrganizations(sessionId, accountId));
+    }
+
+    if (asyncTaskList.includes(AsyncTask.MigrateProjects)) {
+      const organizations = JSON.parse(localStorage.getItem(`${accountId}:organizations`) || '[]') as Organization[];
+      invariant(organizations, 'Failed to fetch organizations.');
+      const personalOrganization = findPersonalOrganization(organizations, accountId);
+      invariant(personalOrganization, 'personalOrganization is required');
+      invariant(personalOrganization.id, 'personalOrganizationId is required');
+      invariant(sessionId, 'sessionId is required');
+      taskPromiseList.push(migrateProjectsUnderOrganization(personalOrganization.id, sessionId));
+    }
+
+    if (asyncTaskList.includes(AsyncTask.SyncProjects)) {
+      invariant(organizationId, 'organizationId is required');
+      taskPromiseList.push(syncProjects(organizationId));
+    }
+
+    await Promise.all(taskPromiseList);
+
+    // When user switch to a new organization, there is no project in db cache, we need to redirect to the first project after sync project
+    if (!projectId && asyncTaskList.includes(AsyncTask.SyncProjects)) {
+      const firstProject = await database.getWhere<Project>(ProjectType, { parentId: organizationId });
+      if (firstProject?._id) {
+        return redirect(`/organization/${organizationId}/project/${firstProject?._id}`);
+      }
+    }
+
+    return {};
+  } catch (error) {
+    console.log('Failed to run async task', error);
+    return {
+      error: error.message,
+    };
+  }
+};
+
+async function migrateProjectsUnderOrganization(personalOrganizationId: string, sessionId: string) {
+  if (await shouldMigrateProjectUnderOrganization()) {
+    await migrateProjectsIntoOrganization({
+      personalOrganizationId,
+    });
+
+    const preferredProjectType = localStorage.getItem('prefers-project-type');
+    if (preferredProjectType === 'remote') {
+      const localProjects = await database.find<Project>('Project', {
+        parentId: personalOrganizationId,
+        remoteId: null,
       });
 
-      invariant(organizationsResult && organizationsResult.organizations, 'Failed to load organizations');
-      invariant(user && user.id, 'Failed to load user');
-      invariant(currentPlan && currentPlan.planId, 'Failed to load current plan');
-
-      const { organizations } = organizationsResult;
-
-      invariant(accountId, 'Account ID is not defined');
-      organizationsData.organizations = sortOrganizations(accountId, organizations);
-      organizationsData.user = user;
-      organizationsData.currentPlan = currentPlan;
-      const personalOrganization = organizations.filter(isPersonalOrganization)
-        .find(organization =>
-          isOwnerOfOrganization({
-            organization,
-            accountId,
-          }));
-      invariant(personalOrganization, 'Failed to find personal organization your account appears to be in an invalid state. Please contact support if this is a recurring issue.');
-      if (await shouldMigrateProjectUnderOrganization()) {
-        await migrateProjectsIntoOrganization({
-          personalOrganization,
+      // If any of those fail projects will still be under the organization as local projects
+      for (const project of localProjects) {
+        updateLocalProjectToRemote({
+          project,
+          organizationId: personalOrganizationId,
+          sessionId,
+          vcs: VCSInstance(),
         });
-
-        const preferredProjectType = localStorage.getItem('prefers-project-type');
-        if (preferredProjectType === 'remote') {
-          const localProjects = await database.find<Project>('Project', {
-            parentId: personalOrganization.id,
-            remoteId: null,
-          });
-
-          // If any of those fail projects will still be under the organization as local projects
-          for (const project of localProjects) {
-            updateLocalProjectToRemote({
-              project,
-              organizationId: personalOrganization.id,
-              sessionId,
-              vcs: VCSInstance(),
-            });
-          }
-        }
       }
+    }
+  }
+};
 
-      if (personalOrganization) {
-        return redirect(`/organization/${personalOrganization.id}`);
-      }
+export const indexLoader: LoaderFunction = async () => {
+  const { id: sessionId, accountId } = await userSession.getOrCreate();
+  if (sessionId) {
+    await syncOrganizations(sessionId, accountId);
 
-      if (organizations.length > 0) {
-        return redirect(`/organization/${organizations[0].id}`);
-      }
-    } catch (error) {
-      console.log('Failed to load Organizations', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Network connectivity issue: Failed to load Organizations. ${errorMessage}`);
+    const organizations = JSON.parse(localStorage.getItem(`${accountId}:organizations`) || '[]') as Organization[];
+    invariant(organizations, 'Failed to fetch organizations.');
+
+    const personalOrganization = findPersonalOrganization(organizations, accountId);
+    invariant(personalOrganization, 'Failed to find personal organization your account appears to be in an invalid state. Please contact support if this is a recurring issue.');
+    const personalOrganizationId = personalOrganization.id;
+    await migrateProjectsUnderOrganization(personalOrganizationId, sessionId);
+
+    const specificOrgRedirectAfterAuthorize = window.localStorage.getItem('specificOrgRedirectAfterAuthorize');
+    if (specificOrgRedirectAfterAuthorize && specificOrgRedirectAfterAuthorize !== '') {
+      window.localStorage.removeItem('specificOrgRedirectAfterAuthorize');
+      return redirect(`/organization/${specificOrgRedirectAfterAuthorize}`);
+    }
+
+    if (personalOrganization) {
+      return redirect(`/organization/${personalOrganizationId}`);
+    }
+
+    if (organizations.length > 0) {
+      return redirect(`/organization/${organizations[0].id}`);
     }
   }
 
@@ -218,36 +286,7 @@ export const syncOrganizationsAction: ActionFunction = async () => {
   const { id: sessionId, accountId } = await userSession.getOrCreate();
 
   if (sessionId) {
-    try {
-
-      const organizationsResult = await window.main.insomniaFetch<OrganizationsResponse | void>({
-        method: 'GET',
-        path: '/v1/organizations',
-        sessionId,
-      });
-
-      const user = await window.main.insomniaFetch<UserProfileResponse | void>({
-        method: 'GET',
-        path: '/v1/user/profile',
-        sessionId,
-      });
-
-      const currentPlan = await window.main.insomniaFetch<CurrentPlan | void>({
-        method: 'GET',
-        path: '/v1/billing/current-plan',
-        sessionId,
-      });
-
-      invariant(organizationsResult, 'Failed to load organizations');
-      invariant(user, 'Failed to load user');
-      invariant(currentPlan, 'Failed to load current plan');
-      invariant(accountId, 'Account ID is not defined');
-      organizationsData.organizations = sortOrganizations(accountId, organizationsResult.organizations);
-      organizationsData.user = user;
-      organizationsData.currentPlan = currentPlan;
-    } catch (error) {
-      console.log('Failed to load Organizations', error);
-    }
+    await syncOrganizations(sessionId, accountId);
   }
 
   return null;
@@ -260,9 +299,17 @@ export interface OrganizationLoaderData {
 }
 
 export const loader: LoaderFunction = async () => {
-  const { id } = await userSession.getOrCreate();
+  const { id, accountId } = await userSession.getOrCreate();
   if (id) {
-    return organizationsData;
+    const organizations = JSON.parse(localStorage.getItem(`${accountId}:organizations`) || '[]') as Organization[];
+    const user = JSON.parse(localStorage.getItem(`${accountId}:user`) || '{}') as UserProfileResponse;
+    const currentPlan = JSON.parse(localStorage.getItem(`${accountId}:currentPlan`) || '{}') as CurrentPlan;
+
+    return {
+      organizations: sortOrganizations(accountId, organizations),
+      user,
+      currentPlan,
+    };
   } else {
     return {
       organizations: [],
@@ -285,22 +332,86 @@ export interface FeatureList {
 export interface Billing {
   // If true, the user has paid for the current period
   isActive: boolean;
+  expirationWarningMessage: string;
+  expirationErrorMessage: string;
+  accessDenied: boolean;
 }
 
+export enum ORG_STORAGE_RULE {
+  CLOUD_PLUS_LOCAL = 'cloud_plus_local',
+  CLOUD_ONLY = 'cloud_only',
+  LOCAL_ONLY = 'local_only',
+};
+
 export interface StorageRule {
-  storage: 'cloud_plus_local' | 'cloud_only' | 'local_only';
+  storage: ORG_STORAGE_RULE;
   isOverridden: boolean;
 }
 
 export interface OrganizationFeatureLoaderData {
-  features: FeatureList;
-  billing: Billing;
-  storage: 'cloud_plus_local' | 'cloud_only' | 'local_only';
+  featuresPromise: Promise<FeatureList>;
+  billingPromise: Promise<Billing>;
+}
+export interface OrganizationStorageLoaderData {
+  storagePromise: Promise<ORG_STORAGE_RULE>;
 }
 
-export const singleOrgLoader: LoaderFunction = async ({ params }): Promise<OrganizationFeatureLoaderData> => {
+// Create an in-memory storage to store the storage rules
+export const inMemoryStorageRuleCache: Map<string, StorageRule> = new Map<string, StorageRule>();
+
+export const organizationStorageLoader: LoaderFunction = async ({ params }): Promise<OrganizationStorageLoaderData> => {
   const { organizationId } = params as { organizationId: string };
+  return {
+    storagePromise: fetchAndCacheOrganizationStorageRule(organizationId),
+  };
+};
+
+export const syncOrganizationStorageRuleAction: ActionFunction = async ({ params }) => {
+  const { organizationId } = params;
+  await fetchAndCacheOrganizationStorageRule(organizationId, true);
+  return null;
+};
+
+export async function fetchAndCacheOrganizationStorageRule(
+  organizationId: string | undefined,
+  forceFetch: boolean = false,
+): Promise<ORG_STORAGE_RULE> {
+  invariant(organizationId, 'Organization ID is required');
+
+  if (isScratchpadOrganizationId(organizationId)) {
+    return ORG_STORAGE_RULE.LOCAL_ONLY;
+  }
+  if (!forceFetch) {
+    const storageRule = inMemoryStorageRuleCache.get(organizationId);
+    if (storageRule) {
+      return storageRule.storage;
+    }
+  }
   const { id: sessionId } = await userSession.getOrCreate();
+
+  // Otherwise fetch from the API
+  return await insomniaFetch<StorageRule | undefined>({
+    method: 'GET',
+    path: `/v1/organizations/${organizationId}/storage-rule`,
+    sessionId,
+    onlyResolveOnSuccess: true,
+  }).then(
+    res => {
+      if (res) {
+        inMemoryStorageRuleCache.set(organizationId, res);
+      }
+      return res?.storage || ORG_STORAGE_RULE.CLOUD_PLUS_LOCAL;
+    },
+    err => {
+      console.log('[storageRule] Failed to load storage rules', err.message);
+      return ORG_STORAGE_RULE.CLOUD_PLUS_LOCAL;
+    }
+  );
+}
+
+export const organizationPermissionsLoader: LoaderFunction = async ({ params }): Promise<OrganizationFeatureLoaderData> => {
+  const { organizationId } = params as { organizationId: string };
+  const { id: sessionId, accountId } = await userSession.getOrCreate();
   const fallbackFeatures = {
     gitSync: { enabled: false, reason: 'Insomnia API unreachable' },
     orgBasicRbac: { enabled: false, reason: 'Insomnia API unreachable' },
@@ -309,62 +420,46 @@ export const singleOrgLoader: LoaderFunction = async ({ params }): Promise<Organ
   // If network unreachable assume user has paid for the current period
   const fallbackBilling = {
     isActive: true,
+    expirationWarningMessage: '',
+    expirationErrorMessage: '',
+    accessDenied: false,
   };
-
-  const fallbackStorage = 'cloud_plus_local';
 
   if (isScratchpadOrganizationId(organizationId)) {
     return {
-      features: fallbackFeatures,
-      billing: fallbackBilling,
-      storage: fallbackStorage,
+      featuresPromise: Promise.resolve(fallbackFeatures),
+      billingPromise: Promise.resolve(fallbackBilling),
     };
   }
 
-  const organization = organizationsData.organizations.find(o => o.id === organizationId);
+  const organizations = JSON.parse(localStorage.getItem(`${accountId}:organizations`) || '[]') as Organization[];
+  const organization = organizations.find(o => o.id === organizationId);
 
   if (!organization) {
     throw redirect('/organization');
   }
 
   try {
-    const response = await window.main.insomniaFetch<{ features: FeatureList; billing: Billing } | undefined>({
+    const featuresResponse = insomniaFetch<{ features: FeatureList; billing: Billing } | undefined>({
       method: 'GET',
       path: `/v1/organizations/${organizationId}/features`,
       sessionId,
     });
 
-    const ruleResponse = await window.main.insomniaFetch<StorageRule | undefined>({
-      method: 'GET',
-      path: `/v1/organizations/${organizationId}/storage-rule`,
-      sessionId,
-    });
-    const storage = ruleResponse?.storage || fallbackStorage;
     return {
-      features: response?.features || fallbackFeatures,
-      billing: response?.billing || fallbackBilling,
-      storage,
+      featuresPromise: featuresResponse.then(res => res?.features || fallbackFeatures),
+      billingPromise: featuresResponse.then(res => res?.billing || fallbackBilling),
     };
   } catch (err) {
     return {
-      features: fallbackFeatures,
-      billing: fallbackBilling,
-      storage: fallbackStorage,
+      featuresPromise: Promise.resolve(fallbackFeatures),
+      billingPromise: Promise.resolve(fallbackBilling),
     };
   }
 };
 
 export const useOrganizationLoaderData = () => {
   return useRouteLoaderData('/organization') as OrganizationLoaderData;
-};
-
-export const shouldOrganizationsRevalidate: ShouldRevalidateFunction = ({
-  currentParams,
-  nextParams,
-}) => {
-  const isSwitchingBetweenOrganizations = currentParams.organizationId !== nextParams.organizationId;
-
-  return isSwitchingBetweenOrganizations;
 };
 
 const UpgradeButton = ({
@@ -408,6 +503,7 @@ const UpgradeButton = ({
 
 const OrganizationRoute = () => {
   const { userSession, settings } = useRootLoaderData();
+  const { billing } = useOrganizationPermissions();
 
   const { organizations, user, currentPlan } =
     useLoaderData() as OrganizationLoaderData;
@@ -427,7 +523,37 @@ const OrganizationRoute = () => {
     projectId?: string;
     workspaceId?: string;
   };
-  const [status, setStatus] = useState<'online' | 'offline'>('online');
+
+  const location = useLocation();
+  const asyncTaskList = location.state?.asyncTaskList as AsyncTask[];
+
+  const syncOrgsAndProjectsFetcher = useFetcher();
+
+  const asyncTaskStatus = syncOrgsAndProjectsFetcher.data?.error ? 'error' : syncOrgsAndProjectsFetcher.state;
+
+  const syncOrgsAndProjects = useCallback(() => {
+    const submit = syncOrgsAndProjectsFetcher.submit;
+
+    submit({
+      organizationId,
+      projectId: projectId || '',
+      asyncTaskList,
+    }, {
+      action: '/organization/sync-orgs-and-projects',
+      method: 'POST',
+      encType: 'application/json',
+    });
+  }, [asyncTaskList, organizationId, syncOrgsAndProjectsFetcher.submit, projectId]);
+
+  useEffect(() => {
+    // each route navigation will change history state, only submit this action when the asyncTaskList state is not empty
+    // currently we have 2 cases that will set the asyncTaskList state
+    // 1. first entry
+    // 2. when user switch to another organization
+    if (asyncTaskList?.length) {
+      syncOrgsAndProjects();
+    }
+  }, [organizationId, asyncTaskList, syncOrgsAndProjects]);
 
   useEffect(() => {
     const isIdleAndUninitialized = untrackedProjectsFetcher.state === 'idle' && !untrackedProjectsFetcher.data;
@@ -439,7 +565,7 @@ const OrganizationRoute = () => {
   const untrackedProjects = untrackedProjectsFetcher.data?.untrackedProjects || [];
   const untrackedWorkspaces = untrackedProjectsFetcher.data?.untrackedWorkspaces || [];
   const hasUntrackedData = untrackedProjects.length > 0 || untrackedWorkspaces.length > 0;
-
+  const [status, setStatus] = useState<'online' | 'offline'>('online');
   useEffect(() => {
     const handleOnline = () => setStatus('online');
     const handleOffline = () => setStatus('offline');
@@ -458,6 +584,22 @@ const OrganizationRoute = () => {
     generating: loadingAI,
     progress: loadingAIProgress,
   } = useAIContext();
+
+  const nextOrganizationId = useRef<string>();
+  const startSwitchOrganizationTime = useRef<number>();
+
+  useEffect(() => {
+    if (nextOrganizationId.current && startSwitchOrganizationTime.current && nextOrganizationId.current === organizationId) {
+      const duration = performance.now() - startSwitchOrganizationTime.current;
+      Sentry.metrics.distribution(SentryMetrics.ORGANIZATION_SWITCH_DURATION, duration, {
+        unit: 'millisecond',
+      });
+      nextOrganizationId.current = undefined;
+      startSwitchOrganizationTime.current = undefined;
+    }
+  }, [organizationId]);
+
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   return (
     <InsomniaEventStreamProvider>
@@ -503,15 +645,19 @@ const OrganizationRoute = () => {
                   <Button
                     aria-label="Invite collaborators"
                     className="px-4 text-[--color-font-surprise] bg-opacity-100 bg-[rgba(var(--color-surprise-rgb),var(--tw-bg-opacity))] py-2 h-full font-semibold border border-solid border-[--hl-md] flex items-center justify-center gap-2 aria-pressed:opacity-80 rounded-md hover:bg-opacity-80 focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm"
-                    onPress={() => {
-                      window.main.openInBrowser(`${getAppWebsiteBaseURL()}/app/dashboard/organizations/${organizationId}/collaborators`);
-                    }}
+                    onPress={() => setIsInviteModalOpen(true)}
                   >
                     <Icon icon="user-plus" />
                     <span className="truncate">
                       Invite
                     </span>
                   </Button>
+                  <InviteModalContainer
+                    {...{
+                      isOpen: isInviteModalOpen,
+                      setIsOpen: setIsInviteModalOpen,
+                    }}
+                  />
                   <MenuTrigger>
                     <Button data-testid='user-dropdown' className="px-1 py-1 flex-shrink-0 flex items-center justify-center gap-2 aria-pressed:bg-[--hl-sm] data-[pressed]:bg-[--hl-sm] rounded-md text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm">
                       <Avatar
@@ -525,8 +671,8 @@ const OrganizationRoute = () => {
                     </Button>
                     <Popover className="min-w-max border select-none text-sm border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] py-2 rounded-md overflow-y-auto max-h-[85vh] focus:outline-none">
                       {currentPlan && Boolean(currentPlan.type) && (
-                        <div className='flex gap-2 justify-between items-center pb-2 px-[--padding-md] border-b border-solid border-[--hl-sm] text-[--color-font] h-[--line-height-xs] w-full text-md whitespace-nowrap'>
-                          <span>{formatCurrentPlanType(currentPlan.type)} Plan</span>
+                        <div className='flex gap-2 justify-between items-center pb-2 px-[--padding-md] border-b border-solid border-[--hl-sm] text-[--color-font] h-[--line-height-xs] w-full text-md whitespace-nowrap capitalize'>
+                          <span>{currentPlan?.planName ?? formatCurrentPlanType(currentPlan.type)} Plan</span>
                           <UpgradeButton currentPlan={currentPlan} />
                         </div>
                       )}
@@ -596,7 +742,7 @@ const OrganizationRoute = () => {
                     className="px-4 py-1 flex items-center justify-center gap-2 aria-pressed:bg-[rgba(var(--color-surprise-rgb),0.8)] focus:bg-[rgba(var(--color-surprise-rgb),0.9)] bg-[--color-surprise] font-semibold rounded-sm text-[--color-font-surprise] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm"
                     to="/auth/login"
                   >
-                    Sign Up
+                      Sign up for free
                   </NavLink>
                 </Fragment>
               )}
@@ -634,40 +780,60 @@ const OrganizationRoute = () => {
           ) : null}
           {isOrganizationSidebarOpen && <div className={`[grid-area:Navbar] overflow-hidden ${isOrganizationSidebarOpen ? '' : 'hidden'}`}>
             <nav className="flex flex-col items-center place-content-stretch gap-[--padding-md] w-full h-full overflow-y-auto py-[--padding-md]">
-              {organizations.map(organization => (
-                <TooltipTrigger key={organization.id}>
-                  <Link className="outline-none">
-                    <NavLink
-                      className={({ isActive, isPending }) =>
-                        `select-none text-[--color-font-surprise] hover:no-underline transition-all duration-150 bg-gradient-to-br box-border from-[#4000BF] to-[#154B62] font-bold outline-[3px] rounded-md w-[28px] h-[28px] flex items-center justify-center active:outline overflow-hidden outline-offset-[3px] outline ${isActive
+              {organizations.map(organization => {
+                const isActive = organization.id === organizationId;
+
+                return (
+                  <TooltipTrigger key={organization.id}>
+                    <Link className="outline-none relative">
+                      <div
+                        className={`select-none text-[--color-font-surprise] hover:no-underline transition-all duration-150 bg-gradient-to-br box-border from-[#4000BF] to-[#154B62] font-bold outline-[3px] rounded-md w-[28px] h-[28px] flex items-center justify-center active:outline overflow-hidden outline-offset-[3px] outline ${isActive
                           ? 'outline-[--color-font]'
                           : 'outline-transparent focus:outline-[--hl-md] hover:outline-[--hl-md]'
-                        } ${isPending ? 'animate-pulse' : ''}`
-                      }
-                      to={`/organization/${organization.id}`}
+                          }`}
+                        onClick={async () => {
+                          nextOrganizationId.current = organization.id;
+                          startSwitchOrganizationTime.current = performance.now();
+                          const routeForOrganization = await getInitialRouteForOrganization({ organizationId: organization.id });
+                          navigate(routeForOrganization, {
+                            state: {
+                              asyncTaskList: [
+                                // we only need sync projects when user switch to another organization
+                                AsyncTask.SyncProjects,
+                              ],
+                            },
+                          });
+                        }}
+                      >
+                        {isPersonalOrganization(organization) && isOwnerOfOrganization({
+                          organization,
+                          accountId: userSession.accountId || '',
+                        }) ? (
+                            <div className='flex items-center justify-center'>
+                              <Icon icon="home" />
+                              {<Icon className={`z-20 absolute -top-1 -right-1 w-4 h-4 transition-opacity ease-in-out ${billing?.expirationErrorMessage ? 'text-[var(--color-danger)]' : 'text-[var(--color-warning)]'} ${isActive && (billing.expirationErrorMessage || billing.expirationWarningMessage) ? 'opacity-100' : 'opacity-0'} `} icon="exclamation-circle" />}
+                            </div>
+                        ) : (
+                            <div className='flex items-center justify-center'>
+                              <OrganizationAvatar
+                                alt={organization.display_name}
+                                src={organization.branding?.logo_url || ''}
+                              />
+                              {<Icon className={`z-20 absolute -top-1 -right-1 w-4 h-4 transition-opacity ease-in-out ${billing?.expirationErrorMessage ? 'text-[var(--color-danger)]' : 'text-[var(--color-warning)]'} ${isActive && (billing.expirationErrorMessage || billing.expirationWarningMessage) ? 'opacity-100' : 'opacity-0'} `} icon="exclamation-circle" />}
+                            </div>
+                        )}
+                      </div>
+                    </Link>
+                    <Tooltip
+                      placement="right"
+                      offset={8}
+                      className="border select-none text-sm min-w-max border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] text-[--color-font] px-4 py-2 rounded-md overflow-y-auto max-h-[85vh] focus:outline-none"
                     >
-                      {isPersonalOrganization(organization) && isOwnerOfOrganization({
-                        organization,
-                        accountId: userSession.accountId || '',
-                      }) ? (
-                        <Icon icon="home" />
-                      ) : (
-                        <OrganizationAvatar
-                          alt={organization.display_name}
-                          src={organization.branding?.logo_url || ''}
-                        />
-                      )}
-                    </NavLink>
-                  </Link>
-                  <Tooltip
-                    placement="right"
-                    offset={8}
-                    className="border select-none text-sm min-w-max border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] text-[--color-font] px-4 py-2 rounded-md overflow-y-auto max-h-[85vh] focus:outline-none"
-                  >
-                    <span>{organization.display_name}</span>
-                  </Tooltip>
-                </TooltipTrigger>
-              ))}
+                      <span>{organization.display_name}</span>
+                    </Tooltip>
+                  </TooltipTrigger>
+                );
+              })}
               <MenuTrigger>
                 <Button className="select-none text-[--color-font] hover:no-underline transition-all duration-150 box-border p-[--padding-sm] font-bold outline-none rounded-md w-[28px] h-[28px] flex items-center justify-center overflow-hidden">
                   <Icon icon="plus" />
@@ -682,15 +848,33 @@ const OrganizationRoute = () => {
                       }
 
                       if (action === 'new-organization') {
-                        if (currentPlan?.type !== 'enterprise-member') {
+                        // If user is in the scratchpad workspace redirect them to the login page
+                        if (isScratchpadWorkspace) {
                           window.main.openInBrowser(
-                            `${getAppWebsiteBaseURL()}/app/organization/create`,
+                            getLoginUrl(),
                           );
-                        } else {
+                        }
+
+                        if (!currentPlan) {
+                          return;
+                        }
+
+                        if (currentPlan.type === 'enterprise-member') {
+                          // If user has a team or enterprise member plan show them an alert
                           showAlert({
-                            title: 'Could not create new organization.',
+                            title: 'Cannot create new organization.',
                             message: 'Your Insomnia account is tied to the enterprise corporate account. Please ask the owner of the enterprise billing to create one for you.',
                           });
+                        } else if (['free', 'individual'].includes(currentPlan.type)) {
+                          // If user has a free or individual plan redirect them to the landing page
+                          window.main.openInBrowser(
+                            `${getAppWebsiteBaseURL()}/app/landing-page`,
+                          );
+                        } else {
+                          // If user has a team or enterprise plan redirect them to the create organization page
+                          window.main.openInBrowser(
+                            `${getAppWebsiteBaseURL()}/app/dashboard/organizations?create_org=true`,
+                          );
                         }
                       }
                     }}
@@ -763,7 +947,7 @@ const OrganizationRoute = () => {
                   <Button
                     data-testid="settings-button"
                     className="px-4 py-1 h-full flex items-center justify-center gap-2 aria-pressed:bg-[--hl-sm] text-[--color-font] text-xs hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all"
-                    onPress={showSettingsModal}
+                    onPress={() => showSettingsModal()}
                   >
                     <Icon icon="gear" /> Preferences
                   </Button>
@@ -820,40 +1004,70 @@ const OrganizationRoute = () => {
                     )}
                   </ProgressBar>
                 )}
-                <TooltipTrigger>
-                  <Button
-                    className="px-4 py-1 h-full flex items-center justify-center gap-2 aria-pressed:bg-[--hl-sm] text-[--color-font] text-xs hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all"
-                    onPress={() => {
-                      !user && navigate('/auth/login');
-                    }}
-                  >
-                    <Icon
-                      icon="circle"
-                      className={
-                        user
-                          ? status === 'online'
-                            ? 'text-[--color-success]'
-                            : 'text-[--color-danger]'
-                          : ''
-                      }
-                    />{' '}
-                    {user
-                      ? status.charAt(0).toUpperCase() + status.slice(1)
-                      : 'Log in to see your projects'}
-                  </Button>
-                  <Tooltip
-                    placement="top"
-                    offset={8}
-                    className="border flex items-center gap-2 select-none text-sm min-w-max border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] text-[--color-font] px-4 py-2 rounded-md overflow-y-auto max-h-[85vh] focus:outline-none"
-                  >
-                    {user
-                      ? `You are ${status === 'online'
-                        ? 'securely connected to Insomnia Cloud.'
-                        : 'offline. Connect to sync your data.'
-                      }`
-                      : 'Log in to Insomnia to sync your data.'}
-                  </Tooltip>
-                </TooltipTrigger>
+                {/* The sync indicator only show when network status is online */}
+                {/* use for show sync organization and projects status(1. first enter app 2. switch organization) */}
+                {status === 'online' && asyncTaskStatus !== 'idle' ? (
+                  <TooltipTrigger>
+                    <Button
+                      className="px-4 py-1 h-full flex items-center justify-center gap-1 aria-pressed:bg-[--hl-sm] text-[--color-font] text-xs hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all"
+                      onPress={() => {
+                        asyncTaskStatus === 'error' && syncOrgsAndProjects();
+                      }}
+                    >
+                      <Icon
+                        icon={asyncTaskStatus !== 'error' ? 'spinner' : 'circle'}
+                        className={`${asyncTaskStatus === 'error' ? 'text-[--color-danger]' : 'text-[--color-font]'} w-5 ${asyncTaskStatus !== 'error' ? 'animate-spin' : ''}`}
+                      />
+                      {asyncTaskStatus !== 'error' ? 'Syncing' : 'Sync error: click to retry'}
+                    </Button>
+                    <Tooltip
+                      placement="top"
+                      offset={8}
+                      className="border flex items-center gap-2 select-none text-sm min-w-max border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] text-[--color-font] px-4 py-2 rounded-md overflow-y-auto max-h-[85vh] focus:outline-none"
+                    >
+                      {asyncTaskStatus !== 'error' ? 'Syncing' : 'Sync error: click to retry'}
+                    </Tooltip>
+                  </TooltipTrigger>
+                ) : (
+                    <TooltipTrigger>
+                      <Button
+                        className="px-4 py-1 h-full flex items-center justify-center gap-1 aria-pressed:bg-[--hl-sm] text-[--color-font] text-xs hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all"
+                        onPress={() => {
+                          !user && navigate('/auth/login');
+                          if (settings.proxyEnabled) {
+                            showSettingsModal({
+                              tab: 'proxy',
+                            });
+                          }
+                        }}
+                      >
+                        <Icon
+                          icon="circle"
+                          className={
+                            user
+                              ? status === 'online'
+                                ? 'text-[--color-success]'
+                                : 'text-[--color-danger]'
+                              : ''
+                          }
+                        />{' '}
+                        {user
+                          ? status.charAt(0).toUpperCase() + status.slice(1)
+                          : 'Log in to see your projects'}
+                        {status === 'online' && settings.proxyEnabled ? ' via proxy' : ''}
+                      </Button>
+                      <Tooltip
+                        placement="top"
+                        offset={8}
+                        className="border flex items-center gap-2 select-none text-sm min-w-max border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] text-[--color-font] px-4 py-2 rounded-md overflow-y-auto max-h-[85vh] focus:outline-none"
+                      >
+                        {user
+                          ? status === 'online' ? 'You have connectivity to the Internet' + (settings.proxyEnabled ? ' via the configured proxy' : '') + '.'
+                            : 'You are offline. Connect to sync your data.'
+                          : 'Log in to Insomnia to unlock the full product experience.'}
+                      </Tooltip>
+                    </TooltipTrigger>
+                )}
                 <span className='w-[1px] h-full bg-[--hl-sm]' />
                 <Link>
                   <a

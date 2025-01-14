@@ -1,85 +1,54 @@
-import React, { FC, Fragment, useState } from 'react';
-import { Button, Heading, ToggleButton } from 'react-aria-components';
+import React, { type FC, Fragment, useState } from 'react';
+import { Button, Heading, Tab, TabList, TabPanel, Tabs, ToggleButton } from 'react-aria-components';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { useParams, useRouteLoaderData } from 'react-router-dom';
 import { useLocalStorage } from 'react-use';
-import styled from 'styled-components';
 
 import { getContentTypeFromHeaders } from '../../../common/constants';
 import * as models from '../../../models';
 import { queryAllWorkspaceUrls } from '../../../models/helpers/query-all-workspace-urls';
-import { getCombinedPathParametersFromUrl, RequestParameter } from '../../../models/request';
+import { getCombinedPathParametersFromUrl, type RequestParameter } from '../../../models/request';
 import type { Settings } from '../../../models/settings';
+import { getAuthObjectOrNull } from '../../../network/authentication';
 import { deconstructQueryStringToParams, extractQueryStringFromUrl } from '../../../utils/url/querystring';
 import { useRequestPatcher, useSettingsPatcher } from '../../hooks/use-request';
 import { useActiveRequestSyncVCSVersion, useGitVCSVersion } from '../../hooks/use-vcs-version';
-import { RequestLoaderData } from '../../routes/request';
-import { WorkspaceLoaderData } from '../../routes/workspace';
-import { PanelContainer, TabItem, Tabs } from '../base/tabs';
+import type { RequestLoaderData } from '../../routes/request';
+import type { WorkspaceLoaderData } from '../../routes/workspace';
 import { OneLineEditor } from '../codemirror/one-line-editor';
-import { AuthDropdown } from '../dropdowns/auth-dropdown';
-import { ContentTypeDropdown } from '../dropdowns/content-type-dropdown';
 import { AuthWrapper } from '../editors/auth/auth-wrapper';
 import { BodyEditor } from '../editors/body/body-editor';
-import { PreRequestScriptEditor } from '../editors/pre-request-script-editor';
-import { RequestHeadersEditor } from '../editors/request-headers-editor';
+import { readOnlyHttpPairs, RequestHeadersEditor } from '../editors/request-headers-editor';
 import { RequestParametersEditor } from '../editors/request-parameters-editor';
+import { RequestScriptEditor } from '../editors/request-script-editor';
 import { ErrorBoundary } from '../error-boundary';
 import { Icon } from '../icon';
-import { MarkdownPreview } from '../markdown-preview';
+import { MarkdownEditor } from '../markdown-editor';
 import { RequestSettingsModal } from '../modals/request-settings-modal';
 import { RenderedQueryString } from '../rendered-query-string';
 import { RequestUrlBar } from '../request-url-bar';
 import { Pane, PaneHeader } from './pane';
 import { PlaceholderRequestPane } from './placeholder-request-pane';
-const HeaderContainer = styled.div({
-  display: 'flex',
-  flexDirection: 'column',
-  position: 'relative',
-  height: '100%',
-  overflowY: 'auto',
-});
-
-export const TabPanelFooter = styled.div({
-  boxSizing: 'content-box',
-  display: 'flex',
-  flexDirection: 'row',
-  borderTop: '1px solid var(--hl-md)',
-  height: 'var(--line-height-sm)',
-  fontSize: 'var(--font-size-sm)',
-  '& > button': {
-    color: 'var(--hl)',
-    padding: 'var(--padding-xs) var(--padding-xs)',
-    height: '100%',
-  },
-});
-
-const TabPanelBody = styled.div({
-  overflowY: 'auto',
-  flex: '1 0',
-});
 
 interface Props {
   environmentId: string;
   settings: Settings;
-  setLoading: (l: boolean) => void;
   onPaste: (text: string) => void;
 }
 
 export const RequestPane: FC<Props> = ({
   environmentId,
   settings,
-  setLoading,
   onPaste,
 }) => {
   const { activeRequest, activeRequestMeta } = useRouteLoaderData('request/:requestId') as RequestLoaderData;
-  const { workspaceId, requestId } = useParams() as { organizationId: string; projectId: string; workspaceId: string; requestId: string };
+  const { workspaceId, requestId } = useParams() as { workspaceId: string; requestId: string };
+
   const patchSettings = useSettingsPatcher();
-  const [isRequestSettingsModalOpen, setIsRequestSettingsModalOpen] =
-    useState(false);
+  const [isRequestSettingsModalOpen, setIsRequestSettingsModalOpen] = useState(false);
   const patchRequest = useRequestPatcher();
 
   const [dismissPathParameterTip, setDismissPathParameterTip] = useLocalStorage('dismissPathParameterTip', '');
-
   const handleImportQueryFromUrl = () => {
     let query;
 
@@ -114,18 +83,21 @@ export const RequestPane: FC<Props> = ({
   if (!activeRequest) {
     return <PlaceholderRequestPane />;
   }
-  const pathParameters = getCombinedPathParametersFromUrl(activeRequest.url, activeRequest.pathParameters);
+  const pathParameters = getCombinedPathParametersFromUrl(activeRequest.url, activeRequest.pathParameters || []);
 
   const onPathParameterChange = (pathParameters: RequestParameter[]) => {
     patchRequest(requestId, { pathParameters });
   };
 
   const parametersCount = pathParameters.length + activeRequest.parameters.filter(p => !p.disabled).length;
-  const headersCount = activeRequest.headers.filter(h => !h.disabled).length;
+  const headersCount = activeRequest.headers.filter(h => !h.disabled).length + readOnlyHttpPairs.length;
   const urlHasQueryParameters = activeRequest.url.indexOf('?') >= 0;
   const contentType =
     getContentTypeFromHeaders(activeRequest.headers) ||
     activeRequest.body.mimeType;
+  const isBodyEmpty = Boolean(typeof activeRequest.body.mimeType !== 'string' && !activeRequest.body.text);
+  const requestAuth = getAuthObjectOrNull(activeRequest.authentication);
+  const isNoneOrInherited = requestAuth?.type === 'none' || requestAuth === null;
 
   return (
     <Pane type="request">
@@ -136,81 +108,142 @@ export const RequestPane: FC<Props> = ({
             uniquenessKey={uniqueKey}
             handleAutocompleteUrls={() => queryAllWorkspaceUrls(workspaceId, models.request.type, requestId)}
             nunjucksPowerUserMode={settings.nunjucksPowerUserMode}
-            setLoading={setLoading}
             onPaste={onPaste}
           />
         </ErrorBoundary>
       </PaneHeader>
-      <Tabs aria-label="Request pane tabs">
-        <TabItem
-          key="query"
-          title={
-            <div className='flex items-center gap-2'>
-              Parameters
-              {parametersCount > 0 && (
-                <span className="p-2 aspect-square flex items-center color-inherit justify-between border-solid border border-[--hl-md] overflow-hidden rounded-lg text-xs shadow-small">{parametersCount}</span>
-              )}
-            </div>
-          }
-        >
-          <div className='h-full flex flex-col'>
-            <div className="p-4">
-              <div className="text-xs max-h-32 flex flex-col overflow-y-auto min-h-[2em] bg-[--hl-xs] px-2 py-1 border border-solid border-[--hl-sm]">
-                <label className="label--small no-pad-top">Url Preview</label>
-                <ErrorBoundary
-                  key={uniqueKey}
-                  errorClassName="tall wide vertically-align font-error pad text-center"
-                >
-                  <RenderedQueryString request={activeRequest} />
-                </ErrorBoundary>
-              </div>
-            </div>
-            <div className="grid flex-1 [grid-template-rows:minmax(auto,min-content)] [grid-template-columns:100%] overflow-hidden">
-              <div className="min-h-[2rem] max-h-full flex flex-col overflow-y-auto [&_.key-value-editor]:p-0 flex-1">
-                <div className='flex items-center w-full p-4 h-4 justify-between'>
-                <Heading className='text-xs font-bold uppercase text-[--hl]'>Query parameters</Heading>
-                <div className='flex items-center gap-2'>
-                  <Button
-                    isDisabled={!urlHasQueryParameters}
-                    onPress={handleImportQueryFromUrl}
-                    className="w-[14ch] flex flex-shrink-0 gap-2 items-center justify-start px-2 py-1 h-full aria-pressed:bg-[--hl-sm] aria-selected:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm"
-                  >
-                    Import from URL
-                  </Button>
-                  <ToggleButton
-                    onChange={isSelected => {
-                      patchSettings({
-                        useBulkParametersEditor: isSelected,
-                      });
-                    }}
-                    isSelected={settings.useBulkParametersEditor}
-                    className="w-[14ch] flex flex-shrink-0 gap-2 items-center justify-start px-2 py-1 h-full rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm"
-                  >
-                    {({ isSelected }) => (
-                      <Fragment>
-                        <Icon icon={isSelected ? 'toggle-on' : 'toggle-off'} className={`${isSelected ? 'text-[--color-success]' : ''}`} />
-                        <span>{
-                          isSelected ? 'Regular Edit' : 'Bulk Edit'
-                        }</span>
-                      </Fragment>
-                    )}
-                  </ToggleButton>
-                </div>
-              </div>
+      <Tabs aria-label='Request pane tabs' className="flex-1 w-full h-full flex flex-col">
+        <TabList className='scrollbar-thin w-full flex-shrink-0  overflow-x-auto border-solid scro border-b border-b-[--hl-md] bg-[--color-bg] flex items-center h-[--line-height-sm]' aria-label='Request pane tabs'>
+          <Tab
+            className='flex-shrink-0 h-full flex items-center justify-between cursor-pointer gap-2 outline-none select-none px-3 py-1 text-[--hl] aria-selected:text-[--color-font]  hover:bg-[--hl-sm] hover:text-[--color-font] aria-selected:bg-[--hl-xs] aria-selected:focus:bg-[--hl-sm] aria-selected:hover:bg-[--hl-sm] focus:bg-[--hl-sm] transition-colors duration-300'
+            id='params'
+          >
+            <span>Params</span>
+            {parametersCount > 0 && (
+              <span className='p-1 min-w-6 h-6 flex items-center justify-center text-xs rounded-lg border border-solid border-[--hl]'>
+                {parametersCount}
+              </span>
+            )}
+          </Tab>
+          <Tab
+            className='flex-shrink-0 h-full flex items-center justify-between cursor-pointer gap-2 outline-none select-none px-3 py-1 text-[--hl] aria-selected:text-[--color-font]  hover:bg-[--hl-sm] hover:text-[--color-font] aria-selected:bg-[--hl-xs] aria-selected:focus:bg-[--hl-sm] aria-selected:hover:bg-[--hl-sm] focus:bg-[--hl-sm] transition-colors duration-300'
+            id='content-type'
+          >
+            <span>Body</span>
+            {!isBodyEmpty && (
+              <span className='p-1 min-w-6 h-6 flex items-center justify-center text-xs rounded-lg border border-solid border-[--hl]'>
+                <span className='w-2 h-2 bg-green-500 rounded-full' />
+              </span>
+            )}
+          </Tab>
+          <Tab
+            className='flex-shrink-0 h-full flex items-center justify-between cursor-pointer gap-2 outline-none select-none px-3 py-1 text-[--hl] aria-selected:text-[--color-font]  hover:bg-[--hl-sm] hover:text-[--color-font] aria-selected:bg-[--hl-xs] aria-selected:focus:bg-[--hl-sm] aria-selected:hover:bg-[--hl-sm] focus:bg-[--hl-sm] transition-colors duration-300'
+            id='auth'
+          >
+            <span>Auth</span>
+
+            {!isNoneOrInherited && (
+              <span className='p-1 min-w-6 h-6 flex items-center justify-center text-xs rounded-lg border border-solid border-[--hl]'>
+                <span className='w-2 h-2 bg-green-500 rounded-full' />
+              </span>
+            )}
+          </Tab>
+          <Tab
+            className='flex-shrink-0 h-full flex items-center justify-between cursor-pointer gap-2 outline-none select-none px-3 py-1 text-[--hl] aria-selected:text-[--color-font]  hover:bg-[--hl-sm] hover:text-[--color-font] aria-selected:bg-[--hl-xs] aria-selected:focus:bg-[--hl-sm] aria-selected:hover:bg-[--hl-sm] focus:bg-[--hl-sm] transition-colors duration-300'
+            id='headers'
+          >
+            <span>Headers</span>
+            {headersCount > 0 && (
+              <span className='p-1 min-w-6 h-6 flex items-center justify-center text-xs rounded-lg border border-solid border-[--hl]'>
+                {headersCount}
+              </span>
+            )}
+          </Tab>
+          <Tab
+            className='flex-shrink-0 h-full flex items-center justify-between cursor-pointer gap-2 outline-none select-none px-3 py-1 text-[--hl] aria-selected:text-[--color-font]  hover:bg-[--hl-sm] hover:text-[--color-font] aria-selected:bg-[--hl-xs] aria-selected:focus:bg-[--hl-sm] aria-selected:hover:bg-[--hl-sm] focus:bg-[--hl-sm] transition-colors duration-300'
+            id='scripts'
+          >
+            <span>Scripts</span>
+            {Boolean(activeRequest.preRequestScript || activeRequest.afterResponseScript) && (
+              <span className='p-1 min-w-6 h-6 flex items-center justify-center text-xs rounded-lg border border-solid border-[--hl]'>
+                <span className='w-2 h-2 bg-green-500 rounded-full' />
+              </span>
+            )}
+          </Tab>
+          <Tab
+            className='flex-shrink-0 h-full flex items-center justify-between cursor-pointer gap-2 outline-none select-none px-3 py-1 text-[--hl] aria-selected:text-[--color-font]  hover:bg-[--hl-sm] hover:text-[--color-font] aria-selected:bg-[--hl-xs] aria-selected:focus:bg-[--hl-sm] aria-selected:hover:bg-[--hl-sm] focus:bg-[--hl-sm] transition-colors duration-300'
+            id='docs'
+          >
+            <span>Docs</span>
+            {activeRequest.description && (
+              <span className='p-1 min-w-6 h-6 flex items-center justify-center text-xs rounded-lg border border-solid border-[--hl]'>
+                <span className='w-2 h-2 bg-green-500 rounded-full' />
+              </span>
+            )}
+          </Tab>
+        </TabList>
+        <TabPanel className='w-full flex-1 flex flex-col h-full overflow-y-auto' id='params'>
+          <div className="p-4 flex-shrink-0">
+            <div className="text-xs max-h-32 flex flex-col overflow-y-auto min-h-[2em] bg-[--hl-xs] px-2 py-1 border border-solid border-[--hl-sm]">
+              <label className="label--small no-pad-top">Url Preview</label>
               <ErrorBoundary
                 key={uniqueKey}
                 errorClassName="tall wide vertically-align font-error pad text-center"
               >
-                <RequestParametersEditor
-                  key={contentType}
-                  bulk={settings.useBulkParametersEditor}
-                />
+                <RenderedQueryString request={activeRequest} />
               </ErrorBoundary>
             </div>
-              <div className='flex-1 flex flex-col gap-4 p-4 overflow-y-auto'>
-              <Heading className='text-xs font-bold uppercase text-[--hl]'>Path parameters</Heading>
+          </div>
+          <PanelGroup className='flex-1 overflow-hidden' direction={'vertical'}>
+            <Panel minSize={20}>
+              <div className='h-full flex flex-col'>
+                <div className='flex items-center w-full p-4 h-4 justify-between'>
+                  <Heading className='text-xs font-bold uppercase text-[--hl]'>Query parameters</Heading>
+                  <div className='flex items-center gap-2'>
+                    <Button
+                      isDisabled={!urlHasQueryParameters}
+                      onPress={handleImportQueryFromUrl}
+                      className="w-[14ch] flex flex-shrink-0 gap-2 items-center justify-start px-2 py-1 h-full asma-pressed:bg-[--hl-sm] aria-selected:bg-[--hl-xs] aria-selected:focus:bg-[--hl-sm] aria-selected:hover:bg-[--hl-sm] focus:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-colors text-sm"
+                    >
+                      Import from URL
+                    </Button>
+                    <ToggleButton
+                      onChange={isSelected => {
+                        patchSettings({
+                          useBulkParametersEditor: isSelected,
+                        });
+                      }}
+                      isSelected={settings.useBulkParametersEditor}
+                      className="w-[14ch] flex flex-shrink-0 gap-2 items-center justify-start px-2 py-1 h-full rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-colors text-sm"
+                    >
+                      {({ isSelected }) => (
+                        <Fragment>
+                          <Icon icon={isSelected ? 'toggle-on' : 'toggle-off'} className={`${isSelected ? 'text-[--color-success]' : ''}`} />
+                          <span>{
+                            isSelected ? 'Regular Edit' : 'Bulk Edit'
+                          }</span>
+                        </Fragment>
+                      )}
+                    </ToggleButton>
+                  </div>
+                </div>
+                <ErrorBoundary
+                  key={uniqueKey}
+                  errorClassName="tall wide vertically-align font-error pad text-center"
+                >
+                  <RequestParametersEditor
+                    key={contentType}
+                    bulk={settings.useBulkParametersEditor}
+                  />
+                </ErrorBoundary>
+              </div>
+            </Panel>
+            <PanelResizeHandle className='w-full h-[1px] bg-[--hl-md]' />
+            <Panel minSize={20}>
+              <div className='h-full flex flex-col'>
+                <Heading className='text-xs font-bold uppercase text-[--hl] p-4'>Path parameters</Heading>
                 {pathParameters.length > 0 && (
-                  <div className="pr-[72.73px] w-full">
+                  <div className="pr-[72.73px] w-full overflow-y-auto pl-4">
                     <div className='grid gap-x-[20.8px] grid-cols-2 flex-shrink-0 w-full rounded-sm overflow-hidden'>
                       {pathParameters.map(pathParameter => (
                         <Fragment key={pathParameter.name}>
@@ -246,144 +279,119 @@ export const RequestPane: FC<Props> = ({
                   </div>
                 )}
               </div>
-            </div>
-          </div>
-        </TabItem>
-        <TabItem key="content-type" title={<ContentTypeDropdown />}>
+            </Panel>
+          </PanelGroup>
+        </TabPanel>
+        <TabPanel className='w-full flex-1 flex flex-col' id='content-type'>
           <BodyEditor
             key={uniqueKey}
             request={activeRequest}
             environmentId={environmentId}
           />
-        </TabItem>
-        <TabItem key="auth" title={<AuthDropdown />}>
+        </TabPanel>
+        <TabPanel className='w-full flex-1 flex flex-col overflow-hidden' id='auth'>
           <ErrorBoundary
             key={uniqueKey}
             errorClassName="font-error pad text-center"
           >
-            <AuthWrapper />
+            <AuthWrapper authentication={activeRequest.authentication} />
           </ErrorBoundary>
-        </TabItem>
-        <TabItem
-          key="headers"
-          title={
-            <div className='flex items-center gap-2'>
-              Headers{' '}
-              {headersCount > 0 && (
-                <span className="p-2 aspect-square flex items-center color-inherit justify-between border-solid border border-[--hl-md] overflow-hidden rounded-lg text-xs shadow-small">{headersCount}</span>
-              )}
-            </div>
-          }
-        >
-          <HeaderContainer>
-            <ErrorBoundary
-              key={uniqueKey}
-              errorClassName="font-error pad text-center"
-            >
-              <TabPanelBody>
-                <RequestHeadersEditor bulk={settings.useBulkHeaderEditor} />
-              </TabPanelBody>
-            </ErrorBoundary>
-
-            <TabPanelFooter>
-              <button
-                className="btn btn--compact"
-                onClick={() =>
-                  patchSettings({
-                    useBulkHeaderEditor: !settings.useBulkHeaderEditor,
-                  })
-                }
-              >
-                {settings.useBulkHeaderEditor ? 'Regular Edit' : 'Bulk Edit'}
-              </button>
-            </TabPanelFooter>
-          </HeaderContainer>
-        </TabItem>
-        <TabItem
-          key="pre-request-script"
-          data-testid="pre-request-script-tab"
-          title={
-            <div className='flex items-center gap-2'>
-              Pre-request Script{' '}
-              {activeRequest.preRequestScript && (
-                <span className="ml-2 p-2 border-solid border border-[--hl-md] rounded-lg">
-                  <span className="flex w-2 h-2 bg-green-500 rounded-full" />
-                </span>
-              )}
-            </div>
-          }
-          aria-label={'experimental'}
-        >
+        </TabPanel>
+        <TabPanel className='w-full flex-1 flex flex-col relative overflow-hidden' id='headers'>
           <ErrorBoundary
             key={uniqueKey}
-            errorClassName="tall wide vertically-align font-error pad text-center"
+            errorClassName="font-error pad text-center"
           >
-            <PreRequestScriptEditor
-              uniquenessKey={uniqueKey}
-              defaultValue={activeRequest.preRequestScript || ''}
-              onChange={preRequestScript => patchRequest(requestId, { preRequestScript })}
-              settings={settings}
-            />
+            <div className='overflow-y-auto flex-1 flex-shrink-0'>
+              <RequestHeadersEditor
+                bulk={settings.useBulkHeaderEditor}
+                headers={activeRequest.headers}
+                requestType="Request"
+              />
+            </div>
           </ErrorBoundary>
-        </TabItem>
-        <TabItem
-          key="docs"
-          title={
-            <>
-              Docs
-              {activeRequest.description && (
-                <span className="ml-2 p-2 border-solid border border-[--hl-md] rounded-lg">
-                  <span className="flex w-2 h-2 bg-green-500 rounded-full" />
-                </span>
-              )}
-            </>
-          }
-        >
-          <PanelContainer className="tall">
-            {activeRequest.description ? (
-              <div>
-                <div className="pull-right pad bg-default">
-                  <button
-                    className="btn btn--clicky"
-                    onClick={() => setIsRequestSettingsModalOpen(true)}
-                  >
-                    Edit
-                  </button>
+
+          <div className="flex flex-row border-solid border-t border-[var(--hl-md)] h-[var(--line-height-sm)] text-[var(--font-size-sm)] box-border">
+            <Button
+              className="px-4 py-1 h-full flex items-center justify-center gap-2 aria-pressed:bg-[--hl-sm] text-[--color-font] text-xs hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-colors"
+              onPress={() =>
+                patchSettings({
+                  useBulkHeaderEditor: !settings.useBulkHeaderEditor,
+                })
+              }
+            >
+              {settings.useBulkHeaderEditor ? 'Regular Edit' : 'Bulk Edit'}
+            </Button>
+          </div>
+        </TabPanel>
+        <TabPanel className='w-full flex-1' id='scripts'>
+          <Tabs className="w-full h-full flex flex-col overflow-hidden">
+            <TabList className="w-full flex-shrink-0 overflow-x-auto border-solid border-b border-b-[--hl-md] px-2 bg-[--color-bg] flex items-center gap-2 h-[--line-height-sm]" aria-label="Request scripts tabs">
+              <Tab
+                className="rounded-md flex-shrink-0 h-[--line-height-xxs] text-sm flex items-center justify-between cursor-pointer w-[10.5rem] outline-none select-none px-2 py-1 hover:bg-[rgba(var(--color-surprise-rgb),50%)] text-[--hl] aria-selected:text-[--color-font-surprise] hover:text-[--color-font-surprise] aria-selected:bg-[rgba(var(--color-surprise-rgb),40%)] transition-colors duration-300"
+                id="pre-request"
+              >
+                <div className='flex flex-1 items-center gap-2'>
+                  <Icon icon="arrow-right-to-bracket" />
+                  <span>Pre-request</span>
                 </div>
-                <div className="pad">
-                  <ErrorBoundary errorClassName="font-error pad text-center">
-                    <MarkdownPreview
-                      heading={activeRequest.name}
-                      markdown={activeRequest.description}
-                    />
-                  </ErrorBoundary>
-                </div>
-              </div>
-            ) : (
-              <div className="overflow-hidden editor vertically-center text-center">
-                <p className="pad text-sm text-center">
-                  <span className="super-faint">
-                    <i
-                      className="fa fa-file-text-o"
-                      style={{
-                        fontSize: '8rem',
-                        opacity: 0.3,
-                      }}
-                    />
+                {Boolean(activeRequest.preRequestScript) && (
+                  <span className="p-2 rounded-lg">
+                    <span className="flex w-2 h-2 bg-green-500 rounded-full" />
                   </span>
-                  <br />
-                  <br />
-                  <button
-                    className="btn btn--clicky faint"
-                    onClick={() => setIsRequestSettingsModalOpen(true)}
-                  >
-                    Add Description
-                  </button>
-                </p>
-              </div>
-            )}
-          </PanelContainer>
-        </TabItem>
+                )}
+              </Tab>
+              <Tab
+                className="rounded-md flex-shrink-0 h-[--line-height-xxs] text-sm flex items-center justify-between cursor-pointer w-[10.5rem] outline-none select-none px-2 py-1 hover:bg-[rgba(var(--color-surprise-rgb),50%)] text-[--hl] aria-selected:text-[--color-font-surprise] hover:text-[--color-font-surprise] aria-selected:bg-[rgba(var(--color-surprise-rgb),40%)] transition-colors duration-300"
+                id="after-response"
+              >
+                <div className='flex flex-1 items-center gap-2'>
+                  <Icon icon="arrow-right-from-bracket" />
+                  <span>After-response</span>
+                </div>
+                {Boolean(activeRequest.afterResponseScript) && (
+                  <span className="p-2 rounded-lg">
+                    <span className="flex w-2 h-2 bg-green-500 rounded-full" />
+                  </span>
+                )}
+              </Tab>
+            </TabList>
+            <TabPanel className="w-full flex-1" id='pre-request'>
+              <ErrorBoundary
+                key={uniqueKey}
+                errorClassName="tall wide vertically-align font-error pad text-center"
+              >
+                <RequestScriptEditor
+                  uniquenessKey={`${activeRequest._id}:pre-request-script`}
+                  defaultValue={activeRequest.preRequestScript || ''}
+                  onChange={preRequestScript => patchRequest(requestId, { preRequestScript })}
+                  settings={settings}
+                />
+              </ErrorBoundary>
+            </TabPanel>
+            <TabPanel className="w-full flex-1" id="after-response">
+              <ErrorBoundary
+                key={uniqueKey}
+                errorClassName="tall wide vertically-align font-error pad text-center"
+              >
+                <RequestScriptEditor
+                  uniquenessKey={`${activeRequest._id}:after-response-script`}
+                  defaultValue={activeRequest.afterResponseScript || ''}
+                  onChange={afterResponseScript => patchRequest(requestId, { afterResponseScript })}
+                  settings={settings}
+                />
+              </ErrorBoundary>
+            </TabPanel>
+          </Tabs>
+        </TabPanel>
+        <TabPanel className='w-full flex-1 overflow-y-auto' id='docs'>
+          <MarkdownEditor
+            key={uniqueKey}
+            placeholder="Write a description"
+            defaultValue={activeRequest.description}
+            onChange={(description: string) => patchRequest(requestId, { description })}
+          />
+        </TabPanel>
       </Tabs>
       {isRequestSettingsModalOpen && (
         <RequestSettingsModal

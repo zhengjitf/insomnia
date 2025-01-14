@@ -1,22 +1,22 @@
-import React, { FC, Fragment, useCallback, useState } from 'react';
+import React, { type FC, Fragment, useCallback, useState } from 'react';
 import { Button, Dialog, Heading, Modal, ModalOverlay } from 'react-aria-components';
 import { useFetcher, useParams } from 'react-router-dom';
 
 import { parseApiSpec } from '../../../common/api-specs';
 import { getProductName } from '../../../common/constants';
-import { exportMockServerToFile } from '../../../common/export';
+import { exportGlobalEnvironmentToFile, exportMockServerToFile } from '../../../common/export';
 import { getWorkspaceLabel } from '../../../common/get-workspace-label';
 import { RENDER_PURPOSE_NO_RENDER } from '../../../common/render';
 import type { ApiSpec } from '../../../models/api-spec';
-import { MockServer } from '../../../models/mock-server';
-import { isRemoteProject, Project } from '../../../models/project';
+import type { MockServer } from '../../../models/mock-server';
+import { isRemoteProject, type Project } from '../../../models/project';
 import type { Workspace } from '../../../models/workspace';
 import { WorkspaceScopeKeys } from '../../../models/workspace';
 import type { DocumentAction } from '../../../plugins';
 import { getDocumentActions } from '../../../plugins';
 import * as pluginContexts from '../../../plugins/context';
 import { useLoadingRecord } from '../../hooks/use-loading-record';
-import { Dropdown, DropdownButton, DropdownItem, DropdownSection, ItemContent } from '../base/dropdown';
+import { Dropdown, DropdownItem, DropdownSection, ItemContent } from '../base/dropdown';
 import { Icon } from '../icon';
 import { showError, showPrompt } from '../modals';
 import { ExportRequestsModal } from '../modals/export-requests-modal';
@@ -82,7 +82,7 @@ const useDocumentActionPlugins = ({ workspace, apiSpec, project }: Props) => {
 };
 
 export const WorkspaceCardDropdown: FC<Props> = props => {
-  const { workspace, mockServer, project, projects } = props;
+  const { workspace, mockServer, project } = props;
   const fetcher = useFetcher();
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -105,14 +105,14 @@ export const WorkspaceCardDropdown: FC<Props> = props => {
         aria-label='Workspace Actions Dropdown'
         onOpen={refresh}
         triggerButton={
-          <DropdownButton aria-label='Workspace actions menu button' className="px-4 py-1 flex flex-1 items-center justify-center gap-2 aria-pressed:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm">
+          <Button aria-label='Workspace actions menu button' className="px-4 py-1 flex flex-1 items-center justify-center gap-2 aria-pressed:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm">
             <SvgIcon icon="ellipsis" />
-          </DropdownButton>
+          </Button>
         }
       >
-        <DropdownItem aria-label='Duplicate'>
+        <DropdownItem aria-label='Duplicate / Move'>
           <ItemContent
-            label="Duplicate"
+            label="Duplicate / Move"
             icon="copy"
             onClick={() => setIsDuplicateModalOpen(true)}
           />
@@ -153,9 +153,15 @@ export const WorkspaceCardDropdown: FC<Props> = props => {
             <ItemContent
               label="Export"
               icon="file-export"
-              onClick={() => workspace.scope !== 'mock-server'
-                ? setIsExportModalOpen(true)
-                : exportMockServerToFile(workspace)}
+              onClick={() => {
+                if (workspace.scope === 'mock-server') {
+                  return exportMockServerToFile(workspace);
+                }
+                if (workspace.scope === 'environment') {
+                  return exportGlobalEnvironmentToFile(workspace);
+                }
+                return setIsExportModalOpen(true);
+              }}
             />
           </DropdownItem>
           <DropdownItem aria-label='Settings'>
@@ -185,7 +191,6 @@ export const WorkspaceCardDropdown: FC<Props> = props => {
         <WorkspaceDuplicateModal
           onHide={() => setIsDuplicateModalOpen(false)}
           workspace={workspace}
-          projects={projects}
         />
       )}
       {isImportModalOpen && (
@@ -201,7 +206,7 @@ export const WorkspaceCardDropdown: FC<Props> = props => {
       )}
       {isExportModalOpen && (
         <ExportRequestsModal
-          workspace={workspace}
+          workspaceIdToExport={workspace._id}
           onClose={() => setIsExportModalOpen(false)}
         />
       )}

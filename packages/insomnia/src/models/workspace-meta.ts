@@ -10,6 +10,7 @@ export const canSync = false;
 export interface BaseWorkspaceMeta {
   activeActivity: string | null;
   activeEnvironmentId: string | null;
+  activeGlobalEnvironmentId: string | null;
   activeRequestId: string | null;
   activeUnitTestSuiteId: string | null;
   cachedGitLastAuthor: string | null;
@@ -18,6 +19,8 @@ export interface BaseWorkspaceMeta {
   gitRepositoryId: string | null;
   parentId: string | null;
   pushSnapshotOnInitialize: boolean;
+  hasUncommittedChanges: boolean;
+  hasUnpushedChanges: boolean;
 }
 
 export type WorkspaceMeta = BaseWorkspaceMeta & BaseModel;
@@ -30,6 +33,7 @@ export function init(): BaseWorkspaceMeta {
   return {
     activeActivity: null,
     activeEnvironmentId: null,
+    activeGlobalEnvironmentId: null,
     activeRequestId: null,
     activeUnitTestSuiteId: null,
     cachedGitLastAuthor: null,
@@ -38,6 +42,8 @@ export function init(): BaseWorkspaceMeta {
     gitRepositoryId: null,
     parentId: null,
     pushSnapshotOnInitialize: false,
+    hasUncommittedChanges: false,
+    hasUnpushedChanges: false,
   };
 }
 
@@ -68,7 +74,6 @@ export async function getByParentId(parentId: string) {
 }
 
 export async function getByGitRepositoryId(gitRepositoryId: string) {
-  // @ts-expect-error -- TSCONVERSION needs generic for query
   return db.getWhere<WorkspaceMeta>(type, { gitRepositoryId });
 }
 

@@ -1,11 +1,8 @@
 import { CurlHttpVersion, CurlNetrc } from '@getinsomnia/node-libcurl';
-import { beforeEach, describe, expect, it } from '@jest/globals';
-import electron from 'electron';
 import fs from 'fs';
 import { join as pathJoin, resolve as pathResolve } from 'path';
+import { beforeEach, describe, expect, it } from 'vitest';
 
-import { version } from '../../../package.json';
-import { globalBeforeEach } from '../../__jest__/before-each';
 import {
   AUTH_AWS_IAM,
   AUTH_BASIC,
@@ -24,13 +21,10 @@ import * as models from '../../models';
 import * as networkUtils from '../network';
 import { getSetCookiesFromResponseHeaders } from '../network';
 
-window.app = electron.app;
-
 const getRenderedRequest = async (args: Parameters<typeof getRenderedRequestAndContext>[0]) => (await getRenderedRequestAndContext(args)).request;
 
 describe('sendCurlAndWriteTimeline()', () => {
   beforeEach(async () => {
-    await globalBeforeEach();
     await models.project.all();
   });
 
@@ -140,7 +134,7 @@ describe('sendCurlAndWriteTimeline()', () => {
         PROXY: '',
         TIMEOUT_MS: 30000,
         URL: 'http://localhost/?foo%20bar=hello%26world',
-        USERAGENT: `insomnia/${version}`,
+        USERAGENT: '',
         VERBOSE: true,
         SSL_OPTIONS: 'NativeCa',
       },
@@ -213,7 +207,7 @@ describe('sendCurlAndWriteTimeline()', () => {
         PROXY: '',
         TIMEOUT_MS: 30000,
         URL: 'http://localhost/',
-        USERAGENT: `insomnia/${version}`,
+        USERAGENT: '',
         VERBOSE: true,
         SSL_OPTIONS: 'NativeCa',
      },
@@ -317,7 +311,7 @@ describe('sendCurlAndWriteTimeline()', () => {
         PROXY: '',
         TIMEOUT_MS: 30000,
         URL: 'http://localhost/?foo%20bar=hello%26world',
-        USERAGENT: `insomnia/${version}`,
+        USERAGENT: '',
         VERBOSE: true,
         SSL_OPTIONS: 'NativeCa',
       },
@@ -384,7 +378,7 @@ describe('sendCurlAndWriteTimeline()', () => {
         TIMEOUT_MS: 30000,
         UPLOAD: 1,
         URL: 'http://localhost/',
-        USERAGENT: `insomnia/${version}`,
+        USERAGENT: '',
         VERBOSE: true,
         SSL_OPTIONS: 'NativeCa',
       },
@@ -480,7 +474,7 @@ describe('sendCurlAndWriteTimeline()', () => {
         TIMEOUT_MS: 30000,
         URL: 'http://localhost/',
         UPLOAD: 1,
-        USERAGENT: `insomnia/${version}`,
+        USERAGENT: '',
         VERBOSE: true,
         SSL_OPTIONS: 'NativeCa',
       },
@@ -524,7 +518,7 @@ describe('sendCurlAndWriteTimeline()', () => {
         TIMEOUT_MS: 30000,
         URL: 'http://my/path',
         UNIX_SOCKET_PATH: '/my/socket',
-        USERAGENT: `insomnia/${version}`,
+        USERAGENT: '',
         VERBOSE: true,
         SSL_OPTIONS: 'NativeCa',
       },
@@ -567,7 +561,7 @@ describe('sendCurlAndWriteTimeline()', () => {
         PROXY: '',
         TIMEOUT_MS: 30000,
         URL: 'http://localhost:3000/foo/bar',
-        USERAGENT: `insomnia/${version}`,
+        USERAGENT: '',
         VERBOSE: true,
         SSL_OPTIONS: 'NativeCa',
       },
@@ -610,7 +604,7 @@ describe('sendCurlAndWriteTimeline()', () => {
         PROXY: '',
         TIMEOUT_MS: 30000,
         URL: 'http://unix:3000/my/path',
-        USERAGENT: `insomnia/${version}`,
+        USERAGENT: '',
         VERBOSE: true,
         SSL_OPTIONS: 'NativeCa',
       },
@@ -655,7 +649,7 @@ describe('sendCurlAndWriteTimeline()', () => {
         TIMEOUT_MS: 30000,
         NETRC: CurlNetrc.Required,
         URL: '',
-        USERAGENT: `insomnia/${version}`,
+        USERAGENT: '',
         VERBOSE: true,
         SSL_OPTIONS: 'NativeCa',
       },
@@ -774,7 +768,7 @@ describe('sendCurlAndWriteTimeline()', () => {
         SSL_VERIFYPEER: 0, // should disable SSL
         TIMEOUT_MS: 30000,
         URL: 'http://localhost/?foo%20bar=hello%26world',
-        USERAGENT: `insomnia/${version}`,
+        USERAGENT: '',
         VERBOSE: true,
         SSL_OPTIONS: 'NativeCa',
       },
@@ -794,7 +788,8 @@ describe('sendCurlAndWriteTimeline()', () => {
       preferredHttpVersion: HttpVersions.V1_0,
     },
       '/tmp/res_id',
-      'res_id');
+      'res_id'
+    );
     expect(JSON.parse(String(models.response.getBodyBuffer(responseV1))).options.HTTP_VERSION).toBe('V1_0');
     expect(getHttpVersion(HttpVersions.V1_0).curlHttpVersion).toBe(CurlHttpVersion.V1_0);
     expect(getHttpVersion(HttpVersions.V1_1).curlHttpVersion).toBe(CurlHttpVersion.V1_1);
@@ -807,8 +802,6 @@ describe('sendCurlAndWriteTimeline()', () => {
 });
 
 describe('_getAwsAuthHeaders', () => {
-  beforeEach(globalBeforeEach);
-
   it('should generate expected headers', () => {
     const authentication = {
       type: AUTH_AWS_IAM,

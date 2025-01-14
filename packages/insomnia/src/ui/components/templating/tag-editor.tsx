@@ -1,34 +1,39 @@
 import classnames from 'classnames';
 import clone from 'clone';
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import React, { type FC, useCallback, useEffect, useState } from 'react';
+import { Button } from 'react-aria-components';
 import { useMount } from 'react-use';
 
 import { database as db } from '../../../common/database';
+import { docsAfterResponseScript } from '../../../common/documentation';
 import { delay, fnOrString } from '../../../common/misc';
 import { metaSortKeySort } from '../../../common/sorting';
 import * as models from '../../../models';
 import type { BaseModel } from '../../../models/index';
-import { isRequest, Request } from '../../../models/request';
-import { isRequestGroup, RequestGroup } from '../../../models/request-group';
+import { isRequest, type Request } from '../../../models/request';
+import { isRequestGroup, type RequestGroup } from '../../../models/request-group';
 import type { Workspace } from '../../../models/workspace';
 import * as plugins from '../../../plugins';
 import * as pluginContexts from '../../../plugins/context';
 import * as templating from '../../../templating';
-import type {
-  NunjucksParsedTag,
-  NunjucksParsedTagArg,
+import {
+  type NunjucksParsedTag,
+  type NunjucksParsedTagArg,
+  sanitizeStrForWin32,
 } from '../../../templating/utils';
 import * as templateUtils from '../../../templating/utils';
 import { useNunjucks } from '../../context/nunjucks/use-nunjucks';
-import { Dropdown, DropdownButton, DropdownItem, DropdownSection, ItemContent } from '../base/dropdown';
+import { Dropdown, DropdownItem, DropdownSection, ItemContent } from '../base/dropdown';
 import { FileInputButton } from '../base/file-input-button';
 import { HelpTooltip } from '../help-tooltip';
+import { Icon } from '../icon';
 import { localTemplateTags } from './local-template-tags';
 
 interface Props {
   defaultValue: string;
   onChange: (...args: any[]) => any;
   workspace: Workspace;
+  editorId?: string;
 }
 
 interface State {
@@ -100,7 +105,7 @@ export const TagEditor: FC<Props> = props => {
     // Fix strings: arg.value expects an escaped value (based on updateArg logic)
     for (const arg of activeTagData.args) {
       if (typeof arg.value === 'string') {
-        arg.value = arg.value.replace(/\\/g, '\\\\');
+        arg.value = sanitizeStrForWin32(arg.value);
       }
     }
     await Promise.all([
@@ -133,7 +138,7 @@ export const TagEditor: FC<Props> = props => {
     }
     // Fix strings
     if (typeof argValue === 'string') {
-      argValue = argValue.replace(/\\/g, '\\\\');
+      argValue = sanitizeStrForWin32(argValue);
     }
     // Ensure all arguments exist
     const defaultArgs = templateUtils.tokenizeTag(templateUtils.getDefaultFill(
@@ -180,7 +185,6 @@ export const TagEditor: FC<Props> = props => {
     if (event.currentTarget.type === 'number') {
       return updateArg(parseFloat(event.currentTarget.value), argIndex);
     } else if (event.currentTarget.type === 'checkbox') {
-      // @ts-expect-error -- TSCONVERSION .checked doesn't exist on HTMLSelectElement
       return updateArg(event.currentTarget.checked, argIndex);
     } else {
       return updateArg(event.currentTarget.value, argIndex);
@@ -295,6 +299,12 @@ export const TagEditor: FC<Props> = props => {
             <option value="custom">-- Custom --</option>
           </select>
         </label>
+        {/* Warning message when user uses response tag in environment variable and suggest to user after-response script INS-4243 */}
+        {activeTagDefinition?.name === 'response' && props.editorId?.includes('environment') &&
+          <p className='text-sm warning mt-2'>
+            <Icon icon="exclamation-circle" /><a href={docsAfterResponseScript}> We suggest to save your response into an environment variable using after-response script.</a>
+          </p>
+        }
       </div>
       {activeTagDefinition?.args.map((argDefinition: NunjucksParsedTagArg, index) => {
         // Decide whether or not to show it
@@ -333,7 +343,7 @@ export const TagEditor: FC<Props> = props => {
             const encoding = argDefinition.encoding || 'utf8';
             argInput = (<input
               type="text"
-              defaultValue={strValue.replace(/\\\\/g, '\\') || ''}
+              defaultValue={sanitizeStrForWin32(strValue)}
               placeholder={placeholder}
               onChange={handleChange}
               data-encoding={encoding}
@@ -356,7 +366,7 @@ export const TagEditor: FC<Props> = props => {
               showFileName
               className="btn btn--clicky btn--super-compact"
               onChange={path => updateArg(path, index)}
-              path={strValue.replace(/\\\\/g, '\\')}
+              path={sanitizeStrForWin32(strValue)}
               itemtypes={argDefinition.itemTypes}
               extensions={argDefinition.extensions}
             />);
@@ -457,9 +467,9 @@ export const TagEditor: FC<Props> = props => {
                 <Dropdown
                   aria-label='Variable Dropdown'
                   triggerButton={
-                    <DropdownButton className="btn btn--clicky">
+                    <Button className="btn btn--clicky">
                       <i className="fa fa-gear" />
-                    </DropdownButton>
+                    </Button>
                   }
                 >
                   <DropdownSection

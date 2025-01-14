@@ -1,7 +1,7 @@
 import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 
-import { Workspace } from '../../../models/workspace';
-import { Modal, type ModalHandle, ModalProps } from '../base/modal';
+import type { Workspace } from '../../../models/workspace';
+import { Modal, type ModalHandle, type ModalProps } from '../base/modal';
 import { ModalBody } from '../base/modal-body';
 import { ModalFooter } from '../base/modal-footer';
 import { ModalHeader } from '../base/modal-header';
@@ -16,11 +16,13 @@ interface State {
   isTag: boolean;
   template: string;
   onDone: Function;
+  editorId?: string;
 }
 
 interface NunjucksModalOptions {
   template: string;
   onDone: Function;
+  editorId?: string;
 }
 
 export interface NunjucksModalHandle {
@@ -33,17 +35,19 @@ export const NunjucksModal = forwardRef<NunjucksModalHandle, ModalProps & Props>
     isTag: false,
     template: '',
     onDone: () => { },
+    editorId: '',
   });
 
   useImperativeHandle(ref, () => ({
     hide: () => {
       modalRef.current?.hide();
     },
-    show: ({ onDone, template }) => {
+    show: ({ onDone, template, editorId }) => {
       setState({
         isTag: template.indexOf('{%') === 0,
         template,
         onDone,
+        editorId,
       });
       modalRef.current?.show();
     },
@@ -61,7 +65,7 @@ export const NunjucksModal = forwardRef<NunjucksModalHandle, ModalProps & Props>
   const title = isTag ? 'Tag' : 'Variable';
   let editor: JSX.Element | null = null;
   if (isTag) {
-    editor = <TagEditor onChange={handleTemplateChange} defaultValue={template} workspace={workspace} />;
+    editor = <TagEditor onChange={handleTemplateChange} defaultValue={template} workspace={workspace} editorId={state.editorId} />;
   } else {
     editor = <VariableEditor onChange={handleTemplateChange} defaultValue={template} />;
   }

@@ -1,10 +1,12 @@
 import fs from 'fs';
+import type { RequestTestResult } from 'insomnia-sdk';
 import { Readable } from 'stream';
 import zlib from 'zlib';
 
-import { database as db, Query } from '../common/database';
+import { database as db, type Query } from '../common/database';
 import type { ResponseTimelineEntry } from '../main/network/libcurl-promise';
 import * as requestOperations from '../models/helpers/request-operations';
+import { deserializeNDJSON } from '../utils/ndjson';
 import type { BaseModel } from './index';
 import * as models from './index';
 
@@ -27,6 +29,7 @@ export type Compression = 'zip' | null | '__NEEDS_MIGRATION__' | undefined;
 
 export interface BaseResponse {
   environmentId: string | null;
+  globalEnvironmentId: string | null;
   statusCode: number;
   statusMessage: string;
   httpVersion: string;
@@ -46,6 +49,7 @@ export interface BaseResponse {
   // Things from the request
   settingStoreCookies: boolean | null;
   settingSendCookies: boolean | null;
+  requestTestResults: RequestTestResult[];
 }
 
 export type Response = BaseModel & BaseResponse;
@@ -80,6 +84,8 @@ export function init(): BaseResponse {
     // Responses sent before environment filtering will have a special value
     // so they don't show up at all when filtering is on.
     environmentId: '__LEGACY__',
+    requestTestResults: [],
+    globalEnvironmentId: null,
   };
 }
 
@@ -144,12 +150,13 @@ async function _findRecentForRequest(
   environmentId: string | null,
   limit: number,
 ) {
-  const query: Query = {
+  const query: Query<Response> = {
     parentId: requestId,
   };
 
   // Filter responses by environment if setting is enabled
-  if ((await models.settings.get()).filterResponsesByEnv) {
+  const settings = await models.settings.get();
+  if (environmentId && settings?.filterResponsesByEnv) {
     query.environmentId = environmentId;
   }
 
@@ -177,7 +184,8 @@ export async function create(patch: Partial<Response> = {}, maxResponses = 20): 
   const requestVersion = request ? await models.requestVersion.create(request) : null;
   patch.requestVersionId = requestVersion ? requestVersion._id : null;
   // Filter responses by environment if setting is enabled
-  const shouldQueryByEnvId = (await models.settings.get()).filterResponsesByEnv && patch.hasOwnProperty('environmentId');
+  const settings = await models.settings.get();
+  const shouldQueryByEnvId = patch.hasOwnProperty('environmentId') && settings.filterResponsesByEnv;
   const query = {
     parentId,
     ...(shouldQueryByEnvId ? { environmentId: patch.environmentId } : {}),
@@ -222,7 +230,22 @@ export const getBodyStream = (
     return fs.createReadStream(response?.bodyPath);
   }
 };
+export const readCurlResponse = async (options: { bodyPath?: string; bodyCompression?: Compression }) => {
+  const readFailureMsg = '[main/curlBridgeAPI] failed to read response body message';
+  const bodyBufferOrErrMsg = getBodyBuffer(options, readFailureMsg);
+  // TODO(jackkav): simplify the fail msg and reuse in other getBodyBuffer renderer calls
 
+  if (!bodyBufferOrErrMsg) {
+    return { body: '', error: readFailureMsg };
+  } else if (typeof bodyBufferOrErrMsg === 'string') {
+    if (bodyBufferOrErrMsg === readFailureMsg) {
+      return { body: '', error: readFailureMsg };
+    }
+    return { body: '', error: `unknown error in loading response body: ${bodyBufferOrErrMsg}` };
+  }
+
+  return { body: bodyBufferOrErrMsg.toString('utf8'), error: '' };
+};
 export const getBodyBuffer = (
   response?: { bodyPath?: string; bodyCompression?: Compression },
   readFailureValue?: string,
@@ -257,7 +280,7 @@ export function getTimeline(response: Response, showBody?: boolean) {
     const isLegacyTimelineFormat = timelineString.startsWith('[');
     const timeline = isLegacyTimelineFormat
       ? JSON.parse(timelineString) as ResponseTimelineEntry[]
-      : timelineString.split('\n').filter(e => e?.trim()).map(e => JSON.parse(e));
+      : deserializeNDJSON(timelineString);
 
     const body: ResponseTimelineEntry[] = showBody ? [
       {

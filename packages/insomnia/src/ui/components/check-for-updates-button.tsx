@@ -1,24 +1,35 @@
-import React, { FC, ReactNode, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-interface Props {
-  children: ReactNode;
-  className?: string | null;
-}
+import type { UpdateStatus } from '../../main/updates';
+import { Icon } from './icon';
 
-export const CheckForUpdatesButton: FC<Props> = ({ children, className }) => {
+type UpdateStatusIcon = 'refresh' | 'check' | null;
+
+export const CheckForUpdatesButton = () => {
   const [disabled, setDisabled] = useState(false);
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState<UpdateStatus>('Check Now');
 
   useEffect(() => {
     const unsubscribe = window.main.on('updaterStatus',
-      (_e: Electron.IpcRendererEvent, status: string) => setStatus(status));
+      (_e: Electron.IpcRendererEvent, status: UpdateStatus) => {
+        setStatus(status);
+    });
     return () => {
       unsubscribe();
     };
   });
+
+  let statusIcon: UpdateStatusIcon = null;
+  if (['Performing backup...', 'Downloading...', 'Checking'].includes(status)) {
+    statusIcon = 'refresh';
+  }
+  if (['Up to Date', 'Updated (Restart Required)'].includes(status)) {
+    statusIcon = 'check';
+  }
+
   return (
     <button
-      className={className ?? ''}
+      className="flex items-center gap-2 btn btn--outlined btn--super-compact"
       disabled={disabled}
       onClick={() => {
         window.main.manualUpdateCheck();
@@ -27,7 +38,8 @@ export const CheckForUpdatesButton: FC<Props> = ({ children, className }) => {
         setDisabled(true);
       }}
     >
-      {status || children}
+      {statusIcon && <Icon className={statusIcon === 'refresh' ? 'animate-spin' : ''} icon={statusIcon} />}
+      {status}
     </button>
   );
 };

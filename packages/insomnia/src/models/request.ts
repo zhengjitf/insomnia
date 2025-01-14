@@ -1,3 +1,5 @@
+import { OperationTypeNode } from 'graphql';
+
 import {
   AUTH_API_KEY,
   AUTH_ASAP,
@@ -18,6 +20,7 @@ import {
 } from '../common/constants';
 import { database as db } from '../common/database';
 import type { OAuth1SignatureMethod } from '../network/o-auth-1/constants';
+import { getOperationType } from '../utils/graph-ql';
 import { deconstructQueryStringToParams } from '../utils/url/querystring';
 import type { BaseModel } from './index';
 
@@ -251,9 +254,10 @@ export interface BaseRequest {
   description: string;
   method: string;
   body: RequestBody;
-  preRequestScript: string;
+  preRequestScript?: string;
+  afterResponseScript?: string;
   parameters: RequestParameter[];
-  pathParameters: RequestPathParameter[];
+  pathParameters?: RequestPathParameter[];
   headers: RequestHeader[];
   authentication: RequestAuthentication | {};
   metaSortKey: number;
@@ -273,12 +277,15 @@ export const isRequest = (model: Pick<BaseModel, 'type'>): model is Request => (
   model.type === type
 );
 
-export const isRequestId = (id: string | null) => (
+export const isRequestId = (id?: string | null) => (
   id?.startsWith(`${prefix}_`)
 );
 
 export const isEventStreamRequest = (model: Pick<BaseModel, 'type'>) => (
   isRequest(model) && model.headers?.find(h => h.name === 'Accept')?.value === 'text/event-stream'
+);
+export const isGraphqlSubscriptionRequest = (model: Pick<BaseModel, 'type'>) => (
+  isRequest(model) && getOperationType(model) === OperationTypeNode.SUBSCRIPTION
 );
 
 export function init(): BaseRequest {
@@ -288,13 +295,14 @@ export function init(): BaseRequest {
     description: '',
     method: METHOD_GET,
     body: {},
-    preRequestScript: '',
     parameters: [],
     headers: [],
     authentication: {},
+    preRequestScript: undefined,
     metaSortKey: -1 * Date.now(),
     isPrivate: false,
-    pathParameters: [],
+    pathParameters: undefined,
+    afterResponseScript: undefined,
     // Settings
     settingStoreCookies: true,
     settingSendCookies: true,
@@ -357,7 +365,6 @@ export async function duplicate(request: Request, patch: Partial<Request> = {}) 
     },
   };
 
-  // @ts-expect-error -- TSCONVERSION appears to be a genuine error
   const [nextRequest] = await db.find<Request>(type, q, {
     metaSortKey: 1,
   });

@@ -10,12 +10,10 @@ test('can make websocket connection', async ({ app, page }) => {
     has: page.locator('.CodeMirror-activeline'),
   });
 
-  await page.getByRole('button', { name: 'Create in project' }).click();
-
   const text = await loadFixture('websockets.yaml');
   await app.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), text);
 
-  await page.getByRole('menuitemradio', { name: 'Import' }).click();
+  await page.getByLabel('Import').click();
   await page.locator('[data-test-id="import-from-clipboard"]').click();
   await page.getByRole('button', { name: 'Scan' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
@@ -25,7 +23,7 @@ test('can make websocket connection', async ({ app, page }) => {
   await expect(page.locator('.app')).toContainText('ws://localhost:4010');
   await page.click('text=Connect');
   await expect(statusTag).toContainText('101 Switching Protocols');
-  await page.getByRole('tab', { name: 'Timeline' }).click();
+  await page.getByRole('tab', { name: 'Console' }).click();
   await expect(responseBody).toContainText('WebSocket connection established');
   await page.click('text=Disconnect');
   await expect(responseBody).toContainText('Closing connection with code 1005');
@@ -35,7 +33,7 @@ test('can make websocket connection', async ({ app, page }) => {
   await expect(page.locator('.app')).toContainText('ws://localhost:4010/basic-auth');
   await page.click('text=Connect');
   await expect(statusTag).toContainText('101 Switching Protocols');
-  await page.getByRole('tab', { name: 'Timeline' }).click();
+  await page.getByRole('tab', { name: 'Console' }).click();
   await expect(responseBody).toContainText('> authorization: Basic dXNlcjpwYXNzd29yZA==');
 
   // Can connect with Bearer Auth
@@ -43,7 +41,7 @@ test('can make websocket connection', async ({ app, page }) => {
   await expect(page.locator('.app')).toContainText('ws://localhost:4010/bearer');
   await page.click('text=Connect');
   await expect(statusTag).toContainText('101 Switching Protocols');
-  await page.getByRole('tab', { name: 'Timeline' }).click();
+  await page.getByRole('tab', { name: 'Console' }).click();
   await expect(responseBody).toContainText('> authorization: Bearer insomnia-cool-token-!!!1112113243111');
 
   // Can handle redirects
@@ -51,7 +49,7 @@ test('can make websocket connection', async ({ app, page }) => {
   await expect(page.locator('.app')).toContainText('ws://localhost:4010/redirect');
   await page.click('text=Connect');
   await expect(statusTag).toContainText('101 Switching Protocols');
-  await page.getByRole('tab', { name: 'Timeline' }).click();
+  await page.getByRole('tab', { name: 'Console' }).click();
   await expect(responseBody).toContainText('WebSocket connection established');
 
   const webSocketActiveConnections = page.locator('[data-testid="WebSocketSpinner__Connected"]');

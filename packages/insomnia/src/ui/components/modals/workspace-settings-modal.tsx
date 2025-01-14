@@ -1,21 +1,21 @@
 import React from 'react';
 import { Button, Dialog, Heading, Input, Label, Modal, ModalOverlay, Radio, RadioGroup, TextField } from 'react-aria-components';
 import { useFetcher, useRouteLoaderData } from 'react-router-dom';
-import { useParams } from 'react-router-dom';
 
 import { database as db } from '../../../common/database';
 import { getWorkspaceLabel } from '../../../common/get-workspace-label';
 import * as models from '../../../models/index';
-import { MockServer } from '../../../models/mock-server';
+import type { MockServer } from '../../../models/mock-server';
 import { isRequest } from '../../../models/request';
-import { isScratchpad, Workspace } from '../../../models/workspace';
-import { OrganizationLoaderData } from '../../routes/organization';
+import { isEnvironment, isMockServer, isScratchpad, type Workspace } from '../../../models/workspace';
+import type { WorkspaceLoaderData } from '../../routes/workspace';
 import { Link } from '../base/link';
 import { PromptButton } from '../base/prompt-button';
 import { Icon } from '../icon';
 import { MarkdownEditor } from '../markdown-editor';
 import { showModal } from '.';
 import { AlertModal } from './alert-modal';
+import { useAvailableMockServerType } from './mock-server-settings-modal';
 
 interface Props {
   onClose: () => void;
@@ -24,13 +24,20 @@ interface Props {
 }
 
 export const WorkspaceSettingsModal = ({ workspace, mockServer, onClose }: Props) => {
-  const hasDescription = !!workspace.description;
+  // file://./../../routes/workspace.tsx#workspaceLoader
+  const workspaceLoaderData = useRouteLoaderData(':workspaceId') as WorkspaceLoaderData | null;
+  const isLocalProject = !workspaceLoaderData?.activeProject?.remoteId;
+  const {
+    isSelfHostedDisabled,
+    isCloudProjectDisabled,
+    organizationId,
+    projectId,
+    isEnterprise,
+  } = useAvailableMockServerType(isLocalProject);
   const isScratchpadWorkspace = isScratchpad(workspace);
-  const { currentPlan } = useRouteLoaderData('/organization') as OrganizationLoaderData;
 
   const activeWorkspaceName = workspace.name;
 
-  const { organizationId, projectId } = useParams<{ organizationId: string; projectId: string }>();
   const workspaceFetcher = useFetcher();
   const mockServerFetcher = useFetcher();
   const workspacePatcher = (workspaceId: string, patch: Partial<Workspace>) => {
@@ -41,6 +48,7 @@ export const WorkspaceSettingsModal = ({ workspace, mockServer, onClose }: Props
     });
   };
   const mockServerPatcher = (mockServerId: string, patch: Partial<MockServer>) => {
+    // file://./../../routes/actions.tsx#updateMockServerAction
     mockServerFetcher.submit({ ...patch, mockServerId }, {
       action: `/organization/${organizationId}/project/${projectId}/workspace/${workspace._id}/mock-server/update`,
       method: 'post',
@@ -91,41 +99,45 @@ export const WorkspaceSettingsModal = ({ workspace, mockServer, onClose }: Props
                   className='p-2 w-full rounded-sm border border-solid border-[--hl-sm] bg-[--color-bg] text-[--color-font] focus:outline-none focus:ring-1 focus:ring-[--hl-md] transition-colors'
                   onChange={event => workspacePatcher(workspace._id, { name: event.target.value })}
                 />
-                {workspace.scope !== 'mock-server' && (
+                {!isMockServer(workspace) && (
                   <>
                     <Label className='text-sm text-[--hl]' aria-label='Description'>
                       Description
                     </Label>
                     <MarkdownEditor
-                      defaultPreviewMode={hasDescription}
+                      key={workspace._id}
                       placeholder="Write a description"
                       defaultValue={workspace.description}
                       onChange={(description: string) => {
                         workspacePatcher(workspace._id, { description });
                       }}
                     />
-                    <Heading>Actions</Heading>
-                    <PromptButton
-                      onClick={async () => {
-                        const docs = await db.withDescendants(workspace, models.request.type);
-                        const requests = docs.filter(isRequest);
-                        for (const req of requests) {
-                          await models.response.removeForRequest(req._id);
-                        }
-                        close();
-                      }}
-                      className="width-auto btn btn--clicky inline-block space-left"
-                    >
-                      <i className="fa fa-trash-o" /> Clear All Responses
-                    </PromptButton>
-                  </>)}
-                {Boolean(workspace.scope === 'mock-server' && mockServer) && (
+                    {!isEnvironment(workspace) && (
+                      <>
+                        <Heading>Actions</Heading>
+                        <PromptButton
+                          onClick={async () => {
+                            const docs = await db.withDescendants(workspace, models.request.type);
+                            const requests = docs.filter(isRequest);
+                            for (const req of requests) {
+                              await models.response.removeForRequest(req._id);
+                            }
+                            close();
+                          }}
+                          className="width-auto btn btn--clicky inline-block space-left"
+                        >
+                          <i className="fa fa-trash-o" /> Clear All Responses
+                        </PromptButton>
+                      </>
+                    )}
+                  </>
+                )}
+                {Boolean(isMockServer(workspace) && mockServer) && (
                   <>
                     <RadioGroup
                       name="mockServerType"
                       defaultValue={mockServer?.useInsomniaCloud ? 'cloud' : 'self-hosted'}
                       onChange={value => {
-                        const isEnterprise = currentPlan?.type.includes('enterprise');
                         if (!isEnterprise && value === 'self-hosted') {
                           showModal(AlertModal, {
                             title: 'Upgrade required',
@@ -143,6 +155,7 @@ export const WorkspaceSettingsModal = ({ workspace, mockServer, onClose }: Props
                       <div className="flex gap-2">
                         <Radio
                           value="cloud"
+                          isDisabled={isCloudProjectDisabled}
                           className="flex-1 data-[selected]:border-[--color-surprise] data-[selected]:ring-2 data-[selected]:ring-[--color-surprise] data-[disabled]:opacity-25 hover:bg-[--hl-xs] focus:bg-[--hl-sm] border border-solid border-[--hl-md] rounded p-4 focus:outline-none transition-colors"
                         >
                           <div className='flex items-center gap-2'>
@@ -155,6 +168,7 @@ export const WorkspaceSettingsModal = ({ workspace, mockServer, onClose }: Props
                         </Radio>
                         <Radio
                           value="self-hosted"
+                          isDisabled={isSelfHostedDisabled}
                           className="flex-1 data-[selected]:border-[--color-surprise] data-[selected]:ring-2 data-[selected]:ring-[--color-surprise] data-[disabled]:opacity-25 hover:bg-[--hl-xs] focus:bg-[--hl-sm] border border-solid border-[--hl-md] rounded p-4 focus:outline-none transition-colors"
                         >
                           <div className="flex items-center gap-2">
@@ -170,25 +184,27 @@ export const WorkspaceSettingsModal = ({ workspace, mockServer, onClose }: Props
                     <div className="flex items-center gap-2 text-sm">
                       <Icon icon="info-circle" />
                       <span>
-                        To learn more about self hosting. <Link href="https://docs.insomnia.rest/insomnia/api-mocking" className='underline'>Click here</Link>
+                        To learn more about self hosting <Link href="https://docs.insomnia.rest/insomnia/api-mocking" className='underline'>click here</Link>
                       </span>
                     </div>
-                    <TextField
-                      autoFocus
-                      name="name"
-                      defaultValue={mockServer?.url || ''}
-                      className={`group relative flex-1 flex flex-col gap-2 ${mockServer?.useInsomniaCloud ? 'disabled' : ''}`}
-                    >
-                      <Label className='text-sm text-[--hl]'>
-                        Self-hosted mock server URL
-                      </Label>
-                      <Input
-                        disabled={mockServer?.useInsomniaCloud}
-                        placeholder={mockServer?.useInsomniaCloud ? '' : 'https://example.com'}
-                        onChange={e => mockServer && mockServerPatcher(mockServer._id, { url: e.target.value })}
-                        className="py-1 placeholder:italic w-full pl-2 pr-7 rounded-sm border border-solid border-[--hl-sm] bg-[--color-bg] text-[--color-font] focus:outline-none focus:ring-1 focus:ring-[--hl-md] transition-colors"
-                      />
-                    </TextField>
+                    {!isSelfHostedDisabled && (
+                      <TextField
+                        autoFocus
+                        name="name"
+                        defaultValue={mockServer?.url || ''}
+                        className={`group relative flex-1 flex flex-col gap-2 ${mockServer?.useInsomniaCloud ? 'disabled' : ''}`}
+                      >
+                        <Label className='text-sm text-[--hl]'>
+                          Self-hosted mock server URL
+                        </Label>
+                        <Input
+                          disabled={mockServer?.useInsomniaCloud}
+                          placeholder={mockServer?.useInsomniaCloud ? '' : 'https://example.com'}
+                          onChange={e => mockServer && mockServerPatcher(mockServer._id, { url: e.target.value })}
+                          className="py-1 placeholder:italic w-full pl-2 pr-7 rounded-sm border border-solid border-[--hl-sm] bg-[--color-bg] text-[--color-font] focus:outline-none focus:ring-1 focus:ring-[--hl-md] transition-colors"
+                        />
+                      </TextField>
+                    )}
                   </>
                 )}
               </div>

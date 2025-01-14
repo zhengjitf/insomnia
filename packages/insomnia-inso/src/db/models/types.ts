@@ -3,6 +3,7 @@ import { Database } from '../index';
 
 export interface BaseModel {
     _id: string;
+    name: string;
     type: keyof Database;
     parentId: string;
 }
@@ -43,4 +44,16 @@ interface BaseWorkspace {
     description: string;
 }
 
+export type WorkspaceMeta = BaseModel & { activeGlobalEnvironmentId: string };
+
 export type Workspace = BaseModel & BaseWorkspace;
+
+export type InsomniaRequest = BaseModel & {
+    name: string;
+    description: string;
+    method: string;
+    url: string;
+    headers: Record<string, string>;
+    body: string;
+    metaSortKey: number;
+};

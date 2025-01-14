@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Fixtures Import curl complex-input.sh 1`] = `
+exports[`Fixtures > Import curl > complex-input.sh 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -46,7 +46,7 @@ exports[`Fixtures Import curl complex-input.sh 1`] = `
 }
 `;
 
-exports[`Fixtures Import curl dollar-sign-input.sh 1`] = `
+exports[`Fixtures > Import curl > dollar-sign-input.sh 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -97,7 +97,7 @@ exports[`Fixtures Import curl dollar-sign-input.sh 1`] = `
 }
 `;
 
-exports[`Fixtures Import curl form-input.sh 1`] = `
+exports[`Fixtures > Import curl > form-input.sh 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -139,7 +139,7 @@ exports[`Fixtures Import curl form-input.sh 1`] = `
 }
 `;
 
-exports[`Fixtures Import curl from-chrome-input.sh 1`] = `
+exports[`Fixtures > Import curl > from-chrome-input.sh 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -211,7 +211,7 @@ exports[`Fixtures Import curl from-chrome-input.sh 1`] = `
 }
 `;
 
-exports[`Fixtures Import curl get-input.sh 1`] = `
+exports[`Fixtures > Import curl > get-input.sh 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -239,7 +239,7 @@ exports[`Fixtures Import curl get-input.sh 1`] = `
 }
 `;
 
-exports[`Fixtures Import curl header-colon-input.sh 1`] = `
+exports[`Fixtures > Import curl > header-colon-input.sh 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -267,7 +267,7 @@ exports[`Fixtures Import curl header-colon-input.sh 1`] = `
 }
 `;
 
-exports[`Fixtures Import curl multi-data-input.sh 1`] = `
+exports[`Fixtures > Import curl > multi-data-input.sh 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -307,7 +307,7 @@ exports[`Fixtures Import curl multi-data-input.sh 1`] = `
 }
 `;
 
-exports[`Fixtures Import curl multi-input.sh 1`] = `
+exports[`Fixtures > Import curl > multi-input.sh 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -371,7 +371,7 @@ exports[`Fixtures Import curl multi-input.sh 1`] = `
 }
 `;
 
-exports[`Fixtures Import curl no-url-input.sh 1`] = `
+exports[`Fixtures > Import curl > no-url-input.sh 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -394,7 +394,7 @@ exports[`Fixtures Import curl no-url-input.sh 1`] = `
 }
 `;
 
-exports[`Fixtures Import curl question-mark-input.sh 1`] = `
+exports[`Fixtures > Import curl > question-mark-input.sh 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -426,7 +426,7 @@ exports[`Fixtures Import curl question-mark-input.sh 1`] = `
 }
 `;
 
-exports[`Fixtures Import curl simple-url-input.sh 1`] = `
+exports[`Fixtures > Import curl > simple-url-input.sh 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -449,7 +449,7 @@ exports[`Fixtures Import curl simple-url-input.sh 1`] = `
 }
 `;
 
-exports[`Fixtures Import curl url-only-input.sh 1`] = `
+exports[`Fixtures > Import curl > url-only-input.sh 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -472,7 +472,7 @@ exports[`Fixtures Import curl url-only-input.sh 1`] = `
 }
 `;
 
-exports[`Fixtures Import curl urlencoded-input.sh 1`] = `
+exports[`Fixtures > Import curl > urlencoded-input.sh 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -512,7 +512,7 @@ exports[`Fixtures Import curl urlencoded-input.sh 1`] = `
 }
 `;
 
-exports[`Fixtures Import har deep-input.json 1`] = `
+exports[`Fixtures > Import har > deep-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -567,7 +567,7 @@ exports[`Fixtures Import har deep-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import har form-data-input.json 1`] = `
+exports[`Fixtures > Import har > form-data-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -602,7 +602,7 @@ exports[`Fixtures Import har form-data-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import har minimal-input.json 1`] = `
+exports[`Fixtures > Import har > minimal-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -625,7 +625,7 @@ exports[`Fixtures Import har minimal-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import har no-requests-input.json 1`] = `
+exports[`Fixtures > Import har > no-requests-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -635,7 +635,7 @@ exports[`Fixtures Import har no-requests-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import har shallow-input.json 1`] = `
+exports[`Fixtures > Import har > shallow-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -680,7 +680,7 @@ exports[`Fixtures Import har shallow-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import insomnia-1 complex-input.json 1`] = `
+exports[`Fixtures > Import insomnia-1 > complex-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -733,7 +733,7 @@ exports[`Fixtures Import insomnia-1 complex-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import insomnia-1 form-input.json 1`] = `
+exports[`Fixtures > Import insomnia-1 > form-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -831,7 +831,7 @@ exports[`Fixtures Import insomnia-1 form-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import insomnia-1 minimal-input.json 1`] = `
+exports[`Fixtures > Import insomnia-1 > minimal-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -864,7 +864,7 @@ exports[`Fixtures Import insomnia-1 minimal-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import insomnia-2 complex-input.json 1`] = `
+exports[`Fixtures > Import insomnia-2 > complex-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -944,7 +944,7 @@ exports[`Fixtures Import insomnia-2 complex-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import insomnia-3 basic-input.json 1`] = `
+exports[`Fixtures > Import insomnia-3 > basic-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -965,7 +965,7 @@ exports[`Fixtures Import insomnia-3 basic-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import insomnia-4 basic-input.yaml 1`] = `
+exports[`Fixtures > Import insomnia-4 > basic-input.yaml 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -986,7 +986,7 @@ exports[`Fixtures Import insomnia-4 basic-input.yaml 1`] = `
 }
 `;
 
-exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
+exports[`Fixtures > Import openapi3 > dereferenced-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -1055,6 +1055,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
   "status": "string"
 }",
       },
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -1100,6 +1101,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
   "status": "string"
 }",
       },
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -1125,6 +1127,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
         "type": "oauth2",
       },
       "body": {},
+      "description": "Multiple status values can be provided with comma separated strings",
       "headers": [],
       "method": "GET",
       "name": "Finds Pets by status",
@@ -1150,6 +1153,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
         "type": "oauth2",
       },
       "body": {},
+      "description": "Multiple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.",
       "headers": [],
       "method": "GET",
       "name": "Finds Pets by tags",
@@ -1173,6 +1177,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
         "value": "{{ _.apiKey }}",
       },
       "body": {},
+      "description": "Returns a single pet",
       "headers": [],
       "method": "GET",
       "name": "Find pet by ID",
@@ -1194,6 +1199,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
       "body": {
         "mimeType": "application/x-www-form-urlencoded",
       },
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -1219,6 +1225,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
         "type": "oauth2",
       },
       "body": {},
+      "description": "",
       "headers": [
         {
           "disabled": true,
@@ -1246,6 +1253,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
       "body": {
         "mimeType": "multipart/form-data",
       },
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -1269,6 +1277,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
         "value": "{{ _.apiKey }}",
       },
       "body": {},
+      "description": "Returns a map of status codes to quantities",
       "headers": [],
       "method": "GET",
       "name": "Returns pet inventories by status",
@@ -1281,6 +1290,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "POST",
       "name": "Place an order for a pet",
@@ -1293,6 +1303,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "For valid response try integer IDs with value >= 1 and <= 10. Other values will generated exceptions",
       "headers": [],
       "method": "GET",
       "name": "Find purchase order by ID",
@@ -1305,6 +1316,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "For valid response try integer IDs with positive integer value. Negative or non-integer values will generate API errors",
       "headers": [],
       "method": "DELETE",
       "name": "Delete purchase order by ID",
@@ -1317,6 +1329,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "This can only be done by the logged in user.",
       "headers": [],
       "method": "POST",
       "name": "Create user",
@@ -1329,6 +1342,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "POST",
       "name": "Creates list of users with given input array",
@@ -1341,6 +1355,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "POST",
       "name": "Creates list of users with given input array",
@@ -1353,6 +1368,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "Logs user into the system",
@@ -1376,6 +1392,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "Logs out current logged in user session",
@@ -1388,6 +1405,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "Get user by user name",
@@ -1400,6 +1418,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "This can only be done by the logged in user.",
       "headers": [],
       "method": "PUT",
       "name": "Updated user",
@@ -1412,6 +1431,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "This can only be done by the logged in user.",
       "headers": [],
       "method": "DELETE",
       "name": "Delete user",
@@ -1423,7 +1443,7 @@ exports[`Fixtures Import openapi3 dereferenced-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
+exports[`Fixtures > Import openapi3 > dereferenced-with-tags-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -1516,6 +1536,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
   "status": "string"
 }",
       },
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -1561,6 +1582,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
   "status": "string"
 }",
       },
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -1586,6 +1608,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
         "type": "oauth2",
       },
       "body": {},
+      "description": "Multiple status values can be provided with comma separated strings",
       "headers": [],
       "method": "GET",
       "name": "Finds Pets by status",
@@ -1611,6 +1634,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
         "type": "oauth2",
       },
       "body": {},
+      "description": "Multiple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.",
       "headers": [],
       "method": "GET",
       "name": "Finds Pets by tags",
@@ -1634,6 +1658,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
         "value": "{{ _.apiKey }}",
       },
       "body": {},
+      "description": "Returns a single pet",
       "headers": [],
       "method": "GET",
       "name": "Find pet by ID",
@@ -1655,6 +1680,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
       "body": {
         "mimeType": "application/x-www-form-urlencoded",
       },
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -1680,6 +1706,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
         "type": "oauth2",
       },
       "body": {},
+      "description": "",
       "headers": [
         {
           "disabled": true,
@@ -1707,6 +1734,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
       "body": {
         "mimeType": "multipart/form-data",
       },
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -1730,6 +1758,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
         "value": "{{ _.apiKey }}",
       },
       "body": {},
+      "description": "Returns a map of status codes to quantities",
       "headers": [],
       "method": "GET",
       "name": "Returns pet inventories by status",
@@ -1742,6 +1771,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "POST",
       "name": "Place an order for a pet",
@@ -1754,6 +1784,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "For valid response try integer IDs with value >= 1 and <= 10. Other values will generated exceptions",
       "headers": [],
       "method": "GET",
       "name": "Find purchase order by ID",
@@ -1766,6 +1797,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "For valid response try integer IDs with positive integer value. Negative or non-integer values will generate API errors",
       "headers": [],
       "method": "DELETE",
       "name": "Delete purchase order by ID",
@@ -1778,6 +1810,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "This can only be done by the logged in user.",
       "headers": [],
       "method": "POST",
       "name": "Create user",
@@ -1790,6 +1823,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "POST",
       "name": "Creates list of users with given input array",
@@ -1802,6 +1836,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "POST",
       "name": "Creates list of users with given input array",
@@ -1814,6 +1849,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "Logs user into the system",
@@ -1837,6 +1873,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "Logs out current logged in user session",
@@ -1849,6 +1886,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "Get user by user name",
@@ -1861,6 +1899,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "This can only be done by the logged in user.",
       "headers": [],
       "method": "PUT",
       "name": "Updated user",
@@ -1873,6 +1912,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "This can only be done by the logged in user.",
       "headers": [],
       "method": "DELETE",
       "name": "Delete user",
@@ -1884,7 +1924,7 @@ exports[`Fixtures Import openapi3 dereferenced-with-tags-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import openapi3 endpoint-security-input.yaml 1`] = `
+exports[`Fixtures > Import openapi3 > endpoint-security-input.yaml 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -1937,6 +1977,7 @@ exports[`Fixtures Import openapi3 endpoint-security-input.yaml 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "/none",
@@ -1953,6 +1994,7 @@ exports[`Fixtures Import openapi3 endpoint-security-input.yaml 1`] = `
         "username": "{{ _.httpUsername }}",
       },
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "/none/basic",
@@ -1969,6 +2011,7 @@ exports[`Fixtures Import openapi3 endpoint-security-input.yaml 1`] = `
         "username": "{{ _.httpUsername }}",
       },
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "/basic",
@@ -1985,6 +2028,7 @@ exports[`Fixtures Import openapi3 endpoint-security-input.yaml 1`] = `
         "type": "bearer",
       },
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "/bearer",
@@ -1997,6 +2041,7 @@ exports[`Fixtures Import openapi3 endpoint-security-input.yaml 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -2020,6 +2065,7 @@ exports[`Fixtures Import openapi3 endpoint-security-input.yaml 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -2038,6 +2084,7 @@ exports[`Fixtures Import openapi3 endpoint-security-input.yaml 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "/key/query",
@@ -2070,6 +2117,7 @@ exports[`Fixtures Import openapi3 endpoint-security-input.yaml 1`] = `
         "type": "oauth2",
       },
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "/oauth2/authorization-code",
@@ -2089,6 +2137,7 @@ exports[`Fixtures Import openapi3 endpoint-security-input.yaml 1`] = `
         "type": "oauth2",
       },
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "/oauth2/implicit",
@@ -2108,6 +2157,7 @@ exports[`Fixtures Import openapi3 endpoint-security-input.yaml 1`] = `
         "type": "oauth2",
       },
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "/oauth2/client-credentials",
@@ -2129,6 +2179,7 @@ exports[`Fixtures Import openapi3 endpoint-security-input.yaml 1`] = `
         "username": "{{ _.oauth2Username }}",
       },
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "/oauth2/password",
@@ -2145,6 +2196,7 @@ exports[`Fixtures Import openapi3 endpoint-security-input.yaml 1`] = `
         "username": "{{ _.httpUsername }}",
       },
       "body": {},
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -2173,7 +2225,7 @@ exports[`Fixtures Import openapi3 endpoint-security-input.yaml 1`] = `
 }
 `;
 
-exports[`Fixtures Import openapi3 example-with-server-variables-input.yaml 1`] = `
+exports[`Fixtures > Import openapi3 > example-with-server-variables-input.yaml 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -2212,6 +2264,7 @@ exports[`Fixtures Import openapi3 example-with-server-variables-input.yaml 1`] =
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "/files",
@@ -2223,7 +2276,7 @@ exports[`Fixtures Import openapi3 example-with-server-variables-input.yaml 1`] =
 }
 `;
 
-exports[`Fixtures Import openapi3 example-without-servers-input.yaml 1`] = `
+exports[`Fixtures > Import openapi3 > example-without-servers-input.yaml 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -2262,6 +2315,7 @@ exports[`Fixtures Import openapi3 example-without-servers-input.yaml 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "List API versions",
@@ -2274,6 +2328,7 @@ exports[`Fixtures Import openapi3 example-without-servers-input.yaml 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "Show API version details",
@@ -2285,7 +2340,7 @@ exports[`Fixtures Import openapi3 example-without-servers-input.yaml 1`] = `
 }
 `;
 
-exports[`Fixtures Import openapi3 global-security-input.yaml 1`] = `
+exports[`Fixtures > Import openapi3 > global-security-input.yaml 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -2334,6 +2389,7 @@ exports[`Fixtures Import openapi3 global-security-input.yaml 1`] = `
         "username": "{{ _.httpUsername }}",
       },
       "body": {},
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -2357,6 +2413,7 @@ exports[`Fixtures Import openapi3 global-security-input.yaml 1`] = `
         "value": "{{ _.apiKeyHere }}",
       },
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "/override",
@@ -2368,7 +2425,7 @@ exports[`Fixtures Import openapi3 global-security-input.yaml 1`] = `
 }
 `;
 
-exports[`Fixtures Import openapi3 multiple-api-keys-input.yml 1`] = `
+exports[`Fixtures > Import openapi3 > multiple-api-keys-input.yml 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -2418,6 +2475,7 @@ exports[`Fixtures Import openapi3 multiple-api-keys-input.yml 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -2446,6 +2504,7 @@ exports[`Fixtures Import openapi3 multiple-api-keys-input.yml 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "Multiple status values can be provided with comma separated strings",
       "headers": [
         {
           "disabled": false,
@@ -2479,7 +2538,7 @@ exports[`Fixtures Import openapi3 multiple-api-keys-input.yml 1`] = `
 }
 `;
 
-exports[`Fixtures Import openapi3 oauth2-input.yaml 1`] = `
+exports[`Fixtures > Import openapi3 > oauth2-input.yaml 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -2530,6 +2589,7 @@ exports[`Fixtures Import openapi3 oauth2-input.yaml 1`] = `
         "type": "oauth2",
       },
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "/oauth2/authorization-code",
@@ -2551,6 +2611,7 @@ exports[`Fixtures Import openapi3 oauth2-input.yaml 1`] = `
         "type": "oauth2",
       },
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "/oauth2/authorization-code-read",
@@ -2572,6 +2633,7 @@ exports[`Fixtures Import openapi3 oauth2-input.yaml 1`] = `
         "type": "oauth2",
       },
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "/oauth2/authorization-code-read-write",
@@ -2583,7 +2645,7 @@ exports[`Fixtures Import openapi3 oauth2-input.yaml 1`] = `
 }
 `;
 
-exports[`Fixtures Import openapi3 path-plugin-input.yaml 1`] = `
+exports[`Fixtures > Import openapi3 > path-plugin-input.yaml 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -2622,6 +2684,7 @@ exports[`Fixtures Import openapi3 path-plugin-input.yaml 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "test",
       "headers": [],
       "method": "GET",
       "name": "/path",
@@ -2633,7 +2696,7 @@ exports[`Fixtures Import openapi3 path-plugin-input.yaml 1`] = `
 }
 `;
 
-exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
+exports[`Fixtures > Import openapi3 > petstore-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -2716,6 +2779,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
   "status": "string"
 }",
       },
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -2761,6 +2825,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
   "status": "string"
 }",
       },
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -2786,6 +2851,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
         "type": "oauth2",
       },
       "body": {},
+      "description": "Multiple status values can be provided with comma separated strings",
       "headers": [],
       "method": "GET",
       "name": "Finds Pets by status",
@@ -2811,6 +2877,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
         "type": "oauth2",
       },
       "body": {},
+      "description": "Multiple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.",
       "headers": [],
       "method": "GET",
       "name": "Finds Pets by tags",
@@ -2834,6 +2901,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
         "value": "{{ _.apiKey }}",
       },
       "body": {},
+      "description": "Returns a single pet",
       "headers": [],
       "method": "GET",
       "name": "Find pet by ID",
@@ -2855,6 +2923,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
       "body": {
         "mimeType": "application/x-www-form-urlencoded",
       },
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -2880,6 +2949,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
         "type": "oauth2",
       },
       "body": {},
+      "description": "",
       "headers": [
         {
           "disabled": true,
@@ -2907,6 +2977,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
       "body": {
         "mimeType": "multipart/form-data",
       },
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -2930,6 +3001,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
         "value": "{{ _.apiKey }}",
       },
       "body": {},
+      "description": "Returns a map of status codes to quantities",
       "headers": [],
       "method": "GET",
       "name": "Returns pet inventories by status",
@@ -2942,6 +3014,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "POST",
       "name": "Place an order for a pet",
@@ -2954,6 +3027,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "For valid response try integer IDs with value >= 1 and <= 10. Other values will generated exceptions",
       "headers": [],
       "method": "GET",
       "name": "Find purchase order by ID",
@@ -2966,6 +3040,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "For valid response try integer IDs with positive integer value. Negative or non-integer values will generate API errors",
       "headers": [],
       "method": "DELETE",
       "name": "Delete purchase order by ID",
@@ -2978,6 +3053,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "This can only be done by the logged in user.",
       "headers": [],
       "method": "POST",
       "name": "Create user",
@@ -2990,6 +3066,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "POST",
       "name": "Creates list of users with given input array",
@@ -3002,6 +3079,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "POST",
       "name": "Creates list of users with given input array",
@@ -3014,6 +3092,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "Logs user into the system",
@@ -3037,6 +3116,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "Logs out current logged in user session",
@@ -3049,6 +3129,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "Get user by user name",
@@ -3061,6 +3142,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "This can only be done by the logged in user.",
       "headers": [],
       "method": "PUT",
       "name": "Updated user",
@@ -3073,6 +3155,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "This can only be done by the logged in user.",
       "headers": [],
       "method": "DELETE",
       "name": "Delete user",
@@ -3084,7 +3167,7 @@ exports[`Fixtures Import openapi3 petstore-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import openapi3 petstore-readonly-input.yml 1`] = `
+exports[`Fixtures > Import openapi3 > petstore-readonly-input.yml 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -3123,6 +3206,7 @@ exports[`Fixtures Import openapi3 petstore-readonly-input.yml 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "List all pets",
@@ -3147,6 +3231,7 @@ exports[`Fixtures Import openapi3 petstore-readonly-input.yml 1`] = `
   "tag": "string"
 }",
       },
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -3165,6 +3250,7 @@ exports[`Fixtures Import openapi3 petstore-readonly-input.yml 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "Info for a specific pet",
@@ -3176,7 +3262,7 @@ exports[`Fixtures Import openapi3 petstore-readonly-input.yml 1`] = `
 }
 `;
 
-exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
+exports[`Fixtures > Import openapi3 > petstore-with-tags-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -3269,6 +3355,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
   "status": "string"
 }",
       },
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -3314,6 +3401,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
   "status": "string"
 }",
       },
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -3339,6 +3427,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
         "type": "oauth2",
       },
       "body": {},
+      "description": "Multiple status values can be provided with comma separated strings",
       "headers": [],
       "method": "GET",
       "name": "Finds Pets by status",
@@ -3364,6 +3453,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
         "type": "oauth2",
       },
       "body": {},
+      "description": "Multiple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.",
       "headers": [],
       "method": "GET",
       "name": "Finds Pets by tags",
@@ -3387,6 +3477,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
         "value": "{{ _.apiKey }}",
       },
       "body": {},
+      "description": "Returns a single pet",
       "headers": [],
       "method": "GET",
       "name": "Find pet by ID",
@@ -3408,6 +3499,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
       "body": {
         "mimeType": "application/x-www-form-urlencoded",
       },
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -3433,6 +3525,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
         "type": "oauth2",
       },
       "body": {},
+      "description": "",
       "headers": [
         {
           "disabled": true,
@@ -3460,6 +3553,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
       "body": {
         "mimeType": "multipart/form-data",
       },
+      "description": "",
       "headers": [
         {
           "disabled": false,
@@ -3483,6 +3577,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
         "value": "{{ _.apiKey }}",
       },
       "body": {},
+      "description": "Returns a map of status codes to quantities",
       "headers": [],
       "method": "GET",
       "name": "Returns pet inventories by status",
@@ -3495,6 +3590,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "POST",
       "name": "Place an order for a pet",
@@ -3507,6 +3603,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "For valid response try integer IDs with value >= 1 and <= 10. Other values will generated exceptions",
       "headers": [],
       "method": "GET",
       "name": "Find purchase order by ID",
@@ -3519,6 +3616,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "For valid response try integer IDs with positive integer value. Negative or non-integer values will generate API errors",
       "headers": [],
       "method": "DELETE",
       "name": "Delete purchase order by ID",
@@ -3531,6 +3629,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "This can only be done by the logged in user.",
       "headers": [],
       "method": "POST",
       "name": "Create user",
@@ -3543,6 +3642,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "POST",
       "name": "Creates list of users with given input array",
@@ -3555,6 +3655,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "POST",
       "name": "Creates list of users with given input array",
@@ -3567,6 +3668,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "Logs user into the system",
@@ -3590,6 +3692,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "Logs out current logged in user session",
@@ -3602,6 +3705,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "Get user by user name",
@@ -3614,6 +3718,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "This can only be done by the logged in user.",
       "headers": [],
       "method": "PUT",
       "name": "Updated user",
@@ -3626,6 +3731,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "This can only be done by the logged in user.",
       "headers": [],
       "method": "DELETE",
       "name": "Delete user",
@@ -3637,7 +3743,7 @@ exports[`Fixtures Import openapi3 petstore-with-tags-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import openapi3 petstore-yml-input.yml 1`] = `
+exports[`Fixtures > Import openapi3 > petstore-yml-input.yml 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -3676,6 +3782,7 @@ exports[`Fixtures Import openapi3 petstore-yml-input.yml 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "List all pets",
@@ -3694,6 +3801,7 @@ exports[`Fixtures Import openapi3 petstore-yml-input.yml 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "POST",
       "name": "Create a pet",
@@ -3706,6 +3814,7 @@ exports[`Fixtures Import openapi3 petstore-yml-input.yml 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "Info for a specific pet",
@@ -3717,7 +3826,7 @@ exports[`Fixtures Import openapi3 petstore-yml-input.yml 1`] = `
 }
 `;
 
-exports[`Fixtures Import openapi3 petstore-yml-with-tags-input.yml 1`] = `
+exports[`Fixtures > Import openapi3 > petstore-yml-with-tags-input.yml 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -3764,6 +3873,7 @@ exports[`Fixtures Import openapi3 petstore-yml-with-tags-input.yml 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "List all pets",
@@ -3782,6 +3892,7 @@ exports[`Fixtures Import openapi3 petstore-yml-with-tags-input.yml 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "List all pets",
@@ -3800,6 +3911,7 @@ exports[`Fixtures Import openapi3 petstore-yml-with-tags-input.yml 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "POST",
       "name": "Create a pet",
@@ -3812,6 +3924,7 @@ exports[`Fixtures Import openapi3 petstore-yml-with-tags-input.yml 1`] = `
       "_type": "request",
       "authentication": {},
       "body": {},
+      "description": "",
       "headers": [],
       "method": "GET",
       "name": "Info for a specific pet",
@@ -3823,7 +3936,7 @@ exports[`Fixtures Import openapi3 petstore-yml-with-tags-input.yml 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman api-key-default-v2_1-input.json 1`] = `
+exports[`Fixtures > Import postman > api-key-default-v2_1-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -3833,14 +3946,19 @@ exports[`Fixtures Import postman api-key-default-v2_1-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "New Collection",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "addTo": "header",
         "disabled": false,
@@ -3851,7 +3969,7 @@ exports[`Fixtures Import postman api-key-default-v2_1-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983999,
       "method": "GET",
       "name": "New Request",
       "parameters": [],
@@ -3863,7 +3981,7 @@ exports[`Fixtures Import postman api-key-default-v2_1-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman api-key-header-v2_1-input.json 1`] = `
+exports[`Fixtures > Import postman > api-key-header-v2_1-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -3873,14 +3991,19 @@ exports[`Fixtures Import postman api-key-header-v2_1-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "New Collection",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "addTo": "header",
         "disabled": false,
@@ -3891,7 +4014,7 @@ exports[`Fixtures Import postman api-key-header-v2_1-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983999,
       "method": "GET",
       "name": "New Request",
       "parameters": [],
@@ -3903,7 +4026,7 @@ exports[`Fixtures Import postman api-key-header-v2_1-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman api-key-queryParams-v2_1-input.json 1`] = `
+exports[`Fixtures > Import postman > api-key-queryParams-v2_1-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -3913,14 +4036,19 @@ exports[`Fixtures Import postman api-key-queryParams-v2_1-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "New Collection",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "addTo": "queryParams",
         "disabled": false,
@@ -3931,7 +4059,7 @@ exports[`Fixtures Import postman api-key-queryParams-v2_1-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983999,
       "method": "GET",
       "name": "New Request",
       "parameters": [],
@@ -3943,7 +4071,7 @@ exports[`Fixtures Import postman api-key-queryParams-v2_1-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman aws-signature-auth-v2_0-input.json 1`] = `
+exports[`Fixtures > Import postman > aws-signature-auth-v2_0-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -3953,14 +4081,19 @@ exports[`Fixtures Import postman aws-signature-auth-v2_0-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "A collection for testing",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "AWS Signature Test",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "accessKeyId": "aws-access-key",
         "disabled": false,
@@ -3973,7 +4106,7 @@ exports[`Fixtures Import postman aws-signature-auth-v2_0-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983999,
       "method": "GET",
       "name": "AWS Signature",
       "parameters": [],
@@ -3985,7 +4118,7 @@ exports[`Fixtures Import postman aws-signature-auth-v2_0-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman aws-signature-auth-v2_1-input.json 1`] = `
+exports[`Fixtures > Import postman > aws-signature-auth-v2_1-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -3995,14 +4128,19 @@ exports[`Fixtures Import postman aws-signature-auth-v2_1-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "A collection for testing",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "AWS Signature Test",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "accessKeyId": "aws-access-key",
         "disabled": false,
@@ -4015,7 +4153,7 @@ exports[`Fixtures Import postman aws-signature-auth-v2_1-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983999,
       "method": "GET",
       "name": "AWS Signature",
       "parameters": [],
@@ -4027,7 +4165,7 @@ exports[`Fixtures Import postman aws-signature-auth-v2_1-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman basic-auth-v2_0-input.json 1`] = `
+exports[`Fixtures > Import postman > basic-auth-v2_0-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -4037,14 +4175,19 @@ exports[`Fixtures Import postman basic-auth-v2_0-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "A collection for testing",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "Basic Auth Test",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "disabled": false,
         "password": "basic-password",
@@ -4054,7 +4197,7 @@ exports[`Fixtures Import postman basic-auth-v2_0-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983999,
       "method": "GET",
       "name": "Basic Auth",
       "parameters": [],
@@ -4066,7 +4209,7 @@ exports[`Fixtures Import postman basic-auth-v2_0-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman basic-auth-v2_1-input.json 1`] = `
+exports[`Fixtures > Import postman > basic-auth-v2_1-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -4076,14 +4219,19 @@ exports[`Fixtures Import postman basic-auth-v2_1-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "A collection for testing",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "Basic Auth Test",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "disabled": false,
         "password": "basic-password",
@@ -4093,7 +4241,7 @@ exports[`Fixtures Import postman basic-auth-v2_1-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983999,
       "method": "GET",
       "name": "Basic Auth",
       "parameters": [],
@@ -4105,7 +4253,7 @@ exports[`Fixtures Import postman basic-auth-v2_1-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman bearer-token-v2_0-input.json 1`] = `
+exports[`Fixtures > Import postman > bearer-token-v2_0-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -4115,14 +4263,19 @@ exports[`Fixtures Import postman bearer-token-v2_0-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "A collection for testing",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "Bearer Token Test",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "disabled": false,
         "prefix": "",
@@ -4132,7 +4285,7 @@ exports[`Fixtures Import postman bearer-token-v2_0-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983999,
       "method": "GET",
       "name": "Bearer Token",
       "parameters": [],
@@ -4144,7 +4297,7 @@ exports[`Fixtures Import postman bearer-token-v2_0-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman bearer-token-v2_1-input.json 1`] = `
+exports[`Fixtures > Import postman > bearer-token-v2_1-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -4154,14 +4307,19 @@ exports[`Fixtures Import postman bearer-token-v2_1-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "A collection for testing",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "Bearer Token Test",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "disabled": false,
         "prefix": "",
@@ -4171,7 +4329,7 @@ exports[`Fixtures Import postman bearer-token-v2_1-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983999,
       "method": "GET",
       "name": "Bearer Token",
       "parameters": [],
@@ -4183,7 +4341,7 @@ exports[`Fixtures Import postman bearer-token-v2_1-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman complex-url-v2_0-input.json 1`] = `
+exports[`Fixtures > Import postman > complex-url-v2_0-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -4193,19 +4351,24 @@ exports[`Fixtures Import postman complex-url-v2_0-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "A collection for testing",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "Complex URL Test Collection",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {},
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983999,
       "method": "GET",
       "name": "Test Request",
       "parameters": [
@@ -4223,7 +4386,7 @@ exports[`Fixtures Import postman complex-url-v2_0-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman complex-url-v2_1-input.json 1`] = `
+exports[`Fixtures > Import postman > complex-url-v2_1-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -4233,19 +4396,24 @@ exports[`Fixtures Import postman complex-url-v2_1-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "A collection for testing",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "Complex URL Test Collection",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {},
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983999,
       "method": "GET",
       "name": "Test Request",
       "parameters": [
@@ -4263,7 +4431,7 @@ exports[`Fixtures Import postman complex-url-v2_1-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman complex-v2_0_fromHeaders-input.json 1`] = `
+exports[`Fixtures > Import postman > complex-v2_0_fromHeaders-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -4273,22 +4441,31 @@ exports[`Fixtures Import postman complex-v2_0_fromHeaders-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "Timing API",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__GRP_2__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "",
       "environment": {},
+      "metaSortKey": -1622117983999,
       "name": "Projects",
       "parentId": "__GRP_1__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "disabled": false,
         "prefix": "",
@@ -4296,11 +4473,15 @@ exports[`Fixtures Import postman complex-v2_0_fromHeaders-input.json 1`] = `
         "type": "bearer",
       },
       "body": {
-        "mimeType": "application/json",
+        "mimeType": "text/plain",
         "text": "[]",
       },
       "description": "<br>See [Display the specified project.](#display-the-specified-project) for the returned attributes.",
       "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{token}}",
+        },
         {
           "name": "Accept",
           "value": "application/json",
@@ -4310,7 +4491,7 @@ exports[`Fixtures Import postman complex-v2_0_fromHeaders-input.json 1`] = `
           "value": "application/json",
         },
       ],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983998,
       "method": "GET",
       "name": "Return the complete project hierarchy.",
       "parameters": [
@@ -4327,6 +4508,7 @@ exports[`Fixtures Import postman complex-v2_0_fromHeaders-input.json 1`] = `
     {
       "_id": "__REQ_2__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "accessKeyId": "<accessKeyId>",
         "disabled": false,
@@ -4336,11 +4518,15 @@ exports[`Fixtures Import postman complex-v2_0_fromHeaders-input.json 1`] = `
         "type": "iam",
       },
       "body": {
-        "mimeType": "application/json",
+        "mimeType": "text/plain",
         "text": "[]",
       },
       "description": "<br>See [Display the specified project.](#display-the-specified-project) for the returned attributes.",
       "headers": [
+        {
+          "name": "Authorization",
+          "value": "AWS4-HMAC-SHA256 Credential=<accessKeyId>/20220110/<region>/<service>/aws4_request, SignedHeaders=accept;content-type;host;x-amz-date;x-amz-security-token, Signature=ed270ed6ad1cad3513f6edad9692e4496e321e44954c70a86504eea5e0ef1ff5",
+        },
         {
           "name": "Accept",
           "value": "application/json",
@@ -4350,7 +4536,7 @@ exports[`Fixtures Import postman complex-v2_0_fromHeaders-input.json 1`] = `
           "value": "application/json",
         },
       ],
-      "metaSortKey": 3,
+      "metaSortKey": -1622117983997,
       "method": "GET",
       "name": "Return a list containing all projects.",
       "parameters": [
@@ -4377,6 +4563,7 @@ exports[`Fixtures Import postman complex-v2_0_fromHeaders-input.json 1`] = `
     {
       "_id": "__REQ_3__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "disabled": false,
         "password": "abc123",
@@ -4384,7 +4571,7 @@ exports[`Fixtures Import postman complex-v2_0_fromHeaders-input.json 1`] = `
         "username": "john@example.com",
       },
       "body": {
-        "mimeType": "application/json",
+        "mimeType": "text/plain",
         "text": "{
     "title": "Acme Inc.",
     "parent": "\\/projects\\/1",
@@ -4396,6 +4583,10 @@ exports[`Fixtures Import postman complex-v2_0_fromHeaders-input.json 1`] = `
       "description": "<br>See [Display the specified project.](#display-the-specified-project) for the returned attributes.",
       "headers": [
         {
+          "name": "Authorization",
+          "value": "Basic am9obkBleGFtcGxlLmNvbTphYmMxMjM=",
+        },
+        {
           "name": "Accept",
           "value": "application/json",
         },
@@ -4404,7 +4595,7 @@ exports[`Fixtures Import postman complex-v2_0_fromHeaders-input.json 1`] = `
           "value": "application/json",
         },
       ],
-      "metaSortKey": 4,
+      "metaSortKey": -1622117983996,
       "method": "POST",
       "name": "Create a new project.",
       "parameters": [],
@@ -4415,6 +4606,7 @@ exports[`Fixtures Import postman complex-v2_0_fromHeaders-input.json 1`] = `
     {
       "_id": "__REQ_4__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "disabled": false,
         "password": "",
@@ -4422,7 +4614,7 @@ exports[`Fixtures Import postman complex-v2_0_fromHeaders-input.json 1`] = `
         "username": "Username",
       },
       "body": {
-        "mimeType": "application/json",
+        "mimeType": "text/plain",
         "text": "[]",
       },
       "description": "<br>The following attributes will be returned:
@@ -4441,6 +4633,10 @@ Child projects are provided as references; i.e. they only contain the <code>self
 </aside>",
       "headers": [
         {
+          "name": "Authorization",
+          "value": "Digest username="Username", realm="Realm", nonce="Nonce", uri="//api/v1/report?start_date_min=2019-01-01T00%3A00%3A00%2B00%3A00&start_date_max=2019-01-01T23%3A59%3A59%2B00%3A00&projects[]=%2Fprojects%2F1&include_child_projects=1&search_query=meeting&columns[]=project&include_project_data=1&sort[]=-duration", algorithm="MD5", response="f3f762321e158aefe103529eda4ddb7c", opaque="Opaque"",
+        },
+        {
           "name": "Accept",
           "value": "application/json",
         },
@@ -4449,7 +4645,7 @@ Child projects are provided as references; i.e. they only contain the <code>self
           "value": "application/json",
         },
       ],
-      "metaSortKey": 5,
+      "metaSortKey": -1622117983995,
       "method": "GET",
       "name": "Display the specified project.",
       "parameters": [],
@@ -4460,6 +4656,7 @@ Child projects are provided as references; i.e. they only contain the <code>self
     {
       "_id": "__REQ_5__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "callback": "Callback%20URL",
         "consumerKey": "Consumer%20Key",
@@ -4477,7 +4674,7 @@ Child projects are provided as references; i.e. they only contain the <code>self
         "version": "Version",
       },
       "body": {
-        "mimeType": "application/json",
+        "mimeType": "text/plain",
         "text": "{
     "title": "Acme Inc.",
     "color": "#FF0000",
@@ -4496,6 +4693,10 @@ Changing a project's parent or children is currently not possible.
 </aside>",
       "headers": [
         {
+          "name": "Authorization",
+          "value": "OAuth realm="Realm",oauth_consumer_key="Consumer%20Key",oauth_token="Access%20Token",oauth_signature_method="HMAC-SHA1",oauth_timestamp="Timestamp",oauth_nonce="Nonce",oauth_version="Version",oauth_callback="Callback%20URL",oauth_verifier="Verifier",oauth_signature="TwJvZVasVWTL6X%2Bz3lmuiyvaX2Q%3D"",
+        },
+        {
           "name": "Accept",
           "value": "application/json",
         },
@@ -4504,7 +4705,7 @@ Changing a project's parent or children is currently not possible.
           "value": "application/json",
         },
       ],
-      "metaSortKey": 6,
+      "metaSortKey": -1622117983994,
       "method": "PUT",
       "name": "Update the specified project.",
       "parameters": [],
@@ -4516,7 +4717,7 @@ Changing a project's parent or children is currently not possible.
 }
 `;
 
-exports[`Fixtures Import postman complex-v2_0-input.json 1`] = `
+exports[`Fixtures > Import postman > complex-v2_0-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -4526,22 +4727,31 @@ exports[`Fixtures Import postman complex-v2_0-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "A collection for testing",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "Complex Test Collection",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__GRP_2__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "The first folder",
       "environment": {},
+      "metaSortKey": -1622117983999,
       "name": "First Folder",
       "parentId": "__GRP_1__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "disabled": false,
         "password": "password",
@@ -4566,8 +4776,14 @@ exports[`Fixtures Import postman complex-v2_0-input.json 1`] = `
         ],
       },
       "description": "First Request",
-      "headers": [],
-      "metaSortKey": 2,
+      "headers": [
+        {
+          "description": "",
+          "name": "Authorization",
+          "value": "Basic dXNlcm5hbWU6cGFzc3dvcmQ=",
+        },
+      ],
+      "metaSortKey": -1622117983998,
       "method": "POST",
       "name": "{{base_url}}/api/users",
       "parameters": [],
@@ -4578,6 +4794,7 @@ exports[`Fixtures Import postman complex-v2_0-input.json 1`] = `
     {
       "_id": "__REQ_2__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "disabled": false,
         "password": "password",
@@ -4595,8 +4812,14 @@ exports[`Fixtures Import postman complex-v2_0-input.json 1`] = `
         ],
       },
       "description": "First Request",
-      "headers": [],
-      "metaSortKey": 3,
+      "headers": [
+        {
+          "description": "",
+          "name": "Authorization",
+          "value": "Basic dXNlcm5hbWU6cGFzc3dvcmQ=",
+        },
+      ],
+      "metaSortKey": -1622117983997,
       "method": "POST",
       "name": "Urlencoded Form Test",
       "parameters": [],
@@ -4607,14 +4830,20 @@ exports[`Fixtures Import postman complex-v2_0-input.json 1`] = `
     {
       "_id": "__REQ_3__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {},
       "body": {
-        "mimeType": "",
+        "mimeType": "text/plain",
         "text": "hello world!",
       },
       "description": "Request with raw body",
-      "headers": [],
-      "metaSortKey": 4,
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "text/plain",
+        },
+      ],
+      "metaSortKey": -1622117983996,
       "method": "POST",
       "name": "Test Request Raw Body",
       "parameters": [],
@@ -4625,11 +4854,12 @@ exports[`Fixtures Import postman complex-v2_0-input.json 1`] = `
     {
       "_id": "__REQ_4__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {},
       "body": {},
       "description": "Request with empty raw body",
       "headers": [],
-      "metaSortKey": 5,
+      "metaSortKey": -1622117983995,
       "method": "POST",
       "name": "Test Request Empty Raw Body",
       "parameters": [],
@@ -4640,11 +4870,12 @@ exports[`Fixtures Import postman complex-v2_0-input.json 1`] = `
     {
       "_id": "__REQ_5__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {},
       "body": {},
       "description": "Request with unknown body",
       "headers": [],
-      "metaSortKey": 6,
+      "metaSortKey": -1622117983994,
       "method": "POST",
       "name": "Test Request Unknown Body",
       "parameters": [],
@@ -4655,6 +4886,7 @@ exports[`Fixtures Import postman complex-v2_0-input.json 1`] = `
     {
       "_id": "__REQ_6__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {},
       "body": {
         "mimeType": "application/graphql",
@@ -4662,7 +4894,7 @@ exports[`Fixtures Import postman complex-v2_0-input.json 1`] = `
       },
       "description": "Request with graphql body",
       "headers": [],
-      "metaSortKey": 7,
+      "metaSortKey": -1622117983993,
       "method": "POST",
       "name": "Test Request GraphQL Body",
       "parameters": [],
@@ -4674,7 +4906,7 @@ exports[`Fixtures Import postman complex-v2_0-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman complex-v2_1-input.json 1`] = `
+exports[`Fixtures > Import postman > complex-v2_1-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -4684,22 +4916,31 @@ exports[`Fixtures Import postman complex-v2_1-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "A collection for testing",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "Complex Test Collection",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__GRP_2__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "The first folder",
       "environment": {},
+      "metaSortKey": -1622117983999,
       "name": "First Folder",
       "parentId": "__GRP_1__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "disabled": false,
         "password": "password",
@@ -4730,8 +4971,13 @@ exports[`Fixtures Import postman complex-v2_1-input.json 1`] = `
         ],
       },
       "description": "First Request",
-      "headers": [],
-      "metaSortKey": 2,
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Basic dXNlcm5hbWU6cGFzc3dvcmQ=",
+        },
+      ],
+      "metaSortKey": -1622117983998,
       "method": "POST",
       "name": "{{base_url}}/api/users",
       "parameters": [],
@@ -4742,6 +4988,7 @@ exports[`Fixtures Import postman complex-v2_1-input.json 1`] = `
     {
       "_id": "__REQ_2__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "disabled": false,
         "password": "password",
@@ -4759,8 +5006,13 @@ exports[`Fixtures Import postman complex-v2_1-input.json 1`] = `
         ],
       },
       "description": "First Request",
-      "headers": [],
-      "metaSortKey": 3,
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Basic dXNlcm5hbWU6cGFzc3dvcmQ=",
+        },
+      ],
+      "metaSortKey": -1622117983997,
       "method": "POST",
       "name": "Urlencoded Form Test",
       "parameters": [],
@@ -4771,14 +5023,20 @@ exports[`Fixtures Import postman complex-v2_1-input.json 1`] = `
     {
       "_id": "__REQ_3__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {},
       "body": {
-        "mimeType": "",
+        "mimeType": "text/plain",
         "text": "hello world!",
       },
       "description": "Request with raw body",
-      "headers": [],
-      "metaSortKey": 4,
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "text/plain",
+        },
+      ],
+      "metaSortKey": -1622117983996,
       "method": "POST",
       "name": "Test Request",
       "parameters": [],
@@ -4789,11 +5047,12 @@ exports[`Fixtures Import postman complex-v2_1-input.json 1`] = `
     {
       "_id": "__REQ_4__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {},
       "body": {},
       "description": "Request with unknown body",
       "headers": [],
-      "metaSortKey": 5,
+      "metaSortKey": -1622117983995,
       "method": "POST",
       "name": "Test Request Unknown Body",
       "parameters": [],
@@ -4804,11 +5063,12 @@ exports[`Fixtures Import postman complex-v2_1-input.json 1`] = `
     {
       "_id": "__REQ_5__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {},
       "body": {},
       "description": "Request with empty raw body",
       "headers": [],
-      "metaSortKey": 6,
+      "metaSortKey": -1622117983994,
       "method": "POST",
       "name": "Test Request Empty Body",
       "parameters": [],
@@ -4819,6 +5079,7 @@ exports[`Fixtures Import postman complex-v2_1-input.json 1`] = `
     {
       "_id": "__REQ_6__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {},
       "body": {
         "mimeType": "application/graphql",
@@ -4826,7 +5087,7 @@ exports[`Fixtures Import postman complex-v2_1-input.json 1`] = `
       },
       "description": "Request with graphql body",
       "headers": [],
-      "metaSortKey": 7,
+      "metaSortKey": -1622117983993,
       "method": "POST",
       "name": "Test Request GraphQL Body",
       "parameters": [],
@@ -4838,7 +5099,7 @@ exports[`Fixtures Import postman complex-v2_1-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman digest-auth-v2_0-input.json 1`] = `
+exports[`Fixtures > Import postman > digest-auth-v2_0-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -4848,14 +5109,19 @@ exports[`Fixtures Import postman digest-auth-v2_0-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "A collection for testing",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "Digest Authentication Test",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "disabled": false,
         "password": "guest",
@@ -4865,7 +5131,7 @@ exports[`Fixtures Import postman digest-auth-v2_0-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983999,
       "method": "GET",
       "name": "Digest Auth",
       "parameters": [],
@@ -4877,7 +5143,7 @@ exports[`Fixtures Import postman digest-auth-v2_0-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman digest-auth-v2_1-input.json 1`] = `
+exports[`Fixtures > Import postman > digest-auth-v2_1-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -4887,14 +5153,19 @@ exports[`Fixtures Import postman digest-auth-v2_1-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "A collection for testing",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "Digest Authentication Test",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "disabled": false,
         "password": "guest",
@@ -4904,7 +5175,7 @@ exports[`Fixtures Import postman digest-auth-v2_1-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983999,
       "method": "GET",
       "name": "Digest Auth",
       "parameters": [],
@@ -4916,7 +5187,7 @@ exports[`Fixtures Import postman digest-auth-v2_1-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman minimal-v2_0-input.json 1`] = `
+exports[`Fixtures > Import postman > faker-vars-v2_1-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -4926,19 +5197,87 @@ exports[`Fixtures Import postman minimal-v2_0-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
-      "description": "A collection for testing",
+      "afterResponseScript": "",
+      "authentication": {},
+      "description": "",
       "environment": {},
-      "name": "Minimal Test Collection",
+      "metaSortKey": -1622117984000,
+      "name": "export tags",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
+      "authentication": {
+        "disabled": false,
+        "prefix": "",
+        "token": "{% faker 'guid' %}",
+        "type": "bearer",
+      },
+      "body": {
+        "mimeType": "text/plain",
+        "text": "{% faker 'guid' %}",
+      },
+      "description": "",
+      "headers": [
+        {
+          "description": "",
+          "name": "{% faker 'guid' %}",
+          "value": "{% faker 'guid' %}",
+        },
+        {
+          "name": "Content-Type",
+          "value": "text/plain",
+        },
+      ],
+      "metaSortKey": -1622117983999,
+      "method": "GET",
+      "name": "New Request",
+      "parameters": [
+        {
+          "disabled": false,
+          "name": "{% faker 'guid' %}",
+          "value": "{% faker 'guid' %}",
+        },
+      ],
+      "parentId": "__GRP_1__",
+      "preRequestScript": "",
+      "url": "httpbin.org/anything/{% faker 'guid' %}",
+    },
+  ],
+}
+`;
+
+exports[`Fixtures > Import postman > minimal-v2_0-input.json 1`] = `
+{
+  "__export_date": "",
+  "__export_format": 4,
+  "__export_source": "insomnia.importers:v0.1.0",
+  "_type": "export",
+  "resources": [
+    {
+      "_id": "__GRP_1__",
+      "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
+      "description": "A collection for testing",
+      "environment": {},
+      "metaSortKey": -1622117984000,
+      "name": "Minimal Test Collection",
+      "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
+    },
+    {
+      "_id": "__REQ_1__",
+      "_type": "request",
+      "afterResponseScript": "",
       "authentication": {},
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983999,
       "method": "GET",
       "name": "",
       "parameters": [],
@@ -4950,7 +5289,7 @@ exports[`Fixtures Import postman minimal-v2_0-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman minimal-v2_1-input.json 1`] = `
+exports[`Fixtures > Import postman > minimal-v2_1-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -4960,19 +5299,24 @@ exports[`Fixtures Import postman minimal-v2_1-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "A collection for testing",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "Minimal Test Collection",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {},
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983999,
       "method": "GET",
       "name": "",
       "parameters": [],
@@ -4984,7 +5328,7 @@ exports[`Fixtures Import postman minimal-v2_1-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman oauth1_0-auth-v2_0-input.json 1`] = `
+exports[`Fixtures > Import postman > oauth1_0-auth-v2_0-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -4994,14 +5338,19 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_0-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "A collection for testing",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "Oauth 1.0 Test",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "callback": "",
         "consumerKey": "consumer-key-value",
@@ -5021,7 +5370,7 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_0-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983999,
       "method": "GET",
       "name": "Added to Request Body/URL",
       "parameters": [],
@@ -5032,6 +5381,7 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_0-input.json 1`] = `
     {
       "_id": "__REQ_2__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "callback": "",
         "consumerKey": "consumer-key-value",
@@ -5051,7 +5401,7 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_0-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 3,
+      "metaSortKey": -1622117983998,
       "method": "GET",
       "name": "Added to Request Headers",
       "parameters": [],
@@ -5062,6 +5412,7 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_0-input.json 1`] = `
     {
       "_id": "__REQ_3__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "callback": "",
         "consumerKey": "plaintext-consumer-key-value",
@@ -5081,7 +5432,7 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_0-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 4,
+      "metaSortKey": -1622117983997,
       "method": "GET",
       "name": "Signature Method PLAINTEXT",
       "parameters": [],
@@ -5092,6 +5443,7 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_0-input.json 1`] = `
     {
       "_id": "__REQ_4__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "callback": "",
         "consumerKey": "sha256-consumer-key-value",
@@ -5111,7 +5463,7 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_0-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 5,
+      "metaSortKey": -1622117983996,
       "method": "GET",
       "name": "Signature Method HMAC-SHA256",
       "parameters": [],
@@ -5122,6 +5474,7 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_0-input.json 1`] = `
     {
       "_id": "__REQ_5__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "callback": "",
         "consumerKey": "sha1-consumer-key-value",
@@ -5141,7 +5494,7 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_0-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 6,
+      "metaSortKey": -1622117983995,
       "method": "GET",
       "name": "Signature Method HMAC-SHA1",
       "parameters": [],
@@ -5153,7 +5506,7 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_0-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman oauth1_0-auth-v2_1-input.json 1`] = `
+exports[`Fixtures > Import postman > oauth1_0-auth-v2_1-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -5163,14 +5516,19 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_1-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "A collection for testing",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "Oauth 1.0 Test",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "callback": "",
         "consumerKey": "consumer-key-value",
@@ -5190,7 +5548,7 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_1-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983999,
       "method": "GET",
       "name": "Added to Request Body/URL",
       "parameters": [],
@@ -5201,6 +5559,7 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_1-input.json 1`] = `
     {
       "_id": "__REQ_2__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "callback": "",
         "consumerKey": "consumer-key-value",
@@ -5220,7 +5579,7 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_1-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 3,
+      "metaSortKey": -1622117983998,
       "method": "GET",
       "name": "Added to Request Headers",
       "parameters": [],
@@ -5231,6 +5590,7 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_1-input.json 1`] = `
     {
       "_id": "__REQ_3__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "callback": "",
         "consumerKey": "plaintext-consumer-key-value",
@@ -5250,7 +5610,7 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_1-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 4,
+      "metaSortKey": -1622117983997,
       "method": "GET",
       "name": "Signature Method PLAINTEXT",
       "parameters": [],
@@ -5261,6 +5621,7 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_1-input.json 1`] = `
     {
       "_id": "__REQ_4__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "callback": "",
         "consumerKey": "sha256-consumer-key-value",
@@ -5280,7 +5641,7 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_1-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 5,
+      "metaSortKey": -1622117983996,
       "method": "GET",
       "name": "Signature Method HMAC-SHA256",
       "parameters": [],
@@ -5291,6 +5652,7 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_1-input.json 1`] = `
     {
       "_id": "__REQ_5__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "callback": "",
         "consumerKey": "sha1-consumer-key-value",
@@ -5310,7 +5672,7 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_1-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 6,
+      "metaSortKey": -1622117983995,
       "method": "GET",
       "name": "Signature Method HMAC-SHA1",
       "parameters": [],
@@ -5322,7 +5684,7 @@ exports[`Fixtures Import postman oauth1_0-auth-v2_1-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman oauth2_0-auth-v2_0-input.json 1`] = `
+exports[`Fixtures > Import postman > oauth2_0-auth-v2_0-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -5332,14 +5694,19 @@ exports[`Fixtures Import postman oauth2_0-auth-v2_0-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "A collection for testing",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "Oauth 2.0 Test",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "accessTokenUrl": "",
         "authorizationUrl": "",
@@ -5352,7 +5719,7 @@ exports[`Fixtures Import postman oauth2_0-auth-v2_0-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983999,
       "method": "GET",
       "name": "Added to Request URL",
       "parameters": [],
@@ -5363,6 +5730,7 @@ exports[`Fixtures Import postman oauth2_0-auth-v2_0-input.json 1`] = `
     {
       "_id": "__REQ_2__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "accessTokenUrl": "",
         "authorizationUrl": "",
@@ -5375,7 +5743,7 @@ exports[`Fixtures Import postman oauth2_0-auth-v2_0-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 3,
+      "metaSortKey": -1622117983998,
       "method": "GET",
       "name": "Added to Request Headers",
       "parameters": [],
@@ -5387,7 +5755,7 @@ exports[`Fixtures Import postman oauth2_0-auth-v2_0-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman oauth2_0-auth-v2_1-input.json 1`] = `
+exports[`Fixtures > Import postman > oauth2_0-auth-v2_1-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -5397,14 +5765,19 @@ exports[`Fixtures Import postman oauth2_0-auth-v2_1-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "oauth2",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "accessTokenUrl": "test",
         "authorizationUrl": "test",
@@ -5426,7 +5799,7 @@ exports[`Fixtures Import postman oauth2_0-auth-v2_1-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983999,
       "method": "GET",
       "name": "auth code",
       "parameters": [],
@@ -5437,6 +5810,7 @@ exports[`Fixtures Import postman oauth2_0-auth-v2_1-input.json 1`] = `
     {
       "_id": "__REQ_2__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "accessTokenUrl": "test",
         "authorizationUrl": "test",
@@ -5458,7 +5832,7 @@ exports[`Fixtures Import postman oauth2_0-auth-v2_1-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 3,
+      "metaSortKey": -1622117983998,
       "method": "GET",
       "name": "pkce",
       "parameters": [],
@@ -5469,6 +5843,7 @@ exports[`Fixtures Import postman oauth2_0-auth-v2_1-input.json 1`] = `
     {
       "_id": "__REQ_3__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "accessTokenUrl": "test",
         "authorizationUrl": "test",
@@ -5490,7 +5865,7 @@ exports[`Fixtures Import postman oauth2_0-auth-v2_1-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 4,
+      "metaSortKey": -1622117983997,
       "method": "GET",
       "name": "implicit",
       "parameters": [],
@@ -5501,6 +5876,7 @@ exports[`Fixtures Import postman oauth2_0-auth-v2_1-input.json 1`] = `
     {
       "_id": "__REQ_4__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "accessTokenUrl": "test",
         "authorizationUrl": "test",
@@ -5522,7 +5898,7 @@ exports[`Fixtures Import postman oauth2_0-auth-v2_1-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 5,
+      "metaSortKey": -1622117983996,
       "method": "GET",
       "name": "password",
       "parameters": [],
@@ -5533,6 +5909,7 @@ exports[`Fixtures Import postman oauth2_0-auth-v2_1-input.json 1`] = `
     {
       "_id": "__REQ_5__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "accessTokenUrl": "test",
         "authorizationUrl": "test",
@@ -5554,7 +5931,7 @@ exports[`Fixtures Import postman oauth2_0-auth-v2_1-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 6,
+      "metaSortKey": -1622117983995,
       "method": "GET",
       "name": "client",
       "parameters": [],
@@ -5566,7 +5943,7 @@ exports[`Fixtures Import postman oauth2_0-auth-v2_1-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman postman-export-oauth2-v2_1-input.json 1`] = `
+exports[`Fixtures > Import postman > postman-export-oauth2-v2_1-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -5576,14 +5953,19 @@ exports[`Fixtures Import postman postman-export-oauth2-v2_1-input.json 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "Example collection",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {
         "accessTokenUrl": "exampleAccessTokenUrl",
         "authorizationUrl": "exampleAuthorizeUrl",
@@ -5605,7 +5987,7 @@ exports[`Fixtures Import postman postman-export-oauth2-v2_1-input.json 1`] = `
       "body": {},
       "description": "",
       "headers": [],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983999,
       "method": "GET",
       "name": "Example request with OAuth2",
       "parameters": [],
@@ -5617,7 +5999,53 @@ exports[`Fixtures Import postman postman-export-oauth2-v2_1-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman-env basic-input.json 1`] = `
+exports[`Fixtures > Import postman > scripts-import-v2_1-input.json 1`] = `
+{
+  "__export_date": "",
+  "__export_format": 4,
+  "__export_source": "insomnia.importers:v0.1.0",
+  "_type": "export",
+  "resources": [
+    {
+      "_id": "__GRP_1__",
+      "_type": "request_group",
+      "afterResponseScript": "console.log('after')",
+      "authentication": {},
+      "description": "",
+      "environment": {
+        "bob": "something",
+        "dssx": "{{_['env-var-in-global']}}",
+      },
+      "metaSortKey": -1622117984000,
+      "name": "New Collection",
+      "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "console.log('pre')",
+      "variable": {
+        "bob": "something",
+        "dssx": "{{_['env-var-in-global']}}",
+      },
+    },
+    {
+      "_id": "__REQ_1__",
+      "_type": "request",
+      "afterResponseScript": "console.log('this is test script');",
+      "authentication": {},
+      "body": {},
+      "description": "",
+      "headers": [],
+      "metaSortKey": -1622117983999,
+      "method": "GET",
+      "name": "New Request",
+      "parameters": [],
+      "parentId": "__GRP_1__",
+      "preRequestScript": "console.log('this is pre-request script');",
+      "url": "httpbin.org/get",
+    },
+  ],
+}
+`;
+
+exports[`Fixtures > Import postman-env > basic-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -5629,6 +6057,9 @@ exports[`Fixtures Import postman-env basic-input.json 1`] = `
       "_type": "environment",
       "data": {
         "foo": "production",
+      },
+      "meta": {
+        "postmanEnvScope": "environment",
       },
       "name": "Production Env",
       "parentId": "__BASE_ENVIRONMENT_ID__",
@@ -5637,7 +6068,7 @@ exports[`Fixtures Import postman-env basic-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import postman-env no-name-input.json 1`] = `
+exports[`Fixtures > Import postman-env > no-name-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -5648,7 +6079,10 @@ exports[`Fixtures Import postman-env no-name-input.json 1`] = `
       "_id": "__ENV_1__",
       "_type": "environment",
       "data": {
-        "foo": "production",
+        "foo-and-bar": "production-env",
+      },
+      "meta": {
+        "postmanEnvScope": "environment",
       },
       "name": "Postman Environment",
       "parentId": "__BASE_ENVIRONMENT_ID__",
@@ -5657,7 +6091,7 @@ exports[`Fixtures Import postman-env no-name-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import swagger2 dereferenced-input.json 1`] = `
+exports[`Fixtures > Import swagger2 > dereferenced-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -6161,1015 +6595,7 @@ exports[`Fixtures Import swagger2 dereferenced-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import swagger2 dereferenced-with-tags-input.json 1`] = `
-{
-  "__export_date": "",
-  "__export_format": 4,
-  "__export_source": "insomnia.importers:v0.1.0",
-  "_type": "export",
-  "resources": [
-    {
-      "_id": "__WORKSPACE_ID__",
-      "_type": "workspace",
-      "description": "This is a sample server Petstore server.  You can find out more about Swagger at [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).  For this sample, you can use the api key \`special-key\` to test the authorization filters.",
-      "name": "Swagger Petstore 1.0.0",
-      "parentId": null,
-    },
-    {
-      "_id": "__BASE_ENVIRONMENT_ID__",
-      "_type": "environment",
-      "data": {
-        "base_url": "{{ _.scheme }}://{{ _.host }}{{ _.base_path }}",
-      },
-      "name": "Base environment",
-      "parentId": "__WORKSPACE_ID__",
-    },
-    {
-      "_id": "env___BASE_ENVIRONMENT_ID___sub",
-      "_type": "environment",
-      "data": {
-        "base_path": "/v2",
-        "host": "petstore.swagger.io",
-        "scheme": "http",
-      },
-      "name": "Swagger env",
-      "parentId": "__BASE_ENVIRONMENT_ID__",
-    },
-    {
-      "_id": "fld___WORKSPACE_ID__1b034c38",
-      "_type": "request_group",
-      "description": "Everything about your Pets",
-      "environment": {},
-      "name": "pet",
-      "parentId": "__WORKSPACE_ID__",
-    },
-    {
-      "_id": "fld___WORKSPACE_ID__3a21295d",
-      "_type": "request_group",
-      "description": "Access to Petstore orders",
-      "environment": {},
-      "name": "store",
-      "parentId": "__WORKSPACE_ID__",
-    },
-    {
-      "_id": "fld___WORKSPACE_ID__12dea96f",
-      "_type": "request_group",
-      "description": "Operations about user",
-      "environment": {},
-      "name": "user",
-      "parentId": "__WORKSPACE_ID__",
-    },
-    {
-      "_id": "addPet",
-      "_type": "request",
-      "authentication": {
-        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
-        "clientId": "{{ _.client_id }}",
-        "disabled": false,
-        "grantType": "authorization_code",
-        "scope": "write:pets read:pets",
-        "type": "oauth2",
-      },
-      "body": {
-        "mimeType": "application/json",
-        "text": "{
-  "id": 0,
-  "category": {
-    "id": 0,
-    "name": "string"
-  },
-  "name": "doggie",
-  "photoUrls": [
-    "string"
-  ],
-  "tags": [
-    {
-      "id": 0,
-      "name": "string"
-    }
-  ],
-  "status": "string"
-}",
-      },
-      "description": "",
-      "headers": [
-        {
-          "disabled": false,
-          "name": "Content-Type",
-          "value": "application/json",
-        },
-      ],
-      "method": "POST",
-      "name": "Add a new pet to the store",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__1b034c38",
-      "url": "{{ _.base_url }}/pet",
-    },
-    {
-      "_id": "updatePet",
-      "_type": "request",
-      "authentication": {
-        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
-        "clientId": "{{ _.client_id }}",
-        "disabled": false,
-        "grantType": "authorization_code",
-        "scope": "write:pets read:pets",
-        "type": "oauth2",
-      },
-      "body": {
-        "mimeType": "application/json",
-        "text": "{
-  "id": 0,
-  "category": {
-    "id": 0,
-    "name": "string"
-  },
-  "name": "doggie",
-  "photoUrls": [
-    "string"
-  ],
-  "tags": [
-    {
-      "id": 0,
-      "name": "string"
-    }
-  ],
-  "status": "string"
-}",
-      },
-      "description": "",
-      "headers": [
-        {
-          "disabled": false,
-          "name": "Content-Type",
-          "value": "application/json",
-        },
-      ],
-      "method": "PUT",
-      "name": "Update an existing pet",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__1b034c38",
-      "url": "{{ _.base_url }}/pet",
-    },
-    {
-      "_id": "findPetsByStatus",
-      "_type": "request",
-      "authentication": {
-        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
-        "clientId": "{{ _.client_id }}",
-        "disabled": false,
-        "grantType": "authorization_code",
-        "scope": "write:pets read:pets",
-        "type": "oauth2",
-      },
-      "body": {},
-      "description": "Multiple status values can be provided with comma separated strings",
-      "headers": [],
-      "method": "GET",
-      "name": "Finds Pets by status",
-      "parameters": [
-        {
-          "disabled": false,
-          "name": "status",
-          "value": "available",
-        },
-      ],
-      "parentId": "fld___WORKSPACE_ID__1b034c38",
-      "url": "{{ _.base_url }}/pet/findByStatus",
-    },
-    {
-      "_id": "findPetsByTags",
-      "_type": "request",
-      "authentication": {
-        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
-        "clientId": "{{ _.client_id }}",
-        "disabled": false,
-        "grantType": "authorization_code",
-        "scope": "write:pets read:pets",
-        "type": "oauth2",
-      },
-      "body": {},
-      "description": "Multiple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.",
-      "headers": [],
-      "method": "GET",
-      "name": "Finds Pets by tags",
-      "parameters": [
-        {
-          "disabled": false,
-          "name": "tags",
-          "value": "string",
-        },
-      ],
-      "parentId": "fld___WORKSPACE_ID__1b034c38",
-      "url": "{{ _.base_url }}/pet/findByTags",
-    },
-    {
-      "_id": "getPetById",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "Returns a single pet",
-      "headers": [
-        {
-          "disabled": false,
-          "name": "api_key",
-          "value": "{{ _.api_key }}",
-        },
-      ],
-      "method": "GET",
-      "name": "Find pet by ID",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__1b034c38",
-      "url": "{{ _.base_url }}/pet/{{ _.petId }}",
-    },
-    {
-      "_id": "updatePetWithForm",
-      "_type": "request",
-      "authentication": {
-        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
-        "clientId": "{{ _.client_id }}",
-        "disabled": false,
-        "grantType": "authorization_code",
-        "scope": "write:pets read:pets",
-        "type": "oauth2",
-      },
-      "body": {
-        "mimeType": "application/x-www-form-urlencoded",
-        "params": [
-          {
-            "disabled": true,
-            "name": "name",
-            "value": "string",
-          },
-          {
-            "disabled": true,
-            "name": "status",
-            "value": "string",
-          },
-        ],
-      },
-      "description": "",
-      "headers": [
-        {
-          "disabled": false,
-          "name": "Content-Type",
-          "value": "application/x-www-form-urlencoded",
-        },
-      ],
-      "method": "POST",
-      "name": "Updates a pet in the store with form data",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__1b034c38",
-      "url": "{{ _.base_url }}/pet/{{ _.petId }}",
-    },
-    {
-      "_id": "deletePet",
-      "_type": "request",
-      "authentication": {
-        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
-        "clientId": "{{ _.client_id }}",
-        "disabled": false,
-        "grantType": "authorization_code",
-        "scope": "write:pets read:pets",
-        "type": "oauth2",
-      },
-      "body": {},
-      "description": "",
-      "headers": [
-        {
-          "disabled": true,
-          "name": "api_key",
-          "value": "string",
-        },
-      ],
-      "method": "DELETE",
-      "name": "Deletes a pet",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__1b034c38",
-      "url": "{{ _.base_url }}/pet/{{ _.petId }}",
-    },
-    {
-      "_id": "uploadFile",
-      "_type": "request",
-      "authentication": {
-        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
-        "clientId": "{{ _.client_id }}",
-        "disabled": false,
-        "grantType": "authorization_code",
-        "scope": "write:pets read:pets",
-        "type": "oauth2",
-      },
-      "body": {
-        "mimeType": "multipart/form-data",
-        "params": [
-          {
-            "disabled": true,
-            "name": "additionalMetadata",
-            "value": "string",
-          },
-          {
-            "disabled": true,
-            "name": "file",
-            "type": "file",
-          },
-        ],
-      },
-      "description": "",
-      "headers": [
-        {
-          "disabled": false,
-          "name": "Content-Type",
-          "value": "multipart/form-data",
-        },
-      ],
-      "method": "POST",
-      "name": "uploads an image",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__1b034c38",
-      "url": "{{ _.base_url }}/pet/{{ _.petId }}/uploadImage",
-    },
-    {
-      "_id": "getInventory",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "Returns a map of status codes to quantities",
-      "headers": [
-        {
-          "disabled": false,
-          "name": "api_key",
-          "value": "{{ _.api_key }}",
-        },
-      ],
-      "method": "GET",
-      "name": "Returns pet inventories by status",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__3a21295d",
-      "url": "{{ _.base_url }}/store/inventory",
-    },
-    {
-      "_id": "placeOrder",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "",
-      "headers": [],
-      "method": "POST",
-      "name": "Place an order for a pet",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__3a21295d",
-      "url": "{{ _.base_url }}/store/order",
-    },
-    {
-      "_id": "getOrderById",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "For valid response try integer IDs with value >= 1 and <= 10. Other values will generated exceptions",
-      "headers": [],
-      "method": "GET",
-      "name": "Find purchase order by ID",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__3a21295d",
-      "url": "{{ _.base_url }}/store/order/{{ _.orderId }}",
-    },
-    {
-      "_id": "deleteOrder",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "For valid response try integer IDs with positive integer value. Negative or non-integer values will generate API errors",
-      "headers": [],
-      "method": "DELETE",
-      "name": "Delete purchase order by ID",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__3a21295d",
-      "url": "{{ _.base_url }}/store/order/{{ _.orderId }}",
-    },
-    {
-      "_id": "createUser",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "This can only be done by the logged in user.",
-      "headers": [],
-      "method": "POST",
-      "name": "Create user",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__12dea96f",
-      "url": "{{ _.base_url }}/user",
-    },
-    {
-      "_id": "createUsersWithArrayInput",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "",
-      "headers": [],
-      "method": "POST",
-      "name": "Creates list of users with given input array",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__12dea96f",
-      "url": "{{ _.base_url }}/user/createWithArray",
-    },
-    {
-      "_id": "createUsersWithListInput",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "",
-      "headers": [],
-      "method": "POST",
-      "name": "Creates list of users with given input array",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__12dea96f",
-      "url": "{{ _.base_url }}/user/createWithList",
-    },
-    {
-      "_id": "loginUser",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "",
-      "headers": [],
-      "method": "GET",
-      "name": "Logs user into the system",
-      "parameters": [
-        {
-          "disabled": false,
-          "name": "username",
-          "value": "string",
-        },
-        {
-          "disabled": false,
-          "name": "password",
-          "value": "string",
-        },
-      ],
-      "parentId": "fld___WORKSPACE_ID__12dea96f",
-      "url": "{{ _.base_url }}/user/login",
-    },
-    {
-      "_id": "logoutUser",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "",
-      "headers": [],
-      "method": "GET",
-      "name": "Logs out current logged in user session",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__12dea96f",
-      "url": "{{ _.base_url }}/user/logout",
-    },
-    {
-      "_id": "getUserByName",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "",
-      "headers": [],
-      "method": "GET",
-      "name": "Get user by user name",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__12dea96f",
-      "url": "{{ _.base_url }}/user/{{ _.username }}",
-    },
-    {
-      "_id": "updateUser",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "This can only be done by the logged in user.",
-      "headers": [],
-      "method": "PUT",
-      "name": "Updated user",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__12dea96f",
-      "url": "{{ _.base_url }}/user/{{ _.username }}",
-    },
-    {
-      "_id": "deleteUser",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "This can only be done by the logged in user.",
-      "headers": [],
-      "method": "DELETE",
-      "name": "Delete user",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__12dea96f",
-      "url": "{{ _.base_url }}/user/{{ _.username }}",
-    },
-  ],
-}
-`;
-
-exports[`Fixtures Import swagger2 petstore-input.json 1`] = `
-{
-  "__export_date": "",
-  "__export_format": 4,
-  "__export_source": "insomnia.importers:v0.1.0",
-  "_type": "export",
-  "resources": [
-    {
-      "_id": "__WORKSPACE_ID__",
-      "_type": "workspace",
-      "description": "This is a sample server Petstore server.  You can find out more about Swagger at [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).  For this sample, you can use the api key \`special-key\` to test the authorization filters.",
-      "name": "Swagger Petstore 1.0.0",
-      "parentId": null,
-    },
-    {
-      "_id": "__BASE_ENVIRONMENT_ID__",
-      "_type": "environment",
-      "data": {
-        "base_url": "{{ _.scheme }}://{{ _.host }}{{ _.base_path }}",
-      },
-      "name": "Base environment",
-      "parentId": "__WORKSPACE_ID__",
-    },
-    {
-      "_id": "env___BASE_ENVIRONMENT_ID___sub",
-      "_type": "environment",
-      "data": {
-        "base_path": "/v2",
-        "host": "petstore.swagger.io",
-        "scheme": "http",
-      },
-      "name": "Swagger env",
-      "parentId": "__BASE_ENVIRONMENT_ID__",
-    },
-    {
-      "_id": "fld___WORKSPACE_ID__1b034c38",
-      "_type": "request_group",
-      "description": "",
-      "environment": {},
-      "name": "pet",
-      "parentId": "__WORKSPACE_ID__",
-    },
-    {
-      "_id": "fld___WORKSPACE_ID__3a21295d",
-      "_type": "request_group",
-      "description": "",
-      "environment": {},
-      "name": "store",
-      "parentId": "__WORKSPACE_ID__",
-    },
-    {
-      "_id": "fld___WORKSPACE_ID__12dea96f",
-      "_type": "request_group",
-      "description": "",
-      "environment": {},
-      "name": "user",
-      "parentId": "__WORKSPACE_ID__",
-    },
-    {
-      "_id": "addPet",
-      "_type": "request",
-      "authentication": {
-        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
-        "clientId": "{{ _.client_id }}",
-        "disabled": false,
-        "grantType": "authorization_code",
-        "scope": "write:pets read:pets",
-        "type": "oauth2",
-      },
-      "body": {
-        "mimeType": "application/json",
-        "text": "{
-  "id": 0,
-  "category": {
-    "id": 0,
-    "name": "string"
-  },
-  "name": "doggie",
-  "photoUrls": [
-    "string"
-  ],
-  "tags": [
-    {
-      "id": 0,
-      "name": "string"
-    }
-  ],
-  "status": "string"
-}",
-      },
-      "description": "",
-      "headers": [
-        {
-          "disabled": false,
-          "name": "Content-Type",
-          "value": "application/json",
-        },
-      ],
-      "method": "POST",
-      "name": "Add a new pet to the store",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__1b034c38",
-      "url": "{{ _.base_url }}/pet",
-    },
-    {
-      "_id": "updatePet",
-      "_type": "request",
-      "authentication": {
-        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
-        "clientId": "{{ _.client_id }}",
-        "disabled": false,
-        "grantType": "authorization_code",
-        "scope": "write:pets read:pets",
-        "type": "oauth2",
-      },
-      "body": {
-        "mimeType": "application/json",
-        "text": "{
-  "id": 0,
-  "category": {
-    "id": 0,
-    "name": "string"
-  },
-  "name": "doggie",
-  "photoUrls": [
-    "string"
-  ],
-  "tags": [
-    {
-      "id": 0,
-      "name": "string"
-    }
-  ],
-  "status": "string"
-}",
-      },
-      "description": "",
-      "headers": [
-        {
-          "disabled": false,
-          "name": "Content-Type",
-          "value": "application/json",
-        },
-      ],
-      "method": "PUT",
-      "name": "Update an existing pet",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__1b034c38",
-      "url": "{{ _.base_url }}/pet",
-    },
-    {
-      "_id": "findPetsByStatus",
-      "_type": "request",
-      "authentication": {
-        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
-        "clientId": "{{ _.client_id }}",
-        "disabled": false,
-        "grantType": "authorization_code",
-        "scope": "write:pets read:pets",
-        "type": "oauth2",
-      },
-      "body": {},
-      "description": "Multiple status values can be provided with comma separated strings",
-      "headers": [],
-      "method": "GET",
-      "name": "Finds Pets by status",
-      "parameters": [
-        {
-          "disabled": false,
-          "name": "status",
-          "value": "available",
-        },
-      ],
-      "parentId": "fld___WORKSPACE_ID__1b034c38",
-      "url": "{{ _.base_url }}/pet/findByStatus",
-    },
-    {
-      "_id": "findPetsByTags",
-      "_type": "request",
-      "authentication": {
-        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
-        "clientId": "{{ _.client_id }}",
-        "disabled": false,
-        "grantType": "authorization_code",
-        "scope": "write:pets read:pets",
-        "type": "oauth2",
-      },
-      "body": {},
-      "description": "Multiple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.",
-      "headers": [],
-      "method": "GET",
-      "name": "Finds Pets by tags",
-      "parameters": [
-        {
-          "disabled": false,
-          "name": "tags",
-          "value": "string",
-        },
-      ],
-      "parentId": "fld___WORKSPACE_ID__1b034c38",
-      "url": "{{ _.base_url }}/pet/findByTags",
-    },
-    {
-      "_id": "getPetById",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "Returns a single pet",
-      "headers": [
-        {
-          "disabled": false,
-          "name": "api_key",
-          "value": "{{ _.api_key }}",
-        },
-      ],
-      "method": "GET",
-      "name": "Find pet by ID",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__1b034c38",
-      "url": "{{ _.base_url }}/pet/{{ _.petId }}",
-    },
-    {
-      "_id": "updatePetWithForm",
-      "_type": "request",
-      "authentication": {
-        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
-        "clientId": "{{ _.client_id }}",
-        "disabled": false,
-        "grantType": "authorization_code",
-        "scope": "write:pets read:pets",
-        "type": "oauth2",
-      },
-      "body": {
-        "mimeType": "application/x-www-form-urlencoded",
-        "params": [
-          {
-            "disabled": true,
-            "name": "name",
-            "value": "string",
-          },
-          {
-            "disabled": true,
-            "name": "status",
-            "value": "string",
-          },
-        ],
-      },
-      "description": "",
-      "headers": [
-        {
-          "disabled": false,
-          "name": "Content-Type",
-          "value": "application/x-www-form-urlencoded",
-        },
-      ],
-      "method": "POST",
-      "name": "Updates a pet in the store with form data",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__1b034c38",
-      "url": "{{ _.base_url }}/pet/{{ _.petId }}",
-    },
-    {
-      "_id": "deletePet",
-      "_type": "request",
-      "authentication": {
-        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
-        "clientId": "{{ _.client_id }}",
-        "disabled": false,
-        "grantType": "authorization_code",
-        "scope": "write:pets read:pets",
-        "type": "oauth2",
-      },
-      "body": {},
-      "description": "",
-      "headers": [
-        {
-          "disabled": true,
-          "name": "api_key",
-          "value": "string",
-        },
-      ],
-      "method": "DELETE",
-      "name": "Deletes a pet",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__1b034c38",
-      "url": "{{ _.base_url }}/pet/{{ _.petId }}",
-    },
-    {
-      "_id": "uploadFile",
-      "_type": "request",
-      "authentication": {
-        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
-        "clientId": "{{ _.client_id }}",
-        "disabled": false,
-        "grantType": "authorization_code",
-        "scope": "write:pets read:pets",
-        "type": "oauth2",
-      },
-      "body": {
-        "mimeType": "multipart/form-data",
-        "params": [
-          {
-            "disabled": true,
-            "name": "additionalMetadata",
-            "value": "string",
-          },
-          {
-            "disabled": true,
-            "name": "file",
-            "type": "file",
-          },
-        ],
-      },
-      "description": "",
-      "headers": [
-        {
-          "disabled": false,
-          "name": "Content-Type",
-          "value": "multipart/form-data",
-        },
-      ],
-      "method": "POST",
-      "name": "uploads an image",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__1b034c38",
-      "url": "{{ _.base_url }}/pet/{{ _.petId }}/uploadImage",
-    },
-    {
-      "_id": "getInventory",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "Returns a map of status codes to quantities",
-      "headers": [
-        {
-          "disabled": false,
-          "name": "api_key",
-          "value": "{{ _.api_key }}",
-        },
-      ],
-      "method": "GET",
-      "name": "Returns pet inventories by status",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__3a21295d",
-      "url": "{{ _.base_url }}/store/inventory",
-    },
-    {
-      "_id": "placeOrder",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "",
-      "headers": [],
-      "method": "POST",
-      "name": "Place an order for a pet",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__3a21295d",
-      "url": "{{ _.base_url }}/store/order",
-    },
-    {
-      "_id": "getOrderById",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "For valid response try integer IDs with value >= 1 and <= 10. Other values will generated exceptions",
-      "headers": [],
-      "method": "GET",
-      "name": "Find purchase order by ID",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__3a21295d",
-      "url": "{{ _.base_url }}/store/order/{{ _.orderId }}",
-    },
-    {
-      "_id": "deleteOrder",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "For valid response try integer IDs with positive integer value. Negative or non-integer values will generate API errors",
-      "headers": [],
-      "method": "DELETE",
-      "name": "Delete purchase order by ID",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__3a21295d",
-      "url": "{{ _.base_url }}/store/order/{{ _.orderId }}",
-    },
-    {
-      "_id": "createUser",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "This can only be done by the logged in user.",
-      "headers": [],
-      "method": "POST",
-      "name": "Create user",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__12dea96f",
-      "url": "{{ _.base_url }}/user",
-    },
-    {
-      "_id": "createUsersWithArrayInput",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "",
-      "headers": [],
-      "method": "POST",
-      "name": "Creates list of users with given input array",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__12dea96f",
-      "url": "{{ _.base_url }}/user/createWithArray",
-    },
-    {
-      "_id": "createUsersWithListInput",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "",
-      "headers": [],
-      "method": "POST",
-      "name": "Creates list of users with given input array",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__12dea96f",
-      "url": "{{ _.base_url }}/user/createWithList",
-    },
-    {
-      "_id": "loginUser",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "",
-      "headers": [],
-      "method": "GET",
-      "name": "Logs user into the system",
-      "parameters": [
-        {
-          "disabled": false,
-          "name": "username",
-          "value": "string",
-        },
-        {
-          "disabled": false,
-          "name": "password",
-          "value": "string",
-        },
-      ],
-      "parentId": "fld___WORKSPACE_ID__12dea96f",
-      "url": "{{ _.base_url }}/user/login",
-    },
-    {
-      "_id": "logoutUser",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "",
-      "headers": [],
-      "method": "GET",
-      "name": "Logs out current logged in user session",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__12dea96f",
-      "url": "{{ _.base_url }}/user/logout",
-    },
-    {
-      "_id": "getUserByName",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "",
-      "headers": [],
-      "method": "GET",
-      "name": "Get user by user name",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__12dea96f",
-      "url": "{{ _.base_url }}/user/{{ _.username }}",
-    },
-    {
-      "_id": "updateUser",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "This can only be done by the logged in user.",
-      "headers": [],
-      "method": "PUT",
-      "name": "Updated user",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__12dea96f",
-      "url": "{{ _.base_url }}/user/{{ _.username }}",
-    },
-    {
-      "_id": "deleteUser",
-      "_type": "request",
-      "authentication": {},
-      "body": {},
-      "description": "This can only be done by the logged in user.",
-      "headers": [],
-      "method": "DELETE",
-      "name": "Delete user",
-      "parameters": [],
-      "parentId": "fld___WORKSPACE_ID__12dea96f",
-      "url": "{{ _.base_url }}/user/{{ _.username }}",
-    },
-  ],
-}
-`;
-
-exports[`Fixtures Import swagger2 petstore-with-tags-input.json 1`] = `
+exports[`Fixtures > Import swagger2 > dereferenced-with-tags-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -7673,7 +7099,1015 @@ exports[`Fixtures Import swagger2 petstore-with-tags-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import swagger2 petstore-yml-input.yml 1`] = `
+exports[`Fixtures > Import swagger2 > petstore-input.json 1`] = `
+{
+  "__export_date": "",
+  "__export_format": 4,
+  "__export_source": "insomnia.importers:v0.1.0",
+  "_type": "export",
+  "resources": [
+    {
+      "_id": "__WORKSPACE_ID__",
+      "_type": "workspace",
+      "description": "This is a sample server Petstore server.  You can find out more about Swagger at [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).  For this sample, you can use the api key \`special-key\` to test the authorization filters.",
+      "name": "Swagger Petstore 1.0.0",
+      "parentId": null,
+    },
+    {
+      "_id": "__BASE_ENVIRONMENT_ID__",
+      "_type": "environment",
+      "data": {
+        "base_url": "{{ _.scheme }}://{{ _.host }}{{ _.base_path }}",
+      },
+      "name": "Base environment",
+      "parentId": "__WORKSPACE_ID__",
+    },
+    {
+      "_id": "env___BASE_ENVIRONMENT_ID___sub",
+      "_type": "environment",
+      "data": {
+        "base_path": "/v2",
+        "host": "petstore.swagger.io",
+        "scheme": "http",
+      },
+      "name": "Swagger env",
+      "parentId": "__BASE_ENVIRONMENT_ID__",
+    },
+    {
+      "_id": "fld___WORKSPACE_ID__1b034c38",
+      "_type": "request_group",
+      "description": "",
+      "environment": {},
+      "name": "pet",
+      "parentId": "__WORKSPACE_ID__",
+    },
+    {
+      "_id": "fld___WORKSPACE_ID__3a21295d",
+      "_type": "request_group",
+      "description": "",
+      "environment": {},
+      "name": "store",
+      "parentId": "__WORKSPACE_ID__",
+    },
+    {
+      "_id": "fld___WORKSPACE_ID__12dea96f",
+      "_type": "request_group",
+      "description": "",
+      "environment": {},
+      "name": "user",
+      "parentId": "__WORKSPACE_ID__",
+    },
+    {
+      "_id": "addPet",
+      "_type": "request",
+      "authentication": {
+        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
+        "clientId": "{{ _.client_id }}",
+        "disabled": false,
+        "grantType": "authorization_code",
+        "scope": "write:pets read:pets",
+        "type": "oauth2",
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{
+  "id": 0,
+  "category": {
+    "id": 0,
+    "name": "string"
+  },
+  "name": "doggie",
+  "photoUrls": [
+    "string"
+  ],
+  "tags": [
+    {
+      "id": 0,
+      "name": "string"
+    }
+  ],
+  "status": "string"
+}",
+      },
+      "description": "",
+      "headers": [
+        {
+          "disabled": false,
+          "name": "Content-Type",
+          "value": "application/json",
+        },
+      ],
+      "method": "POST",
+      "name": "Add a new pet to the store",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__1b034c38",
+      "url": "{{ _.base_url }}/pet",
+    },
+    {
+      "_id": "updatePet",
+      "_type": "request",
+      "authentication": {
+        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
+        "clientId": "{{ _.client_id }}",
+        "disabled": false,
+        "grantType": "authorization_code",
+        "scope": "write:pets read:pets",
+        "type": "oauth2",
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{
+  "id": 0,
+  "category": {
+    "id": 0,
+    "name": "string"
+  },
+  "name": "doggie",
+  "photoUrls": [
+    "string"
+  ],
+  "tags": [
+    {
+      "id": 0,
+      "name": "string"
+    }
+  ],
+  "status": "string"
+}",
+      },
+      "description": "",
+      "headers": [
+        {
+          "disabled": false,
+          "name": "Content-Type",
+          "value": "application/json",
+        },
+      ],
+      "method": "PUT",
+      "name": "Update an existing pet",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__1b034c38",
+      "url": "{{ _.base_url }}/pet",
+    },
+    {
+      "_id": "findPetsByStatus",
+      "_type": "request",
+      "authentication": {
+        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
+        "clientId": "{{ _.client_id }}",
+        "disabled": false,
+        "grantType": "authorization_code",
+        "scope": "write:pets read:pets",
+        "type": "oauth2",
+      },
+      "body": {},
+      "description": "Multiple status values can be provided with comma separated strings",
+      "headers": [],
+      "method": "GET",
+      "name": "Finds Pets by status",
+      "parameters": [
+        {
+          "disabled": false,
+          "name": "status",
+          "value": "available",
+        },
+      ],
+      "parentId": "fld___WORKSPACE_ID__1b034c38",
+      "url": "{{ _.base_url }}/pet/findByStatus",
+    },
+    {
+      "_id": "findPetsByTags",
+      "_type": "request",
+      "authentication": {
+        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
+        "clientId": "{{ _.client_id }}",
+        "disabled": false,
+        "grantType": "authorization_code",
+        "scope": "write:pets read:pets",
+        "type": "oauth2",
+      },
+      "body": {},
+      "description": "Multiple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.",
+      "headers": [],
+      "method": "GET",
+      "name": "Finds Pets by tags",
+      "parameters": [
+        {
+          "disabled": false,
+          "name": "tags",
+          "value": "string",
+        },
+      ],
+      "parentId": "fld___WORKSPACE_ID__1b034c38",
+      "url": "{{ _.base_url }}/pet/findByTags",
+    },
+    {
+      "_id": "getPetById",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "Returns a single pet",
+      "headers": [
+        {
+          "disabled": false,
+          "name": "api_key",
+          "value": "{{ _.api_key }}",
+        },
+      ],
+      "method": "GET",
+      "name": "Find pet by ID",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__1b034c38",
+      "url": "{{ _.base_url }}/pet/{{ _.petId }}",
+    },
+    {
+      "_id": "updatePetWithForm",
+      "_type": "request",
+      "authentication": {
+        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
+        "clientId": "{{ _.client_id }}",
+        "disabled": false,
+        "grantType": "authorization_code",
+        "scope": "write:pets read:pets",
+        "type": "oauth2",
+      },
+      "body": {
+        "mimeType": "application/x-www-form-urlencoded",
+        "params": [
+          {
+            "disabled": true,
+            "name": "name",
+            "value": "string",
+          },
+          {
+            "disabled": true,
+            "name": "status",
+            "value": "string",
+          },
+        ],
+      },
+      "description": "",
+      "headers": [
+        {
+          "disabled": false,
+          "name": "Content-Type",
+          "value": "application/x-www-form-urlencoded",
+        },
+      ],
+      "method": "POST",
+      "name": "Updates a pet in the store with form data",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__1b034c38",
+      "url": "{{ _.base_url }}/pet/{{ _.petId }}",
+    },
+    {
+      "_id": "deletePet",
+      "_type": "request",
+      "authentication": {
+        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
+        "clientId": "{{ _.client_id }}",
+        "disabled": false,
+        "grantType": "authorization_code",
+        "scope": "write:pets read:pets",
+        "type": "oauth2",
+      },
+      "body": {},
+      "description": "",
+      "headers": [
+        {
+          "disabled": true,
+          "name": "api_key",
+          "value": "string",
+        },
+      ],
+      "method": "DELETE",
+      "name": "Deletes a pet",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__1b034c38",
+      "url": "{{ _.base_url }}/pet/{{ _.petId }}",
+    },
+    {
+      "_id": "uploadFile",
+      "_type": "request",
+      "authentication": {
+        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
+        "clientId": "{{ _.client_id }}",
+        "disabled": false,
+        "grantType": "authorization_code",
+        "scope": "write:pets read:pets",
+        "type": "oauth2",
+      },
+      "body": {
+        "mimeType": "multipart/form-data",
+        "params": [
+          {
+            "disabled": true,
+            "name": "additionalMetadata",
+            "value": "string",
+          },
+          {
+            "disabled": true,
+            "name": "file",
+            "type": "file",
+          },
+        ],
+      },
+      "description": "",
+      "headers": [
+        {
+          "disabled": false,
+          "name": "Content-Type",
+          "value": "multipart/form-data",
+        },
+      ],
+      "method": "POST",
+      "name": "uploads an image",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__1b034c38",
+      "url": "{{ _.base_url }}/pet/{{ _.petId }}/uploadImage",
+    },
+    {
+      "_id": "getInventory",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "Returns a map of status codes to quantities",
+      "headers": [
+        {
+          "disabled": false,
+          "name": "api_key",
+          "value": "{{ _.api_key }}",
+        },
+      ],
+      "method": "GET",
+      "name": "Returns pet inventories by status",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__3a21295d",
+      "url": "{{ _.base_url }}/store/inventory",
+    },
+    {
+      "_id": "placeOrder",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "",
+      "headers": [],
+      "method": "POST",
+      "name": "Place an order for a pet",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__3a21295d",
+      "url": "{{ _.base_url }}/store/order",
+    },
+    {
+      "_id": "getOrderById",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "For valid response try integer IDs with value >= 1 and <= 10. Other values will generated exceptions",
+      "headers": [],
+      "method": "GET",
+      "name": "Find purchase order by ID",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__3a21295d",
+      "url": "{{ _.base_url }}/store/order/{{ _.orderId }}",
+    },
+    {
+      "_id": "deleteOrder",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "For valid response try integer IDs with positive integer value. Negative or non-integer values will generate API errors",
+      "headers": [],
+      "method": "DELETE",
+      "name": "Delete purchase order by ID",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__3a21295d",
+      "url": "{{ _.base_url }}/store/order/{{ _.orderId }}",
+    },
+    {
+      "_id": "createUser",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "This can only be done by the logged in user.",
+      "headers": [],
+      "method": "POST",
+      "name": "Create user",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__12dea96f",
+      "url": "{{ _.base_url }}/user",
+    },
+    {
+      "_id": "createUsersWithArrayInput",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "",
+      "headers": [],
+      "method": "POST",
+      "name": "Creates list of users with given input array",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__12dea96f",
+      "url": "{{ _.base_url }}/user/createWithArray",
+    },
+    {
+      "_id": "createUsersWithListInput",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "",
+      "headers": [],
+      "method": "POST",
+      "name": "Creates list of users with given input array",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__12dea96f",
+      "url": "{{ _.base_url }}/user/createWithList",
+    },
+    {
+      "_id": "loginUser",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "",
+      "headers": [],
+      "method": "GET",
+      "name": "Logs user into the system",
+      "parameters": [
+        {
+          "disabled": false,
+          "name": "username",
+          "value": "string",
+        },
+        {
+          "disabled": false,
+          "name": "password",
+          "value": "string",
+        },
+      ],
+      "parentId": "fld___WORKSPACE_ID__12dea96f",
+      "url": "{{ _.base_url }}/user/login",
+    },
+    {
+      "_id": "logoutUser",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "",
+      "headers": [],
+      "method": "GET",
+      "name": "Logs out current logged in user session",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__12dea96f",
+      "url": "{{ _.base_url }}/user/logout",
+    },
+    {
+      "_id": "getUserByName",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "",
+      "headers": [],
+      "method": "GET",
+      "name": "Get user by user name",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__12dea96f",
+      "url": "{{ _.base_url }}/user/{{ _.username }}",
+    },
+    {
+      "_id": "updateUser",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "This can only be done by the logged in user.",
+      "headers": [],
+      "method": "PUT",
+      "name": "Updated user",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__12dea96f",
+      "url": "{{ _.base_url }}/user/{{ _.username }}",
+    },
+    {
+      "_id": "deleteUser",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "This can only be done by the logged in user.",
+      "headers": [],
+      "method": "DELETE",
+      "name": "Delete user",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__12dea96f",
+      "url": "{{ _.base_url }}/user/{{ _.username }}",
+    },
+  ],
+}
+`;
+
+exports[`Fixtures > Import swagger2 > petstore-with-tags-input.json 1`] = `
+{
+  "__export_date": "",
+  "__export_format": 4,
+  "__export_source": "insomnia.importers:v0.1.0",
+  "_type": "export",
+  "resources": [
+    {
+      "_id": "__WORKSPACE_ID__",
+      "_type": "workspace",
+      "description": "This is a sample server Petstore server.  You can find out more about Swagger at [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).  For this sample, you can use the api key \`special-key\` to test the authorization filters.",
+      "name": "Swagger Petstore 1.0.0",
+      "parentId": null,
+    },
+    {
+      "_id": "__BASE_ENVIRONMENT_ID__",
+      "_type": "environment",
+      "data": {
+        "base_url": "{{ _.scheme }}://{{ _.host }}{{ _.base_path }}",
+      },
+      "name": "Base environment",
+      "parentId": "__WORKSPACE_ID__",
+    },
+    {
+      "_id": "env___BASE_ENVIRONMENT_ID___sub",
+      "_type": "environment",
+      "data": {
+        "base_path": "/v2",
+        "host": "petstore.swagger.io",
+        "scheme": "http",
+      },
+      "name": "Swagger env",
+      "parentId": "__BASE_ENVIRONMENT_ID__",
+    },
+    {
+      "_id": "fld___WORKSPACE_ID__1b034c38",
+      "_type": "request_group",
+      "description": "Everything about your Pets",
+      "environment": {},
+      "name": "pet",
+      "parentId": "__WORKSPACE_ID__",
+    },
+    {
+      "_id": "fld___WORKSPACE_ID__3a21295d",
+      "_type": "request_group",
+      "description": "Access to Petstore orders",
+      "environment": {},
+      "name": "store",
+      "parentId": "__WORKSPACE_ID__",
+    },
+    {
+      "_id": "fld___WORKSPACE_ID__12dea96f",
+      "_type": "request_group",
+      "description": "Operations about user",
+      "environment": {},
+      "name": "user",
+      "parentId": "__WORKSPACE_ID__",
+    },
+    {
+      "_id": "addPet",
+      "_type": "request",
+      "authentication": {
+        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
+        "clientId": "{{ _.client_id }}",
+        "disabled": false,
+        "grantType": "authorization_code",
+        "scope": "write:pets read:pets",
+        "type": "oauth2",
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{
+  "id": 0,
+  "category": {
+    "id": 0,
+    "name": "string"
+  },
+  "name": "doggie",
+  "photoUrls": [
+    "string"
+  ],
+  "tags": [
+    {
+      "id": 0,
+      "name": "string"
+    }
+  ],
+  "status": "string"
+}",
+      },
+      "description": "",
+      "headers": [
+        {
+          "disabled": false,
+          "name": "Content-Type",
+          "value": "application/json",
+        },
+      ],
+      "method": "POST",
+      "name": "Add a new pet to the store",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__1b034c38",
+      "url": "{{ _.base_url }}/pet",
+    },
+    {
+      "_id": "updatePet",
+      "_type": "request",
+      "authentication": {
+        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
+        "clientId": "{{ _.client_id }}",
+        "disabled": false,
+        "grantType": "authorization_code",
+        "scope": "write:pets read:pets",
+        "type": "oauth2",
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{
+  "id": 0,
+  "category": {
+    "id": 0,
+    "name": "string"
+  },
+  "name": "doggie",
+  "photoUrls": [
+    "string"
+  ],
+  "tags": [
+    {
+      "id": 0,
+      "name": "string"
+    }
+  ],
+  "status": "string"
+}",
+      },
+      "description": "",
+      "headers": [
+        {
+          "disabled": false,
+          "name": "Content-Type",
+          "value": "application/json",
+        },
+      ],
+      "method": "PUT",
+      "name": "Update an existing pet",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__1b034c38",
+      "url": "{{ _.base_url }}/pet",
+    },
+    {
+      "_id": "findPetsByStatus",
+      "_type": "request",
+      "authentication": {
+        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
+        "clientId": "{{ _.client_id }}",
+        "disabled": false,
+        "grantType": "authorization_code",
+        "scope": "write:pets read:pets",
+        "type": "oauth2",
+      },
+      "body": {},
+      "description": "Multiple status values can be provided with comma separated strings",
+      "headers": [],
+      "method": "GET",
+      "name": "Finds Pets by status",
+      "parameters": [
+        {
+          "disabled": false,
+          "name": "status",
+          "value": "available",
+        },
+      ],
+      "parentId": "fld___WORKSPACE_ID__1b034c38",
+      "url": "{{ _.base_url }}/pet/findByStatus",
+    },
+    {
+      "_id": "findPetsByTags",
+      "_type": "request",
+      "authentication": {
+        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
+        "clientId": "{{ _.client_id }}",
+        "disabled": false,
+        "grantType": "authorization_code",
+        "scope": "write:pets read:pets",
+        "type": "oauth2",
+      },
+      "body": {},
+      "description": "Multiple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.",
+      "headers": [],
+      "method": "GET",
+      "name": "Finds Pets by tags",
+      "parameters": [
+        {
+          "disabled": false,
+          "name": "tags",
+          "value": "string",
+        },
+      ],
+      "parentId": "fld___WORKSPACE_ID__1b034c38",
+      "url": "{{ _.base_url }}/pet/findByTags",
+    },
+    {
+      "_id": "getPetById",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "Returns a single pet",
+      "headers": [
+        {
+          "disabled": false,
+          "name": "api_key",
+          "value": "{{ _.api_key }}",
+        },
+      ],
+      "method": "GET",
+      "name": "Find pet by ID",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__1b034c38",
+      "url": "{{ _.base_url }}/pet/{{ _.petId }}",
+    },
+    {
+      "_id": "updatePetWithForm",
+      "_type": "request",
+      "authentication": {
+        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
+        "clientId": "{{ _.client_id }}",
+        "disabled": false,
+        "grantType": "authorization_code",
+        "scope": "write:pets read:pets",
+        "type": "oauth2",
+      },
+      "body": {
+        "mimeType": "application/x-www-form-urlencoded",
+        "params": [
+          {
+            "disabled": true,
+            "name": "name",
+            "value": "string",
+          },
+          {
+            "disabled": true,
+            "name": "status",
+            "value": "string",
+          },
+        ],
+      },
+      "description": "",
+      "headers": [
+        {
+          "disabled": false,
+          "name": "Content-Type",
+          "value": "application/x-www-form-urlencoded",
+        },
+      ],
+      "method": "POST",
+      "name": "Updates a pet in the store with form data",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__1b034c38",
+      "url": "{{ _.base_url }}/pet/{{ _.petId }}",
+    },
+    {
+      "_id": "deletePet",
+      "_type": "request",
+      "authentication": {
+        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
+        "clientId": "{{ _.client_id }}",
+        "disabled": false,
+        "grantType": "authorization_code",
+        "scope": "write:pets read:pets",
+        "type": "oauth2",
+      },
+      "body": {},
+      "description": "",
+      "headers": [
+        {
+          "disabled": true,
+          "name": "api_key",
+          "value": "string",
+        },
+      ],
+      "method": "DELETE",
+      "name": "Deletes a pet",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__1b034c38",
+      "url": "{{ _.base_url }}/pet/{{ _.petId }}",
+    },
+    {
+      "_id": "uploadFile",
+      "_type": "request",
+      "authentication": {
+        "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
+        "clientId": "{{ _.client_id }}",
+        "disabled": false,
+        "grantType": "authorization_code",
+        "scope": "write:pets read:pets",
+        "type": "oauth2",
+      },
+      "body": {
+        "mimeType": "multipart/form-data",
+        "params": [
+          {
+            "disabled": true,
+            "name": "additionalMetadata",
+            "value": "string",
+          },
+          {
+            "disabled": true,
+            "name": "file",
+            "type": "file",
+          },
+        ],
+      },
+      "description": "",
+      "headers": [
+        {
+          "disabled": false,
+          "name": "Content-Type",
+          "value": "multipart/form-data",
+        },
+      ],
+      "method": "POST",
+      "name": "uploads an image",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__1b034c38",
+      "url": "{{ _.base_url }}/pet/{{ _.petId }}/uploadImage",
+    },
+    {
+      "_id": "getInventory",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "Returns a map of status codes to quantities",
+      "headers": [
+        {
+          "disabled": false,
+          "name": "api_key",
+          "value": "{{ _.api_key }}",
+        },
+      ],
+      "method": "GET",
+      "name": "Returns pet inventories by status",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__3a21295d",
+      "url": "{{ _.base_url }}/store/inventory",
+    },
+    {
+      "_id": "placeOrder",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "",
+      "headers": [],
+      "method": "POST",
+      "name": "Place an order for a pet",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__3a21295d",
+      "url": "{{ _.base_url }}/store/order",
+    },
+    {
+      "_id": "getOrderById",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "For valid response try integer IDs with value >= 1 and <= 10. Other values will generated exceptions",
+      "headers": [],
+      "method": "GET",
+      "name": "Find purchase order by ID",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__3a21295d",
+      "url": "{{ _.base_url }}/store/order/{{ _.orderId }}",
+    },
+    {
+      "_id": "deleteOrder",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "For valid response try integer IDs with positive integer value. Negative or non-integer values will generate API errors",
+      "headers": [],
+      "method": "DELETE",
+      "name": "Delete purchase order by ID",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__3a21295d",
+      "url": "{{ _.base_url }}/store/order/{{ _.orderId }}",
+    },
+    {
+      "_id": "createUser",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "This can only be done by the logged in user.",
+      "headers": [],
+      "method": "POST",
+      "name": "Create user",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__12dea96f",
+      "url": "{{ _.base_url }}/user",
+    },
+    {
+      "_id": "createUsersWithArrayInput",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "",
+      "headers": [],
+      "method": "POST",
+      "name": "Creates list of users with given input array",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__12dea96f",
+      "url": "{{ _.base_url }}/user/createWithArray",
+    },
+    {
+      "_id": "createUsersWithListInput",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "",
+      "headers": [],
+      "method": "POST",
+      "name": "Creates list of users with given input array",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__12dea96f",
+      "url": "{{ _.base_url }}/user/createWithList",
+    },
+    {
+      "_id": "loginUser",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "",
+      "headers": [],
+      "method": "GET",
+      "name": "Logs user into the system",
+      "parameters": [
+        {
+          "disabled": false,
+          "name": "username",
+          "value": "string",
+        },
+        {
+          "disabled": false,
+          "name": "password",
+          "value": "string",
+        },
+      ],
+      "parentId": "fld___WORKSPACE_ID__12dea96f",
+      "url": "{{ _.base_url }}/user/login",
+    },
+    {
+      "_id": "logoutUser",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "",
+      "headers": [],
+      "method": "GET",
+      "name": "Logs out current logged in user session",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__12dea96f",
+      "url": "{{ _.base_url }}/user/logout",
+    },
+    {
+      "_id": "getUserByName",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "",
+      "headers": [],
+      "method": "GET",
+      "name": "Get user by user name",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__12dea96f",
+      "url": "{{ _.base_url }}/user/{{ _.username }}",
+    },
+    {
+      "_id": "updateUser",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "This can only be done by the logged in user.",
+      "headers": [],
+      "method": "PUT",
+      "name": "Updated user",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__12dea96f",
+      "url": "{{ _.base_url }}/user/{{ _.username }}",
+    },
+    {
+      "_id": "deleteUser",
+      "_type": "request",
+      "authentication": {},
+      "body": {},
+      "description": "This can only be done by the logged in user.",
+      "headers": [],
+      "method": "DELETE",
+      "name": "Delete user",
+      "parameters": [],
+      "parentId": "fld___WORKSPACE_ID__12dea96f",
+      "url": "{{ _.base_url }}/user/{{ _.username }}",
+    },
+  ],
+}
+`;
+
+exports[`Fixtures > Import swagger2 > petstore-yml-input.yml 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -7805,7 +8239,7 @@ exports[`Fixtures Import swagger2 petstore-yml-input.yml 1`] = `
 }
 `;
 
-exports[`Fixtures Import swagger2 petstore-yml-with-tags-input.yml 1`] = `
+exports[`Fixtures > Import swagger2 > petstore-yml-with-tags-input.yml 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -7896,7 +8330,7 @@ exports[`Fixtures Import swagger2 petstore-yml-with-tags-input.yml 1`] = `
 }
 `;
 
-exports[`Fixtures Import swagger2 user-example-input.json 1`] = `
+exports[`Fixtures > Import swagger2 > user-example-input.json 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -7955,7 +8389,7 @@ exports[`Fixtures Import swagger2 user-example-input.json 1`] = `
 }
 `;
 
-exports[`Fixtures Import wsdl addition-input.wsdl 1`] = `
+exports[`Fixtures > Import wsdl > addition-input.wsdl 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -7965,25 +8399,34 @@ exports[`Fixtures Import wsdl addition-input.wsdl 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "Calculator",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__GRP_2__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "",
       "environment": {},
+      "metaSortKey": -1622117983999,
       "name": "Calculator",
       "parentId": "__GRP_1__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {},
       "body": {
-        "mimeType": "text/xml",
+        "mimeType": "text/plain",
         "text": "
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
  <soapenv:Header>
@@ -8024,7 +8467,7 @@ exports[`Fixtures Import wsdl addition-input.wsdl 1`] = `
           "value": "application/xml",
         },
       ],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983998,
       "method": "POST",
       "name": "Add",
       "parameters": [],
@@ -8036,7 +8479,7 @@ exports[`Fixtures Import wsdl addition-input.wsdl 1`] = `
 }
 `;
 
-exports[`Fixtures Import wsdl calculator-input.wsdl 1`] = `
+exports[`Fixtures > Import wsdl > calculator-input.wsdl 1`] = `
 {
   "__export_date": "",
   "__export_format": 4,
@@ -8046,25 +8489,34 @@ exports[`Fixtures Import wsdl calculator-input.wsdl 1`] = `
     {
       "_id": "__GRP_1__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "",
       "environment": {},
+      "metaSortKey": -1622117984000,
       "name": "Calculator",
       "parentId": "__WORKSPACE_ID__",
+      "preRequestScript": "",
     },
     {
       "_id": "__GRP_2__",
       "_type": "request_group",
+      "afterResponseScript": "",
+      "authentication": {},
       "description": "",
       "environment": {},
+      "metaSortKey": -1622117983999,
       "name": "Calculator",
       "parentId": "__GRP_1__",
+      "preRequestScript": "",
     },
     {
       "_id": "__REQ_1__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {},
       "body": {
-        "mimeType": "text/xml",
+        "mimeType": "text/plain",
         "text": "
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
  <soapenv:Header>
@@ -8105,7 +8557,7 @@ exports[`Fixtures Import wsdl calculator-input.wsdl 1`] = `
           "value": "application/xml",
         },
       ],
-      "metaSortKey": 2,
+      "metaSortKey": -1622117983998,
       "method": "POST",
       "name": "Add",
       "parameters": [],
@@ -8116,9 +8568,10 @@ exports[`Fixtures Import wsdl calculator-input.wsdl 1`] = `
     {
       "_id": "__REQ_2__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {},
       "body": {
-        "mimeType": "text/xml",
+        "mimeType": "text/plain",
         "text": "
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
  <soapenv:Header>
@@ -8159,7 +8612,7 @@ exports[`Fixtures Import wsdl calculator-input.wsdl 1`] = `
           "value": "application/xml",
         },
       ],
-      "metaSortKey": 3,
+      "metaSortKey": -1622117983997,
       "method": "POST",
       "name": "Subtract",
       "parameters": [],
@@ -8170,9 +8623,10 @@ exports[`Fixtures Import wsdl calculator-input.wsdl 1`] = `
     {
       "_id": "__REQ_3__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {},
       "body": {
-        "mimeType": "text/xml",
+        "mimeType": "text/plain",
         "text": "
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
  <soapenv:Header>
@@ -8213,7 +8667,7 @@ exports[`Fixtures Import wsdl calculator-input.wsdl 1`] = `
           "value": "application/xml",
         },
       ],
-      "metaSortKey": 4,
+      "metaSortKey": -1622117983996,
       "method": "POST",
       "name": "Multiply",
       "parameters": [],
@@ -8224,9 +8678,10 @@ exports[`Fixtures Import wsdl calculator-input.wsdl 1`] = `
     {
       "_id": "__REQ_4__",
       "_type": "request",
+      "afterResponseScript": "",
       "authentication": {},
       "body": {
-        "mimeType": "text/xml",
+        "mimeType": "text/plain",
         "text": "
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
  <soapenv:Header>
@@ -8267,7 +8722,7 @@ exports[`Fixtures Import wsdl calculator-input.wsdl 1`] = `
           "value": "application/xml",
         },
       ],
-      "metaSortKey": 5,
+      "metaSortKey": -1622117983995,
       "method": "POST",
       "name": "Divide",
       "parameters": [],

@@ -1,5 +1,5 @@
+import type { FC } from 'react';
 import React from 'react';
-import { FC } from 'react';
 import { Button } from 'react-aria-components';
 import {
   isRouteErrorResponse,
@@ -67,7 +67,7 @@ export const ErrorRoute: FC<{ defaultMessage?: string }> = ({ defaultMessage }) 
           )}
         >
           Logout{' '}
-          <span>{navigation.state === 'loading' ? <Icon icon="spinner" className='animate-spin' /> : null}</span>
+          <span>{logoutFetcher.state === 'loading' ? <Icon icon="spinner" className='animate-spin' /> : null}</span>
         </Button>
       </div>
       <div className='text-[--color-font] p-6 overflow-y-auto'>

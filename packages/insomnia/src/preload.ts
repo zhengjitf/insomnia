@@ -1,7 +1,7 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, webUtils as _webUtils } from 'electron';
 
-import { gRPCBridgeAPI } from './main/ipc/grpc';
-import { CurlBridgeAPI } from './main/network/curl';
+import type { gRPCBridgeAPI } from './main/ipc/grpc';
+import type { CurlBridgeAPI } from './main/network/curl';
 import type { WebSocketBridgeAPI } from './main/network/websocket';
 import { invariant } from './utils/invariant';
 
@@ -41,15 +41,20 @@ const grpc: gRPCBridgeAPI = {
   loadMethodsFromReflection: options => ipcRenderer.invoke('grpc.loadMethodsFromReflection', options),
 };
 const main: Window['main'] = {
+  startExecution: options => ipcRenderer.send('startExecution', options),
+  addExecutionStep: options => ipcRenderer.send('addExecutionStep', options),
+  completeExecutionStep: options => ipcRenderer.send('completeExecutionStep', options),
+  updateLatestStepName: options => ipcRenderer.send('updateLatestStepName', options),
+  getExecution: options => ipcRenderer.invoke('getExecution', options),
   loginStateChange: () => ipcRenderer.send('loginStateChange'),
   restart: () => ipcRenderer.send('restart'),
   openInBrowser: options => ipcRenderer.send('openInBrowser', options),
+  openDeepLink: options => ipcRenderer.send('openDeepLink', options),
   halfSecondAfterAppStart: () => ipcRenderer.send('halfSecondAfterAppStart'),
   manualUpdateCheck: () => ipcRenderer.send('manualUpdateCheck'),
   backup: () => ipcRenderer.invoke('backup'),
   restoreBackup: options => ipcRenderer.invoke('restoreBackup', options),
   authorizeUserInWindow: options => ipcRenderer.invoke('authorizeUserInWindow', options),
-  spectralRun: options => ipcRenderer.invoke('spectralRun', options),
   setMenuBarVisibility: options => ipcRenderer.send('setMenuBarVisibility', options),
   installPlugin: options => ipcRenderer.invoke('installPlugin', options),
   curlRequest: options => ipcRenderer.invoke('curlRequest', options),
@@ -64,8 +69,6 @@ const main: Window['main'] = {
   curl,
   trackSegmentEvent: options => ipcRenderer.send('trackSegmentEvent', options),
   trackPageView: options => ipcRenderer.send('trackPageView', options),
-  axiosRequest: options => ipcRenderer.invoke('axiosRequest', options),
-  insomniaFetch: options => ipcRenderer.invoke('insomniaFetch', options),
   showContextMenu: options => ipcRenderer.send('show-context-menu', options),
   database: {
     caCertificate: {
@@ -73,14 +76,15 @@ const main: Window['main'] = {
     },
   },
   hiddenBrowserWindow: {
-    runPreRequestScript: options => new Promise(async (resolve, reject) => {
-      await ipcRenderer.invoke('open-channel-to-hidden-browser-window');
+    runScript: options => new Promise(async (resolve, reject) => {
+      const isPortAlive = ports.get('hiddenWindowPort') !== undefined;
+      await ipcRenderer.invoke('open-channel-to-hidden-browser-window', isPortAlive);
 
       const port = ports.get('hiddenWindowPort');
       invariant(port, 'hiddenWindowPort is undefined');
 
       port.onmessage = event => {
-        console.log('received result:', event.data);
+        console.log('[preload] received result:', event.data);
         if (event.data.error) {
           reject(new Error(event.data.error));
         }
@@ -90,6 +94,11 @@ const main: Window['main'] = {
       port.postMessage({ ...options, type: 'runPreRequestScript' });
     }),
   },
+  landingPageRendered: (landingPage, tags) => ipcRenderer.send('landingPageRendered', {
+    landingPage,
+    tags,
+  }),
+  extractJsonFileFromPostmanDataDumpArchive: archivePath => ipcRenderer.invoke('extractJsonFileFromPostmanDataDumpArchive', archivePath),
 };
 
 ipcRenderer.on('hidden-browser-window-response-listener', event => {
@@ -114,17 +123,21 @@ const clipboard: Window['clipboard'] = {
   writeText: options => ipcRenderer.send('writeText', options),
   clear: () => ipcRenderer.send('clear'),
 };
-
+const webUtils: Window['webUtils'] = {
+  getPathForFile: (file: File) => _webUtils.getPathForFile(file),
+};
 if (process.contextIsolated) {
   contextBridge.exposeInMainWorld('main', main);
   contextBridge.exposeInMainWorld('dialog', dialog);
   contextBridge.exposeInMainWorld('app', app);
   contextBridge.exposeInMainWorld('shell', shell);
   contextBridge.exposeInMainWorld('clipboard', clipboard);
+  contextBridge.exposeInMainWorld('webUtils', webUtils);
 } else {
   window.main = main;
   window.dialog = dialog;
   window.app = app;
   window.shell = shell;
   window.clipboard = clipboard;
+  window.webUtils = webUtils;
 }

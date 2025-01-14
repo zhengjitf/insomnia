@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { type FC, useState } from 'react';
 import { Cookie } from 'tough-cookie';
 
 import { CookiesModal } from '../modals/cookies-modal';
@@ -15,7 +15,7 @@ export const ResponseCookiesViewer: FC<Props> = props => {
     let cookie: Cookie | undefined | null = null;
 
     try {
-      cookie = h ? Cookie.parse(h.value || '') : null;
+      cookie = h ? Cookie.parse(h.value || '', { loose: true }) : null;
     } catch (err) {
       console.warn('Failed to parse set-cookie header', h);
     }

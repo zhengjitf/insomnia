@@ -1,9 +1,9 @@
-import { ChangeEvent, useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { ThemeSettings } from '../../models/settings';
-import { ColorScheme, getThemes } from '../../plugins';
-import { applyColorScheme, PluginTheme } from '../../plugins/misc';
+import type { ThemeSettings } from '../../models/settings';
+import { type ColorScheme, getThemes } from '../../plugins';
+import { applyColorScheme, type PluginTheme } from '../../plugins/misc';
 import { useRootLoaderData } from '../routes/root';
 import { useSettingsPatcher } from './use-request';
 
@@ -52,7 +52,7 @@ export const useThemes = () => {
 
   }, [autoDetectColorScheme, darkTheme, lightTheme, patchSettings, theme]);
 
-  const changeAutoDetect = useCallback(({ target: { checked } }: ChangeEvent<HTMLInputElement>) => apply({ autoDetectColorScheme: checked }), [apply]);
+  const changeAutoDetect = useCallback((autoDetectColorScheme: boolean) => apply({ autoDetectColorScheme }), [apply]);
 
   // Activate the theme for the selected color scheme
   const activate = useCallback(async (themeName: string, colorScheme: ColorScheme) => {

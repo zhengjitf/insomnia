@@ -1,18 +1,54 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Dialog, Heading, Input, Label, Link, Modal, ModalOverlay, Radio, RadioGroup, TextField } from 'react-aria-components';
 import { useFetcher, useParams, useRouteLoaderData } from 'react-router-dom';
 
 import { invariant } from '../../../utils/invariant';
-import { OrganizationLoaderData } from '../../routes/organization';
+import { fetchAndCacheOrganizationStorageRule, ORG_STORAGE_RULE, type OrganizationLoaderData } from '../../routes/organization';
+import type { ProjectIdLoaderData } from '../../routes/project';
 import { Icon } from '../icon';
 import { showModal } from '.';
 import { AlertModal } from './alert-modal';
 
-export const MockServerSettingsModal = ({ onClose }: { onClose: () => void }) => {
-  const [serverType, setServerType] = useState<'self-hosted' | 'cloud'>('cloud');
+export function useAvailableMockServerType(isLocalProject: boolean) {
   const { organizationId, projectId } = useParams<{ organizationId: string; projectId: string }>();
-  const fetcher = useFetcher();
   const { currentPlan } = useRouteLoaderData('/organization') as OrganizationLoaderData;
+  const [orgStorageRule, setOrgStorageRule] = useState<ORG_STORAGE_RULE>(ORG_STORAGE_RULE.CLOUD_PLUS_LOCAL);
+  useEffect(() => {
+    fetchAndCacheOrganizationStorageRule(organizationId as string).then(setOrgStorageRule);
+  }, [organizationId]);
+
+  const isEnterprise = currentPlan?.type.includes('enterprise');
+  const isSelfHostedDisabled = !isEnterprise || orgStorageRule === ORG_STORAGE_RULE.CLOUD_ONLY;
+  const isCloudProjectDisabled = isLocalProject || orgStorageRule === ORG_STORAGE_RULE.LOCAL_ONLY;
+  return {
+    isSelfHostedDisabled,
+    isCloudProjectDisabled,
+    organizationId,
+    projectId,
+    isEnterprise,
+    isLocalProject,
+  };
+}
+
+export const MockServerSettingsModal = ({ onClose }: { onClose: () => void }) => {
+  // file://./../../routes/project.tsx#projectIdLoader
+  const projectData = useRouteLoaderData('/project/:projectId') as ProjectIdLoaderData | null;
+  const isLocalProject = !projectData?.activeProject?.remoteId;
+  const {
+    isSelfHostedDisabled,
+    isCloudProjectDisabled,
+    organizationId,
+    projectId,
+    isEnterprise,
+  } = useAvailableMockServerType(isLocalProject);
+  const fetcher = useFetcher({
+    key: `${organizationId}-create-mock-server`,
+  });
+
+  const canOnlyCreateSelfHosted = isLocalProject && isEnterprise;
+  const defaultServerType = canOnlyCreateSelfHosted ? 'self-hosted' : 'cloud';
+  const [serverType, setServerType] = useState<'self-hosted' | 'cloud'>(defaultServerType);
+
   return (
     <ModalOverlay
       isOpen
@@ -45,11 +81,10 @@ export const MockServerSettingsModal = ({ onClose }: { onClose: () => void }) =>
                   const mockServerUrl = formData.get('mockServerUrl') as string;
                   invariant(mockServerType === 'self-hosted' || mockServerType === 'cloud', 'Project type is required');
 
-                  const isEnterprise = currentPlan?.type.includes('enterprise');
                   if (mockServerType === 'self-hosted' && !isEnterprise) {
                     showModal(AlertModal, {
                       title: 'Upgrade required',
-                      message: 'Self-hosted Mocks are only supported for Enterprise users.',
+                      message: <>Self-hosted Mocks are only supported for Enterprise users. <Link href="https://insomnia.rest/pricing/contact" className="underline">Contact Sales <i className="fa fa-external-link" /></Link></>,
                     });
                     return;
                   }
@@ -73,6 +108,7 @@ export const MockServerSettingsModal = ({ onClose }: { onClose: () => void }) =>
                     }
                   }
 
+                  // file://./../../routes/actions.tsx#createNewWorkspaceAction
                   fetcher.submit(
                     {
                       name,
@@ -111,6 +147,7 @@ export const MockServerSettingsModal = ({ onClose }: { onClose: () => void }) =>
                   <div className="flex gap-2">
                     <Radio
                       value="cloud"
+                      isDisabled={isCloudProjectDisabled}
                       className="flex-1 data-[selected]:border-[--color-surprise] data-[selected]:ring-2 data-[selected]:ring-[--color-surprise] data-[disabled]:opacity-25 hover:bg-[--hl-xs] focus:bg-[--hl-sm] border border-solid border-[--hl-md] rounded p-4 focus:outline-none transition-colors"
                     >
                       <div className='flex items-center gap-2'>
@@ -118,11 +155,12 @@ export const MockServerSettingsModal = ({ onClose }: { onClose: () => void }) =>
                         <Heading className="text-lg font-bold">Cloud Mock</Heading>
                       </div>
                       <p className='pt-2'>
-                        Runs on Insomnia cloud, ideal for collaboration.
+                        {isCloudProjectDisabled ? 'Only available for cloud projects' : 'Runs on Insomnia cloud, ideal for collaboration.'}
                       </p>
                     </Radio>
                     <Radio
                       value="self-hosted"
+                      isDisabled={isSelfHostedDisabled}
                       className="flex-1 data-[selected]:border-[--color-surprise] data-[selected]:ring-2 data-[selected]:ring-[--color-surprise] data-[disabled]:opacity-25 hover:bg-[--hl-xs] focus:bg-[--hl-sm] border border-solid border-[--hl-md] rounded p-4 focus:outline-none transition-colors"
                     >
                       <div className="flex items-center gap-2">
@@ -138,22 +176,24 @@ export const MockServerSettingsModal = ({ onClose }: { onClose: () => void }) =>
                 <div className="flex items-center gap-2 text-sm">
                   <Icon icon="info-circle" />
                   <span>
-                    To learn more about self hosting. <Link href="https://docs.insomnia.rest/insomnia/api-mocking" className='underline'>Click here</Link>
+                    To learn more about self hosting <Link href="https://docs.insomnia.rest/insomnia/api-mocking" className='underline'>click here</Link>
                   </span>
                 </div>
-                <TextField
-                  name="mockServerUrl"
-                  className={`group relative flex-1 flex flex-col gap-2 ${serverType === 'cloud' ? 'disabled' : ''}`}
-                >
-                  <Label className='text-sm text-[--hl]'>
-                    Self-hosted mock server URL
-                  </Label>
-                  <Input
-                    disabled={serverType === 'cloud'}
-                    placeholder={serverType === 'cloud' ? '' : 'https://example.com'}
-                    className="py-1 placeholder:italic w-full pl-2 pr-7 rounded-sm border border-solid border-[--hl-sm] bg-[--color-bg] text-[--color-font] focus:outline-none focus:ring-1 focus:ring-[--hl-md] transition-colors"
-                  />
-                </TextField>
+                {!isSelfHostedDisabled && (
+                  <TextField
+                    name="mockServerUrl"
+                    className={`group relative flex-1 flex flex-col gap-2 ${serverType === 'cloud' ? 'disabled' : ''}`}
+                  >
+                    <Label className='text-sm text-[--hl]'>
+                      Self-hosted mock server URL
+                    </Label>
+                    <Input
+                      disabled={serverType === 'cloud'}
+                      placeholder={serverType === 'cloud' ? '' : 'https://example.com'}
+                      className="py-1 placeholder:italic w-full pl-2 pr-7 rounded-sm border border-solid border-[--hl-sm] bg-[--color-bg] text-[--color-font] focus:outline-none focus:ring-1 focus:ring-[--hl-md] transition-colors"
+                    />
+                  </TextField>
+                )}
                 <div className="flex justify-end gap-2 items-center">
                   <div className='flex items-center gap-2'>
                     <Button

@@ -4,7 +4,8 @@ import fs from 'fs';
 import { extension as mimeExtension } from 'mime-types';
 import multiparty from 'multiparty';
 import path from 'path';
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import React, { type FC, useCallback, useEffect, useState } from 'react';
+import { Button } from 'react-aria-components';
 import { PassThrough } from 'stream';
 
 import {
@@ -12,7 +13,7 @@ import {
   PREVIEW_MODE_FRIENDLY,
 } from '../../../common/constants';
 import type { ResponseHeader } from '../../../models/response';
-import { Dropdown, DropdownButton, DropdownItem, ItemContent } from '../base/dropdown';
+import { Dropdown, DropdownItem, ItemContent } from '../base/dropdown';
 import { showModal } from '../modals/index';
 import { WrapperModal } from '../modals/wrapper-modal';
 import { ResponseHeadersViewer } from './response-headers-viewer';
@@ -113,7 +114,7 @@ export const ResponseMultipartViewer: FC<Props> = ({
     };
     const { canceled, filePath } = await window.dialog.showSaveDialog(options);
 
-    if (canceled) {
+    if (canceled || !filePath) {
       return;
     }
 
@@ -122,7 +123,6 @@ export const ResponseMultipartViewer: FC<Props> = ({
 
     // Save the file
     try {
-      // @ts-expect-error -- TSCONVERSION if filePath is undefined, don't try to write anything
       await fs.promises.writeFile(filePath, selectedPart.value);
     } catch (err) {
       console.warn('Failed to save multipart to file', err);
@@ -164,7 +164,7 @@ export const ResponseMultipartViewer: FC<Props> = ({
           <Dropdown
             aria-label='Select Part Dropdown'
             triggerButton={
-              <DropdownButton className="btn btn--clicky">
+              <Button className="border border-solid border-[--hl-lg] px-[--padding-md] h-[--line-height-xs] rounded-[--radius-md] hover:bg-[--hl-xs]">
                 <div
                   style={{
                     minWidth: '200px',
@@ -174,7 +174,7 @@ export const ResponseMultipartViewer: FC<Props> = ({
                   {selectedPart.title}
                 </div>
                 <i className="fa fa-caret-down fa--skinny space-left" />
-              </DropdownButton>
+              </Button>
             }
           >
             {parts.map(part => (
@@ -194,9 +194,9 @@ export const ResponseMultipartViewer: FC<Props> = ({
         <Dropdown
           aria-label='Part Actions Dropdown'
           triggerButton={
-            <DropdownButton className="btn btn--clicky">
+            <Button className="border border-solid border-[--hl-lg] px-[--padding-md] h-[--line-height-xs] rounded-[--radius-md] hover:bg-[--hl-xs]">
               <i className="fa fa-bars" />
-            </DropdownButton>
+            </Button>
           }
         >
           <DropdownItem aria-label='View Headers'>

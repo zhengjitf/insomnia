@@ -1,12 +1,17 @@
 import appConfig from '../../config/config.json';
 import { version } from '../../package.json';
-import { KeyCombination } from './settings';
+import type { MockServer } from '../models/mock-server';
+import type { KeyCombination } from './settings';
 
 // Vite is filtering out process.env variables that are not prefixed with VITE_.
 const ENV = 'env';
 
 const env = process[ENV];
 
+export const INSOMNIA_GITLAB_REDIRECT_URI = env.INSOMNIA_GITLAB_REDIRECT_URI;
+export const INSOMNIA_GITLAB_CLIENT_ID = env.INSOMNIA_GITLAB_CLIENT_ID;
+export const INSOMNIA_GITLAB_API_URL = env.INSOMNIA_GITLAB_API_URL;
+export const PLAYWRIGHT = env.PLAYWRIGHT;
 // App Stuff
 export const getSkipOnboarding = () => env.INSOMNIA_SKIP_ONBOARDING;
 export const getInsomniaSession = () => env.INSOMNIA_SESSION;
@@ -50,22 +55,12 @@ export function updatesSupported() {
 }
 
 export const getClientString = () => `${getAppEnvironment()}::${getAppPlatform()}::${getAppVersion()}`;
-export const changelogUrl = () => appConfig.changelogUrl + '#' + version;
 
 // Global Stuff
 export const DEBOUNCE_MILLIS = 100;
-export const REQUEST_TIME_TO_SHOW_COUNTER = 1; // Seconds
 
-/**
- * A number in milliseconds representing the time required to setup and teardown a request.
- *
- * Should not be used for anything a user may rely on for performance metrics of any kind.
- *
- * While this isn't a perfect "magic-number" (it can be as low as 120ms and as high as 300) it serves as a rough average.
- *
- * For initial introduction, see https://github.com/Kong/insomnia/blob/8aa274d21b351c4710f0bb833cba7deea3d56c29/app/ui/components/ResponsePane.js#L100
-*/
-export const REQUEST_SETUP_TEARDOWN_COMPENSATION = 200;
+export const CDN_INVALIDATION_TTL = 10_000; // 10 seconds
+
 export const STATUS_CODE_PLUGIN_ERROR = -222;
 export const LARGE_RESPONSE_MB = 5;
 export const HUGE_RESPONSE_MB = 100;
@@ -126,16 +121,18 @@ export enum UpdateURL {
 export const getApiBaseURL = () => env.INSOMNIA_API_URL || 'https://api.insomnia.rest';
 export const getMockServiceURL = () => env.INSOMNIA_MOCK_API_URL || 'https://mock.insomnia.rest';
 
-export const getMockServiceBinURL = (serverId: string, path: string, customUrl?: string) => {
-  if (serverId && !customUrl) {
+export const getMockServiceBinURL = (mockServer: MockServer, path: string) => {
+  if (!mockServer.useInsomniaCloud) {
+    return `${mockServer.url}/bin/${mockServer._id}${path}`;
+  } else {
     const baseUrl = getMockServiceURL();
     const url = new URL(baseUrl);
-    url.host = serverId + '.' + url.host;
+    url.host = mockServer._id.replace('_', '-') + '.' + url.host;
     return url.origin + path;
   }
-  return customUrl + '/bin/' + serverId + path;
 };
-export const getAIServiceURL = () => env.INSOMNIA_AI_URL || 'https://ai.insomnia.rest';
+
+export const getAIServiceURL = () => env.INSOMNIA_AI_URL || 'https://ai-helper.insomnia.rest';
 
 export const getUpdatesBaseURL = () => env.INSOMNIA_UPDATES_URL || 'https://updates.insomnia.rest';
 
@@ -143,7 +140,8 @@ export const getUpdatesBaseURL = () => env.INSOMNIA_UPDATES_URL || 'https://upda
 export const getAppWebsiteBaseURL = () => env.INSOMNIA_APP_WEBSITE_URL || 'https://app.insomnia.rest';
 
 // GitHub API
-export const getGitHubGraphQLApiURL = () => env.INSOMNIA_GITHUB_API_URL || 'https://api.github.com/graphql';
+export const getGitHubRestApiUrl = () => env.INSOMNIA_GITHUB_REST_API_URL || 'https://api.github.com';
+export const getGitHubGraphQLApiURL = () => env.INSOMNIA_GITHUB_API_URL || `${getGitHubRestApiUrl()}/graphql`;
 
 // SYNC
 export const DEFAULT_BRANCH_NAME = 'master';
@@ -157,6 +155,7 @@ export const MIN_INTERFACE_FONT_SIZE = 8;
 export const MAX_INTERFACE_FONT_SIZE = 24;
 export const MIN_EDITOR_FONT_SIZE = 8;
 export const MAX_EDITOR_FONT_SIZE = 24;
+export const DEFAULT_SIDEBAR_SIZE = 25;
 
 // Activities
 export type GlobalActivity =
@@ -247,7 +246,7 @@ export const PREVIEW_MODES = Object.keys(previewModeMap) as (keyof typeof previe
 export const CONTENT_TYPE_JSON = 'application/json';
 export const CONTENT_TYPE_PLAINTEXT = 'text/plain';
 export const CONTENT_TYPE_XML = 'application/xml';
-export const CONTENT_TYPE_YAML = 'text/yaml';
+export const CONTENT_TYPE_YAML = 'application/yaml';
 export const CONTENT_TYPE_EVENT_STREAM = 'text/event-stream';
 export const CONTENT_TYPE_EDN = 'application/edn';
 export const CONTENT_TYPE_FORM_URLENCODED = 'application/x-www-form-urlencoded';
@@ -300,6 +299,7 @@ const authTypesMap: Record<string, string[]> = {
   [AUTH_AWS_IAM]: ['AWS', 'AWS IAM v4'],
   [AUTH_ASAP]: ['ASAP', 'Atlassian ASAP'],
   [AUTH_NETRC]: ['Netrc', 'Netrc File'],
+  [AUTH_NONE]: ['None', 'No Auth'],
 };
 
 // Sort Orders
@@ -402,11 +402,11 @@ export function getContentTypeName(contentType?: string | null, useLong = false)
   return useLong ? contentTypesMap[CONTENT_TYPE_OTHER][1] : contentTypesMap[CONTENT_TYPE_OTHER][0];
 }
 
-export function getAuthTypeName(authType: string, useLong = false) {
-  if (authTypesMap.hasOwnProperty(authType)) {
+export function getAuthTypeName(authType?: string, useLong = false) {
+  if (authType && authTypesMap.hasOwnProperty(authType)) {
     return useLong ? authTypesMap[authType][1] : authTypesMap[authType][0];
   } else {
-    return '';
+    return 'Auth';
   }
 }
 
@@ -585,3 +585,7 @@ export const EXPORT_TYPE_ENVIRONMENT = 'environment';
 export const EXPORT_TYPE_API_SPEC = 'api_spec';
 export const EXPORT_TYPE_PROTO_FILE = 'proto_file';
 export const EXPORT_TYPE_PROTO_DIRECTORY = 'proto_directory';
+export const EXPORT_TYPE_RUNNER_TEST_RESULT = 'runner_result';
+
+// (ms) curently server timeout is 30s
+export const INSOMNIA_FETCH_TIME_OUT = 30_000;

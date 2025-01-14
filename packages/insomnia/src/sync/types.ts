@@ -1,4 +1,4 @@
-import { BaseModel } from '../models';
+import type { BaseModel } from '../models';
 
 export interface Team {
   id: string;
@@ -106,4 +106,9 @@ export interface Status {
   key: string;
   stage: Stage;
   unstaged: Record<DocumentKey, StageEntry>;
+}
+
+export interface Compare {
+  ahead: number;
+  behind: number;
 }

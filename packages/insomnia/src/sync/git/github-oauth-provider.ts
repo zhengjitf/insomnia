@@ -1,6 +1,7 @@
 import { v4 } from 'uuid';
 
-import { getApiBaseURL, getAppWebsiteBaseURL, getGitHubGraphQLApiURL } from '../../common/constants';
+import { getAppWebsiteBaseURL, getGitHubGraphQLApiURL } from '../../common/constants';
+import { insomniaFetch } from '../../ui/insomniaFetch';
 
 export const GITHUB_TOKEN_STORAGE_KEY = 'github-oauth-token';
 export const GITHUB_GRAPHQL_API_URL = getGitHubGraphQLApiURL();
@@ -12,17 +13,12 @@ export const GITHUB_GRAPHQL_API_URL = getGitHubGraphQLApiURL();
  */
 const statesCache = new Set<string>();
 
-export function generateAuthorizationUrl() {
+export function generateAppAuthorizationUrl() {
   const state = v4();
-  const scopes = ['repo', 'read:user', 'user:email'];
-  const scope = scopes.join(' ');
-
-  const url = new URL(getAppWebsiteBaseURL() + '/oauth/github');
-
   statesCache.add(state);
+  const url = new URL(getAppWebsiteBaseURL() + '/oauth/github-app');
 
   url.search = new URLSearchParams({
-    scope,
     state,
   }).toString();
 
@@ -32,9 +28,11 @@ export function generateAuthorizationUrl() {
 export async function exchangeCodeForToken({
   code,
   state,
+  path,
 }: {
   code: string;
   state: string;
+  path: string;
 }) {
   if (!statesCache.has(state)) {
     throw new Error(
@@ -42,20 +40,16 @@ export async function exchangeCodeForToken({
     );
   }
 
-  const apiURL = getApiBaseURL();
-
-  return window.main.axiosRequest({
-    url: apiURL + '/v1/oauth/github',
+  return insomniaFetch<{ access_token: string }>({
+    path,
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
     data: {
       code,
     },
-  }).then(result => {
+    sessionId: '',
+  }).then(data => {
     statesCache.delete(state);
-    setAccessToken(result.data.access_token);
+    setAccessToken(data.access_token);
   });
 }
 

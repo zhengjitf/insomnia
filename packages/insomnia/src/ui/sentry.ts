@@ -1,27 +1,19 @@
-import * as Sentry from '@sentry/electron';
+import * as Sentry from '@sentry/electron/renderer';
 
-import { getAccountId, onLoginLogout } from '../account/session';
+import { isDevelopment } from '../common/constants';
 import { SENTRY_OPTIONS } from '../common/sentry';
 
-/** Configures user info in Sentry scope. */
-function sentryConfigureUserInfo() {
-  Sentry.configureScope(async scope => {
-    const id = await getAccountId();
-    if (id) {
-      scope.setUser({ id });
-    } else {
-      scope.setUser(null);
-    }
-  });
-}
-
-/** Watches user info for changes. */
-function sentryWatchUserInfo() {
-  sentryConfigureUserInfo();
-  onLoginLogout(() => sentryConfigureUserInfo());
-}
-
 export function initializeSentry() {
-  Sentry.init(SENTRY_OPTIONS);
-  sentryWatchUserInfo();
+  Sentry.init({
+    ...SENTRY_OPTIONS,
+    // enable sentry tracing
+    integrations: [Sentry.browserTracingIntegration()],
+    // set 0.1 sample rate for traces, only send 10% of traces, and check whether the limit is exceeded
+    // https://konghq.sentry.io/settings/billing/overview/?category=transactions
+    tracesSampleRate: 0.1,
+    anrDetection: isDevelopment() ? false : {
+      captureStackTrace: true,
+    },
+  });
+  Sentry.getCurrentScope().setUser(null);
 }

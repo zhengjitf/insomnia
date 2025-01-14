@@ -1,4 +1,4 @@
-import React, { FC, Fragment } from 'react';
+import React, { type FC, Fragment } from 'react';
 
 import {
   EditorKeyMap,
@@ -10,7 +10,7 @@ import {
   updatesSupported,
 } from '../../../common/constants';
 import { docsKeyMaps } from '../../../common/documentation';
-import { HttpVersion, HttpVersions, UpdateChannel } from '../../../common/settings';
+import { type HttpVersion, HttpVersions, UpdateChannel } from '../../../common/settings';
 import { strings } from '../../../common/strings';
 import { initNewOAuthSession } from '../../../network/o-auth-2/get-token';
 import { useRootLoaderData } from '../../routes/root';
@@ -18,7 +18,6 @@ import { Link } from '../base/link';
 import { CheckForUpdatesButton } from '../check-for-updates-button';
 import { BooleanSetting } from './boolean-setting';
 import { EnumSetting } from './enum-setting';
-import { MaskedSetting } from './masked-setting';
 import { NumberSetting } from './number-setting';
 import { TextSetting } from './text-setting';
 
@@ -30,8 +29,10 @@ export const General: FC = () => {
   const isLoggedIn = Boolean(userSession.id);
 
   return (
-    <div className="pad-bottom">
-      <div className="row-fill row-fill--top">
+    <div className="relative p-4">
+      <h2 className='font-bold pt-2 pb-2 text-lg sticky top-0 left-0 bg-[--color-bg] z-10'>Application</h2>
+
+      <div className="">
         <div>
           <BooleanSetting
             label="Use bulk header editor"
@@ -77,8 +78,7 @@ export const General: FC = () => {
         />
       </div>
 
-      <hr className="pad-top" />
-      <h2>Font</h2>
+      <h2 className='font-bold pt-5 pb-2 text-lg sticky top-0 left-0 bg-[--color-bg] z-10'>Font</h2>
 
       <div className="row-fill row-fill--top">
         <div>
@@ -158,9 +158,7 @@ export const General: FC = () => {
         />
       </div>
 
-      <hr className="pad-top" />
-
-      <h2>Request / Response</h2>
+      <h2 className='font-bold pt-5 pb-2 text-lg sticky top-0 left-0 bg-[--color-bg] z-10'>Request / Response</h2>
 
       <div className="row-fill row-fill--top">
         <div>
@@ -187,6 +185,12 @@ export const General: FC = () => {
           <BooleanSetting
             label="Disable links in response viewer"
             setting="disableResponsePreviewLinks"
+          />
+
+          <BooleanSetting
+            label="Disable default User-Agent on new requests"
+            setting="disableAppVersionUserAgent"
+            help="If checked, disables adding the default User-Agent header on newly created requests."
           />
         </div>
       </div>
@@ -240,9 +244,7 @@ export const General: FC = () => {
         />
       </div>
 
-      <hr className="pad-top" />
-
-      <h2>Security</h2>
+      <h2 className='font-bold pt-5 pb-2 text-lg sticky top-0 left-0 bg-[--color-bg] z-10'>Security</h2>
       <div className="form-row pad-top-sm">
         <BooleanSetting
           label="Clear OAuth 2 session on start"
@@ -250,7 +252,7 @@ export const General: FC = () => {
           help="If checked, clears the OAuth session every time Insomnia is relaunched."
         />
         <button
-          className="btn btn--clicky pointer"
+          className="border border-solid border-[--hl-lg] px-[--padding-md] h-[--line-height-xs] rounded-[--radius-md] hover:bg-[--hl-xs] pointer"
           style={{
             padding: 0,
           }}
@@ -267,56 +269,17 @@ export const General: FC = () => {
         />
       </div>
 
-      <hr className="pad-top" />
-
-      <h2>Network Proxy</h2>
-
-      <BooleanSetting
-        label="Enable proxy"
-        setting="proxyEnabled"
-        help="If checked, enables a global network proxy on all requests sent through Insomnia. This proxy supports Basic Auth, digest, and NTLM authentication."
-      />
-
-      <div className="form-row pad-top-sm">
-        <MaskedSetting
-          label='Proxy for HTTP'
-          setting='httpProxy'
-          help="Enter a HTTP or SOCKS4/5 proxy starting with appropriate prefix from the following (http://, socks4://, socks5://)"
-          placeholder="localhost:8005"
-          disabled={!settings.proxyEnabled}
-        />
-        <MaskedSetting
-          label='Proxy for HTTPS'
-          setting='httpsProxy'
-          help="Enter a HTTPS or SOCKS4/5 proxy starting with appropriate prefix from the following (https://, socks4://, socks5://)"
-          placeholder="localhost:8005"
-          disabled={!settings.proxyEnabled}
-        />
-        <TextSetting
-          label="No proxy"
-          setting="noProxy"
-          help="Enter a comma-separated list of hostnames that don’t require a proxy."
-          placeholder="localhost,127.0.0.1"
-          disabled={!settings.proxyEnabled}
-        />
-      </div>
-
       {updatesSupported() && (
         <Fragment>
-          <hr className="pad-top" />
-          <div>
-            <div className="pull-right">
-              <CheckForUpdatesButton className="btn btn--outlined btn--super-duper-compact">
-                Check now
-              </CheckForUpdatesButton>
-            </div>
-            <h2>Software Updates</h2>
+          <h2 className='font-bold pt-5 pb-2 text-lg sticky top-0 left-0 bg-[--color-bg] z-10'>Software Updates</h2>
+          <div className="w-full flex gap-2 justify-between">
+            <BooleanSetting
+              label="Automatically download and install updates"
+              setting="updateAutomatically"
+              help="If disabled, receive a notification in-app when a new update is available."
+            />
+            <CheckForUpdatesButton />
           </div>
-          <BooleanSetting
-            label="Automatically download and install updates"
-            setting="updateAutomatically"
-            help="If disabled, receive a notification in-app when a new update is available."
-          />
 
           <div className="for-row pad-top-sm">
             <EnumSetting<UpdateChannel>
@@ -340,8 +303,7 @@ export const General: FC = () => {
           /></>
       )}
 
-      <hr className="pad-top" />
-      <h2>Plugins</h2>
+      <h2 className='font-bold pt-5 pb-2 text-lg sticky top-0 left-0 bg-[--color-bg] z-10'>Plugins</h2>
       <TextSetting
         label="Additional Plugin Path"
         setting="pluginPath"
@@ -351,17 +313,18 @@ export const General: FC = () => {
 
       {!isLoggedIn && (
         <>
-          <hr className="pad-top" />
-          <h2>Network Activity</h2>
+          <h2 className='font-bold pt-5 pb-2 text-lg sticky top-0 left-0 bg-[--color-bg] z-10'>Network Activity</h2>
           <BooleanSetting
-            descriptions={[
-              `Help Kong improve its products by sending anonymous data about features and plugins used, hardware and software configuration, statistics on number of requests, ${strings.collection.plural.toLowerCase()}, ${strings.document.plural.toLowerCase()}, etc.`,
-              'Please note that this will not include personal data or any sensitive information, such as request data, names, etc.',
-            ]}
             label="Send Anonymous Usage Statistics"
             setting="enableAnalytics"
             disabled={isLoggedIn}
           />
+          <div className="text-sm opacity-50 pl-5 py-2">
+            Help Kong improve its products by sending anonymous data about features and plugins used, hardware and software configuration, statistics on number of requests, {strings.collection.plural.toLowerCase()}, {strings.document.plural.toLowerCase()}, etc.
+          </div>
+          <div className="text-sm opacity-50 pl-5 py-2">
+            Please note that this will not include personal data or any sensitive information, such as request data, names, etc.
+          </div>
         </>
       )
       }

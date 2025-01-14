@@ -1,4 +1,4 @@
-import * as Har from 'har-format';
+import type * as Har from 'har-format';
 
 export interface Comment {
   comment?: string;
@@ -44,7 +44,7 @@ export interface Cookie {
 export interface Header extends Comment {
   name: 'Cookie' | 'Content-Type' | string;
   disabled?: boolean;
-  value: UNKNOWN;
+  value: any;
 }
 
 export interface QueryString extends Comment {
@@ -74,15 +74,17 @@ export interface ImportRequest<T extends {} = {}> extends Comment {
   parameters?: Parameter[];
   parentId?: string | null;
   postData?: Har.PostData;
-  variable?: UNKNOWN;
+  variable?: any;
   queryString?: QueryString[];
   url?: string;
   preRequestScript?: string;
+  afterResponseScript?: string;
   metaSortKey?: number;
+  scope?: string;
 }
 
 export type Converter<T extends {} = {}> = (
-  rawData: string
+  rawData: string,
 ) => ImportRequest<T>[] | Promise<ImportRequest<T>[] | null> | null;
 
 export interface Importer {

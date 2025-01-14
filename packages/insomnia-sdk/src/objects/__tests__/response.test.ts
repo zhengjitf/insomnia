@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it } from 'vitest';
 
 import { Request } from '../request';
 import { Response } from '../response';
@@ -44,7 +44,6 @@ describe('test request and response objects', () => {
             body: '{"key": 888}',
             stream: undefined,
             responseTime: 100,
-            status: 'OK',
             originalRequest: req,
         });
 
@@ -61,6 +60,35 @@ describe('test request and response objects', () => {
             fileName: 'filename',
             mimeFormat: '',
             mimeType: 'text/plain',
+        });
+
+        // extended assertion chains
+        resp.to.have.status(200);
+        resp.to.have.status('OK');
+        resp.to.have.header('header1');
+        resp.to.have.jsonBody({ 'key': 888 });
+        resp.to.have.body('{"key": 888}');
+        resp.to.have.jsonSchema({
+            type: 'object',
+            properties: {
+                key: { type: 'integer' },
+            },
+            required: ['key'],
+            additionalProperties: false,
+        });
+
+        resp.to.not.have.status(201);
+        resp.to.not.have.status('NOT FOUND');
+        resp.to.not.have.header('header_nonexist');
+        resp.to.not.have.jsonBody({ 'key': 777 });
+        resp.to.not.have.body('{"key": 777}');
+        resp.to.not.have.jsonSchema({
+            type: 'object',
+            properties: {
+                keyNoExist: { type: 'integer' },
+            },
+            required: ['keyNoExist'],
+            additionalProperties: false,
         });
     });
 });

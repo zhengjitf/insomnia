@@ -1,13 +1,12 @@
-import type { IRuleResult } from '@stoplight/spectral-core';
+import { type IRuleResult } from '@stoplight/spectral-core';
 import CodeMirror from 'codemirror';
 import { stat } from 'fs/promises';
 import { OpenAPIV3 } from 'openapi-types';
 import path from 'path';
 import React, {
-  createRef,
-  FC,
+  type FC,
   Fragment,
-  ReactNode,
+  type ReactNode,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -28,39 +27,38 @@ import {
   MenuItem,
   MenuTrigger,
   Popover,
-  Select,
-  SelectValue,
   ToggleButton,
   Tooltip,
   TooltipTrigger,
 } from 'react-aria-components';
-import { ImperativePanelGroupHandle, Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import { type ImperativePanelGroupHandle, Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import {
-  LoaderFunction,
+  type LoaderFunction,
   NavLink,
   useFetcher,
   useLoaderData,
   useParams,
   useRouteLoaderData,
 } from 'react-router-dom';
+import { useUnmount } from 'react-use';
 import { SwaggerUIBundle } from 'swagger-ui-dist';
 import YAML from 'yaml';
 import YAMLSourceMap from 'yaml-source-map';
 
 import { parseApiSpec } from '../../common/api-specs';
-import { ACTIVITY_SPEC } from '../../common/constants';
-import { debounce } from '../../common/misc';
-import { ApiSpec } from '../../models/api-spec';
-import { Environment } from '../../models/environment';
+import { ACTIVITY_SPEC, DEFAULT_SIDEBAR_SIZE } from '../../common/constants';
+import { debounce, isNotNullOrUndefined } from '../../common/misc';
+import type { ApiSpec } from '../../models/api-spec';
 import * as models from '../../models/index';
 import { invariant } from '../../utils/invariant';
 import {
   CodeEditor,
-  CodeEditorHandle,
+  type CodeEditorHandle,
 } from '../components/codemirror/code-editor';
 import { DesignEmptyState } from '../components/design-empty-state';
 import { WorkspaceDropdown } from '../components/dropdowns/workspace-dropdown';
 import { WorkspaceSyncDropdown } from '../components/dropdowns/workspace-sync-dropdown';
+import { EnvironmentPicker } from '../components/environment-picker';
 import { Icon } from '../components/icon';
 import { InsomniaAI } from '../components/insomnia-ai-icon';
 import { useDocBodyKeyboardShortcuts } from '../components/keydown-binder';
@@ -73,11 +71,11 @@ import {
   useActiveApiSpecSyncVCSVersion,
   useGitVCSVersion,
 } from '../hooks/use-vcs-version';
+import { SpectralRunner } from '../worker/spectral-run';
 import { useRootLoaderData } from './root';
-import { WorkspaceLoaderData } from './workspace';
+import type { WorkspaceLoaderData } from './workspace';
 
 interface LoaderData {
-  lintMessages: LintMessage[];
   apiSpec: ApiSpec;
   rulesetPath: string;
   parsedSpec?: OpenAPIV3.Document;
@@ -95,8 +93,6 @@ export const loader: LoaderFunction = async ({
 
   const workspaceMeta = await models.workspaceMeta.getByParentId(workspaceId);
 
-  let lintMessages: LintMessage[] = [];
-
   let rulesetPath = '';
 
   try {
@@ -111,35 +107,13 @@ export const loader: LoaderFunction = async ({
   } catch (err) {
     // Ignore
   }
-
-  if (apiSpec.contents && apiSpec.contents.length !== 0) {
-    try {
-      lintMessages = (
-        await window.main.spectralRun({
-          contents: apiSpec.contents,
-          rulesetPath,
-        })
-      ).map(({ severity, code, message, range }) => ({
-        type: (['error', 'warning'][severity] ?? 'info') as LintMessage['type'],
-        message: `${code} ${message}`,
-        line: range.start.line,
-        range,
-      }));
-    } catch (e) {
-      console.log('Error linting spec', e);
-    }
-  }
-
   let parsedSpec: OpenAPIV3.Document | undefined;
 
   try {
     parsedSpec = YAML.parse(apiSpec.contents) as OpenAPIV3.Document;
-  } catch (error) {
-    console.log('Error parsing spec', error);
-  }
+  } catch { }
 
   return {
-    lintMessages,
     apiSpec,
     rulesetPath,
     parsedSpec,
@@ -151,7 +125,7 @@ const SwaggerUIDiv = ({ text }: { text: string }) => {
     let spec = {};
     try {
       spec = parseApiSpec(text).contents || {};
-    } catch (err) {}
+    } catch (err) { }
     SwaggerUIBundle({ spec, dom_id: '#swagger-ui' });
   }, [text]);
   return (
@@ -200,6 +174,10 @@ const getMethodsFromOpenApiPathItem = (
   return methods;
 };
 
+const lintOptions = {
+  delay: 1000,
+};
+
 const Design: FC = () => {
   const { organizationId, projectId, workspaceId } = useParams() as {
     organizationId: string;
@@ -208,28 +186,21 @@ const Design: FC = () => {
   };
   const {
     activeProject,
-    activeEnvironment,
     activeCookieJar,
     caCertificate,
     clientCertificates,
-    subEnvironments,
-    baseEnvironment,
   } = useRouteLoaderData(':workspaceId') as WorkspaceLoaderData;
-  const setActiveEnvironmentFetcher = useFetcher();
   const { settings } = useRootLoaderData();
-  const environmentsList = [baseEnvironment, ...subEnvironments].map(environment => ({
-    id: environment._id,
-    ...environment,
-  }));
 
   const [isCookieModalOpen, setIsCookieModalOpen] = useState(false);
   const [isEnvironmentModalOpen, setEnvironmentModalOpen] = useState(false);
-  const [isEnvironmentSelectOpen, setIsEnvironmentSelectOpen] = useState(false);
+  const [isEnvironmentPickerOpen, setIsEnvironmentPickerOpen] = useState(false);
   const [isCertificatesModalOpen, setCertificatesModalOpen] = useState(false);
+  const [lintMessages, setLintMessages] = useState<LintMessage[]>([]);
 
-  const { apiSpec, lintMessages, rulesetPath, parsedSpec } = useLoaderData() as LoaderData;
+  const { apiSpec, rulesetPath, parsedSpec } = useLoaderData() as LoaderData;
 
-  const editor = createRef<CodeEditorHandle>();
+  const editor = useRef<CodeEditorHandle>(null);
   const { generating, generateTestsFromSpec, access } = useAIContext();
   const updateApiSpecFetcher = useFetcher();
   const generateRequestCollectionFetcher = useFetcher();
@@ -251,24 +222,53 @@ const Design: FC = () => {
     message => message.type === 'warning'
   );
 
-  useEffect(() => {
-    CodeMirror.registerHelper('lint', 'openapi', async (contents: string) => {
-      const diagnostics = await window.main.spectralRun({
-        contents,
-        rulesetPath,
-      });
+  const spectralRunnerRef = useRef<SpectralRunner>();
 
-      return diagnostics.map(result => ({
-        from: CodeMirror.Pos(
-          result.range.start.line,
-          result.range.start.character
-        ),
-        to: CodeMirror.Pos(result.range.end.line, result.range.end.character),
-        message: result.message,
-        severity: ['error', 'warning'][result.severity] ?? 'info',
-      }));
+  const registerCodeMirrorLint = (rulesetPath: string) => {
+    CodeMirror.registerHelper('lint', 'openapi', async (contents: string) => {
+      let runner = spectralRunnerRef.current;
+
+      if (!runner) {
+        runner = new SpectralRunner();
+        spectralRunnerRef.current = runner;
+      }
+
+      try {
+        const diagnostics = await runner.runDiagnostics({ contents, rulesetPath });
+        const lintResult = diagnostics.map(({ severity, code, message, range }) => {
+          return {
+            from: CodeMirror.Pos(
+              range.start.line,
+              range.start.character
+            ),
+            to: CodeMirror.Pos(range.end.line, range.end.character),
+            message: `${code} ${message}`,
+            severity: ['error', 'warning'][severity] ?? 'info',
+            type: (['error', 'warning'][severity] ?? 'info') as LintMessage['type'],
+            range,
+            line: range.start.line,
+          };
+        });
+        setLintMessages?.(lintResult);
+        return lintResult;
+      } catch (e) {
+        // return a rejected promise so that codemirror do nothing
+        return Promise.reject(e);
+      };
     });
+  };
+
+  useEffect(() => {
+    registerCodeMirrorLint(rulesetPath);
+    // when first time into document editor, the lint helper register later than codemirror init, we need to trigger lint through execute setOption
+    editor.current?.tryToSetOption('lint', { ...lintOptions });
   }, [rulesetPath]);
+
+  useUnmount(() => {
+    // delete the helper to avoid it run multiple times when user enter the page next time
+    CodeMirror.registerHelper('lint', 'openapi', undefined);
+    spectralRunnerRef.current?.terminate();
+  });
 
   const onCodeEditorChange = useMemo(() => {
     const handler = async (contents: string) => {
@@ -328,7 +328,7 @@ const Design: FC = () => {
       JSON.parse(apiSpec.contents);
       // Account for JSON (as string) line number shift
       scrollPosition.start.line = 1;
-    } catch {}
+    } catch { }
 
     const sourceMap = new YAMLSourceMap();
     const specMap = sourceMap.index(
@@ -368,7 +368,7 @@ const Design: FC = () => {
     if (layout && layout[0] > 0) {
       layout[0] = 0;
     } else {
-      layout[0] = 30;
+      layout[0] = DEFAULT_SIDEBAR_SIZE;
     }
 
     sidebarPanelRef.current?.setLayout(layout);
@@ -383,7 +383,7 @@ const Design: FC = () => {
   useDocBodyKeyboardShortcuts({
     sidebar_toggle: toggleSidebar,
     environment_showEditor: () => setEnvironmentModalOpen(true),
-    environment_showSwitchMenu: () => setIsEnvironmentSelectOpen(true),
+    environment_showSwitchMenu: () => setIsEnvironmentPickerOpen(true),
     showCookiesEditor: () => setIsCookieModalOpen(true),
   });
 
@@ -452,10 +452,10 @@ const Design: FC = () => {
 
   return (
     <PanelGroup ref={sidebarPanelRef} autoSaveId="insomnia-sidebar" id="wrapper" className='new-sidebar w-full h-full text-[--color-font]' direction='horizontal'>
-      <Panel id="sidebar" className='sidebar theme--sidebar' maxSize={40} minSize={20} collapsible>
+      <Panel id="sidebar" className='sidebar theme--sidebar' defaultSize={DEFAULT_SIDEBAR_SIZE} maxSize={40} minSize={10} collapsible>
         <div className='flex h-full flex-col divide-y divide-solid divide-[--hl-md] overflow-hidden'>
-          <div className="flex flex-col items-start gap-2 justify-between p-[--padding-sm]">
-            <Breadcrumbs className='flex list-none items-center m-0 p-0 gap-2 pb-[--padding-sm] border-b border-solid border-[--hl-sm] font-bold w-full'>
+          <div className="flex flex-col items-start">
+            <Breadcrumbs className='flex h-[--line-height-sm] list-none items-center m-0 gap-2 border-solid border-[--hl-md] border-b p-[--padding-sm] font-bold w-full'>
               <Breadcrumb className="flex select-none items-center gap-2 text-[--color-font] h-full outline-none data-[focused]:outline-none">
                 <NavLink
                   data-testid="project"
@@ -470,143 +470,29 @@ const Design: FC = () => {
                 <WorkspaceDropdown />
               </Breadcrumb>
             </Breadcrumbs>
+            <div className='flex flex-col items-start gap-2 p-[--padding-sm] w-full'>
             <div className="flex w-full items-center gap-2 justify-between">
-              <Select
-                aria-label="Select an environment"
-                className="overflow-hidden"
-                isOpen={isEnvironmentSelectOpen}
-                onOpenChange={setIsEnvironmentSelectOpen}
-                onSelectionChange={environmentId => {
-                  setActiveEnvironmentFetcher.submit(
-                    {
-                      environmentId,
-                    },
-                    {
-                      method: 'POST',
-                      action: `/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/environment/set-active`,
-                    }
-                  );
-                }}
-                selectedKey={activeEnvironment._id}
-              >
-                <Button className="px-4 py-1 flex flex-1 items-center justify-center gap-2 aria-pressed:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm overflow-hidden w-full">
-                  <SelectValue<Environment> className="flex truncate items-center justify-center gap-2">
-                    {({ isPlaceholder, selectedItem }) => {
-                      if (
-                        isPlaceholder ||
-                        (selectedItem &&
-                          selectedItem._id === baseEnvironment._id) ||
-                        !selectedItem
-                      ) {
-                        return (
-                          <Fragment>
-                            <span
-                              style={{
-                                borderColor: 'var(--color-font)',
-                              }}
-                            >
-                              <Icon className='text-xs w-5' icon="globe-americas" />
-                            </span>
-                            <span className='truncate'>
-                              {baseEnvironment.name}
-                            </span>
-                          </Fragment>
-                        );
-                      }
-
-                      return (
-                        <Fragment>
-                          <span
-                            style={{
-                              borderColor: selectedItem.color ?? 'var(--color-font)',
-                            }}
-                          >
-                          <Icon
-                            icon={selectedItem.isPrivate ? 'laptop-code' : 'globe-americas'}
-                            style={{
-                              color: selectedItem.color ?? 'var(--color-font)',
-                            }}
-                            className='text-xs w-5'
-                          />
-                          </span>
-                          {selectedItem.name}
-                        </Fragment>
-                      );
-                    }}
-                  </SelectValue>
-                  <Icon icon="caret-down" />
-                </Button>
-                <Popover className="min-w-max">
-                  <ListBox
-                    key={activeEnvironment._id}
-                    items={environmentsList}
-                    className="border select-none text-sm min-w-max border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] py-2 rounded-md overflow-y-auto max-h-[85vh] focus:outline-none"
-                  >
-                    {item => (
-                      <ListBoxItem
-                        id={item._id}
-                        key={item._id}
-                        className={
-                          `flex gap-2 px-[--padding-md] aria-selected:font-bold items-center text-[--color-font] h-[--line-height-xs] w-full text-md whitespace-nowrap bg-transparent hover:bg-[--hl-sm] disabled:cursor-not-allowed focus:bg-[--hl-xs] focus:outline-none transition-colors ${item._id === baseEnvironment._id ? '' : 'pl-8'}`
-                        }
-                        aria-label={item.name}
-                        textValue={item.name}
-                        value={item}
-                      >
-                        {({ isSelected }) => (
-                          <Fragment>
-                            <span
-                              // className='p-1 border-solid border w-5 h-5 rounded bg-[--hl-sm] flex-shrink-0 flex items-center justify-center'
-                              style={{
-                                borderColor: item.color ?? 'var(--color-font)',
-                              }}
-                            >
-                              <Icon
-                                icon={item.isPrivate ? 'laptop-code' : 'globe-americas'}
-                                className='text-xs w-5'
-                                style={{
-                                  color: item.color ?? 'var(--color-font)',
-                                }}
-                              />
-                            </span>
-                            <span className='flex-1 truncate'>
-                              {item.name}
-                            </span>
-                            {isSelected && (
-                              <Icon
-                                icon="check"
-                                className="text-[--color-success] justify-self-end"
-                              />
-                            )}
-                          </Fragment>
-                        )}
-                      </ListBoxItem>
-                    )}
-                  </ListBox>
-                </Popover>
-              </Select>
-              <Button
-                aria-label='Manage Environments'
-                onPress={() => setEnvironmentModalOpen(true)}
-                className="flex flex-shrink-0 items-center justify-center aspect-square h-full aria-pressed:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm"
-              >
-                <Icon icon="gear" />
-              </Button>
-            </div>
+                <EnvironmentPicker
+                  isOpen={isEnvironmentPickerOpen}
+                  onOpenChange={setIsEnvironmentPickerOpen}
+                  onOpenEnvironmentSettingsModal={() => setEnvironmentModalOpen(true)}
+                />
+              </div>
             <Button
               onPress={() => setIsCookieModalOpen(true)}
               className="px-4 py-1 max-w-full truncate flex-1 flex items-center justify-center gap-2 aria-pressed:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm"
             >
-              <Icon icon="cookie-bite" className='w-5' />
-              <span className='truncate'>{activeCookieJar.cookies.length === 0 ? 'Add' : 'Manage'} Cookies</span>
+                <Icon icon="cookie-bite" className='w-5 flex-shrink-0' />
+                <span className='truncate'>{activeCookieJar.cookies.length === 0 ? 'Add' : 'Manage'} Cookies {activeCookieJar.cookies.length > 0 ? `(${activeCookieJar.cookies.length})` : ''}</span>
             </Button>
             <Button
               onPress={() => setCertificatesModalOpen(true)}
               className="px-4 py-1 max-w-full truncate flex-1 flex items-center justify-center gap-2 aria-pressed:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm"
             >
-              <Icon icon="file-contract" className='w-5' />
-              <span className='truncate'>{clientCertificates.length === 0 || caCertificate ? 'Add' : 'Manage'} Certificates</span>
+                <Icon icon="file-contract" className='w-5 flex-shrink-0' />
+                <span className='truncate'>{clientCertificates.length === 0 || caCertificate ? 'Add' : 'Manage'} Certificates {[...clientCertificates, caCertificate].filter(cert => !cert?.disabled).filter(isNotNullOrUndefined).length > 0 ? `(${[...clientCertificates, caCertificate].filter(cert => !cert?.disabled).filter(isNotNullOrUndefined).length})` : ''}</span>
             </Button>
+          </div>
           </div>
           <div className="flex flex-shrink-0 items-center gap-2 p-[--padding-sm]">
             <Heading className="text-[--hl] uppercase">Spec</Heading>
@@ -631,7 +517,7 @@ const Design: FC = () => {
               >
                 <Icon icon="gear" />
               </Button>
-              <Popover className="min-w-max">
+              <Popover className="min-w-max overflow-y-hidden flex flex-col">
                 <Menu
                   aria-label="Spec actions menu"
                   selectionMode="single"
@@ -645,7 +531,7 @@ const Design: FC = () => {
                     }
                   }}
                   items={specActionList}
-                  className="border select-none text-sm min-w-max border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] py-2 rounded-md overflow-y-auto max-h-[85vh] focus:outline-none"
+                  className="border select-none text-sm min-w-max border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] py-2 rounded-md overflow-y-auto focus:outline-none"
                 >
                   {item => (
                     <MenuItem
@@ -664,22 +550,22 @@ const Design: FC = () => {
             {/* Info */}
             {info && (
               <div className='divide-y divide-solid divide-[--hl-md]'>
-                  <Button
-                    className="text-[--hl] text-sm uppercase w-full select-none p-[--padding-sm] hover:bg-[--hl-sm] focus:bg-[--hl-sm] flex gap-2 justify-between items-center"
-                    onPress={() => {
-                      expandedKeys.includes('info')
-                        ? setExpandedKeys(
-                            expandedKeys.filter(key => key !== 'info')
-                          )
-                        : setExpandedKeys([...expandedKeys, 'info']);
-                    }}
-                  >
-                    <span className='truncate'>Info</span>
-                    <Icon
-                      icon={expandedKeys.includes('info') ? 'minus' : 'plus'}
-                      className='text-xs'
-                    />
-                  </Button>
+                <Button
+                  className="text-[--hl] text-sm uppercase w-full select-none p-[--padding-sm] hover:bg-[--hl-sm] focus:bg-[--hl-sm] flex gap-2 justify-between items-center"
+                  onPress={() => {
+                    expandedKeys.includes('info')
+                      ? setExpandedKeys(
+                        expandedKeys.filter(key => key !== 'info')
+                      )
+                      : setExpandedKeys([...expandedKeys, 'info']);
+                  }}
+                >
+                  <span className='truncate'>Info</span>
+                  <Icon
+                    icon={expandedKeys.includes('info') ? 'minus' : 'plus'}
+                    className='text-xs'
+                  />
+                </Button>
                 {/* Info */}
                 {expandedKeys.includes('info') && (
                   <ListBox onAction={key => navigateToPath(key.toString())}>
@@ -724,8 +610,8 @@ const Design: FC = () => {
                     onPress={() => {
                       expandedKeys.includes('servers')
                         ? setExpandedKeys(
-                            expandedKeys.filter(key => key !== 'servers')
-                          )
+                          expandedKeys.filter(key => key !== 'servers')
+                        )
                         : setExpandedKeys([...expandedKeys, 'servers']);
                     }}
                   >
@@ -765,8 +651,8 @@ const Design: FC = () => {
                     onPress={() => {
                       expandedKeys.includes('paths')
                         ? setExpandedKeys(
-                            expandedKeys.filter(key => key !== 'paths')
-                          )
+                          expandedKeys.filter(key => key !== 'paths')
+                        )
                         : setExpandedKeys([...expandedKeys, 'paths']);
                     }}
                   >
@@ -821,10 +707,10 @@ const Design: FC = () => {
                     onPress={() => {
                       expandedKeys.includes('requestBodies')
                         ? setExpandedKeys(
-                            expandedKeys.filter(
-                              key => key !== 'requestBodies'
-                            )
+                          expandedKeys.filter(
+                            key => key !== 'requestBodies'
                           )
+                        )
                         : setExpandedKeys([...expandedKeys, 'requestBodies']);
                     }}
                   >
@@ -867,8 +753,8 @@ const Design: FC = () => {
                     onPress={() => {
                       expandedKeys.includes('responses')
                         ? setExpandedKeys(
-                            expandedKeys.filter(key => key !== 'responses')
-                          )
+                          expandedKeys.filter(key => key !== 'responses')
+                        )
                         : setExpandedKeys([...expandedKeys, 'responses']);
                     }}
                   >
@@ -911,8 +797,8 @@ const Design: FC = () => {
                     onPress={() => {
                       expandedKeys.includes('parameters')
                         ? setExpandedKeys(
-                            expandedKeys.filter(key => key !== 'parameters')
-                          )
+                          expandedKeys.filter(key => key !== 'parameters')
+                        )
                         : setExpandedKeys([...expandedKeys, 'parameters']);
                     }}
                   >
@@ -955,8 +841,8 @@ const Design: FC = () => {
                     onPress={() => {
                       expandedKeys.includes('headers')
                         ? setExpandedKeys(
-                            expandedKeys.filter(key => key !== 'headers')
-                          )
+                          expandedKeys.filter(key => key !== 'headers')
+                        )
                         : setExpandedKeys([...expandedKeys, 'headers']);
                     }}
                   >
@@ -999,8 +885,8 @@ const Design: FC = () => {
                     onPress={() => {
                       expandedKeys.includes('schemas')
                         ? setExpandedKeys(
-                            expandedKeys.filter(key => key !== 'schemas')
-                          )
+                          expandedKeys.filter(key => key !== 'schemas')
+                        )
                         : setExpandedKeys([...expandedKeys, 'schemas']);
                     }}
                   >
@@ -1043,8 +929,8 @@ const Design: FC = () => {
                     onPress={() => {
                       expandedKeys.includes('security')
                         ? setExpandedKeys(
-                            expandedKeys.filter(key => key !== 'security')
-                          )
+                          expandedKeys.filter(key => key !== 'security')
+                        )
                         : setExpandedKeys([...expandedKeys, 'security']);
                     }}
                   >
@@ -1098,146 +984,150 @@ const Design: FC = () => {
       <PanelResizeHandle className='h-full w-[1px] bg-[--hl-md]' />
       <Panel>
         <PanelGroup autoSaveId="insomnia-panels" direction={direction}>
-          <Panel id="pane-one" className='pane-one theme--pane'>
-        <div className="flex flex-col h-full w-full overflow-hidden divide-y divide-solid divide-[--hl-md]">
-          <div className="relative overflow-hidden flex-shrink-0 flex flex-1 basis-1/2">
-            <CodeEditor
-              id="spec-editor"
-              key={uniquenessKey}
-              showPrettifyButton
-              ref={editor}
-              lintOptions={{ delay: 1000 }}
-              mode="openapi"
-              defaultValue={apiSpec.contents || ''}
-              onChange={onCodeEditorChange}
-              uniquenessKey={uniquenessKey}
-            />
-            {apiSpec.contents ? null : (
-              <DesignEmptyState
-                onImport={value => {
-                  updateApiSpecFetcher.submit(
-                    {
-                      contents: value,
-                      fromSync: 'true',
-                    },
-                    {
-                      action: `/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/${ACTIVITY_SPEC}/update`,
-                      method: 'post',
-                    }
-                  );
-                }}
-              />
-            )}
-          </div>
-          <div className="flex flex-col divide-y divide-solid divide-[--hl-md] overflow-hidden">
-            <div className="flex gap-2 items-center p-[--padding-sm]">
-              <TooltipTrigger>
-                <Button className="flex items-center gap-2 cursor-pointer select-none">
-                  <Icon
-                    icon={
-                      rulesetPath ? 'file-circle-check' : 'file-circle-xmark'
-                    }
+          <Panel id="pane-one" minSize={10} className='pane-one theme--pane'>
+            <div className="flex flex-col h-full w-full overflow-hidden divide-y divide-solid divide-[--hl-md]">
+              <div className="relative overflow-hidden flex-shrink-0 flex flex-1 basis-1/2">
+                <CodeEditor
+                  id="spec-editor"
+                  key={uniquenessKey}
+                  showPrettifyButton
+                  ref={editor}
+                  lintOptions={lintOptions}
+                  mode="openapi"
+                  defaultValue={apiSpec.contents || ''}
+                  onChange={onCodeEditorChange}
+                  uniquenessKey={uniquenessKey}
+                />
+                {apiSpec.contents ? null : (
+                  <DesignEmptyState
+                    onImport={value => {
+                      updateApiSpecFetcher.submit(
+                        {
+                          contents: value,
+                          fromSync: 'true',
+                        },
+                        {
+                          action: `/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/${ACTIVITY_SPEC}/update`,
+                          method: 'post',
+                        }
+                      );
+                    }}
                   />
-                  Ruleset
-                </Button>
-                <Tooltip
-                  placement="top end"
-                  offset={8}
-                  className="border select-none text-sm max-w-xs border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] text-[--color-font] px-4 py-2 rounded-md overflow-y-auto max-h-[85vh] focus:outline-none"
-                >
-                  <div>
-                    {rulesetPath ? (
-                      <Fragment>
-                        <p>Using ruleset from</p>
-                        <code className="break-words p-0">{rulesetPath}</code>
-                      </Fragment>
-                    ) : (
-                      <Fragment>
-                        <p>Using default OAS ruleset.</p>
-                        <p>
-                          To use a custom ruleset add a{' '}
-                          <code className="p-0">.spectral.yaml</code> file to
-                          the root of your git repository
-                        </p>
-                      </Fragment>
-                    )}
-                  </div>
-                </Tooltip>
-              </TooltipTrigger>
-              {lintErrors.length > 0 && (
-                <div className="flex gap-2 items-center select-none">
-                  <Icon icon="circle-xmark" className="text-[--color-danger]" />
-                  {lintErrors.length}
-                </div>
-              )}
-              {lintWarnings.length > 0 && (
-                <div className="flex gap-2 items-center select-none">
-                  <Icon
-                    icon="triangle-exclamation"
-                    className="text-[--color-warning]"
-                  />
-                  {lintWarnings.length}
-                </div>
-              )}
-              {lintMessages.length === 0 && apiSpec.contents && (
-                <div className="flex gap-2 items-center select-none">
-                  <Icon
-                    icon="check-square"
-                    className="text-[--color-success]"
-                  />
-                  No lint problems
-                </div>
-              )}
-              <span className="flex-1" />
-              {lintMessages.length > 0 && (
-                <Button aria-label='Toggle lint panel' onPress={() => setIsLintPaneOpen(!isLintPaneOpen)}>
-                  <Icon icon={isLintPaneOpen ? 'chevron-down' : 'chevron-up'} />
-                </Button>
-              )}
-            </div>
-            {isLintPaneOpen && (
-              <ListBox
-                className="overflow-y-auto flex-1 select-none"
-                onAction={index => {
-                  const listIndex = parseInt(index.toString(), 10);
-                  const lintMessage = lintMessages[listIndex];
-                  handleScrollToLintMessage(lintMessage);
-                }}
-                items={lintMessages.map((message, index) => ({
-                  ...message,
-                  id: index,
-                  value: message,
-                }))}
-              >
-                {item => (
-                  <ListBoxItem className="even:bg-[--hl-xs] p-[--padding-sm] focus-within:bg-[--hl-md] data-[focused]:bg-[--hl-md] outline-none flex items-center gap-2 text-xs transition-colors">
-                    <Icon
-                      className={
-                        item.type === 'error'
-                          ? 'text-[--color-danger]'
-                          : 'text-[--color-warning]'
-                      }
-                      icon={
-                        item.type === 'error'
-                          ? 'circle-xmark'
-                          : 'triangle-exclamation'
-                      }
-                    />
-                    <span className="truncate">{item.message}</span>
-                    <span className="flex-shrink-0 text-[--hl-lg]">
-                      [Ln {item.line}]
-                    </span>
-                  </ListBoxItem>
                 )}
-              </ListBox>
-            )}
-          </div>
-        </div>
+              </div>
+              <div className={`flex ${isLintPaneOpen ? '' : 'h-[--line-height-sm]'} box-border flex-col divide-y divide-solid divide-[--hl-md] overflow-hidden`}>
+                <div className="flex gap-2 items-center p-[--padding-sm]">
+                  <TooltipTrigger>
+                    <Button className="flex items-center gap-2 cursor-pointer select-none">
+                      <Icon
+                        icon={
+                          rulesetPath ? 'file-circle-check' : 'file-circle-xmark'
+                        }
+                      />
+                      Ruleset
+                    </Button>
+                    <Tooltip
+                      placement="top end"
+                      offset={8}
+                      className="border select-none text-sm max-w-xs border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] text-[--color-font] px-4 py-2 rounded-md overflow-y-auto max-h-[85vh] focus:outline-none"
+                    >
+                      <div>
+                        {rulesetPath ? (
+                          <Fragment>
+                            <p>Using ruleset from</p>
+                            <code className="break-words p-0">{rulesetPath}</code>
+                          </Fragment>
+                        ) : (
+                          <Fragment>
+                            <p>Using default OAS ruleset.</p>
+                            <p>
+                              To use a custom ruleset add a{' '}
+                              <code className="p-0">.spectral.yaml</code> file to
+                              the root of your git repository
+                            </p>
+                          </Fragment>
+                        )}
+                      </div>
+                    </Tooltip>
+                  </TooltipTrigger>
+                  {lintErrors.length > 0 && (
+                    <div className="flex gap-2 items-center select-none">
+                      <Icon icon="circle-xmark" className="text-[--color-danger]" />
+                      {lintErrors.length}
+                    </div>
+                  )}
+                  {lintWarnings.length > 0 && (
+                    <div className="flex gap-2 items-center select-none">
+                      <Icon
+                        icon="triangle-exclamation"
+                        className="text-[--color-warning]"
+                      />
+                      {lintWarnings.length}
+                    </div>
+                  )}
+                  {lintMessages.length === 0 && apiSpec.contents && (
+                    <div className="flex gap-2 items-center select-none">
+                      <Icon
+                        icon="check-square"
+                        className="text-[--color-success]"
+                      />
+                      No lint problems
+                    </div>
+                  )}
+                  <span className="flex-1" />
+                  {lintMessages.length > 0 && (
+                    <Button aria-label='Toggle lint panel' onPress={() => setIsLintPaneOpen(!isLintPaneOpen)}>
+                      <Icon icon={isLintPaneOpen ? 'chevron-down' : 'chevron-up'} />
+                    </Button>
+                  )}
+                </div>
+                {isLintPaneOpen && (
+                  <ListBox
+                    className="overflow-y-auto flex-1 select-none"
+                    onAction={index => {
+                      const listIndex = parseInt(index.toString(), 10);
+                      const lintMessage = lintMessages[listIndex];
+                      handleScrollToLintMessage(lintMessage);
+                    }}
+                    items={lintMessages.map((message, index) => ({
+                      ...message,
+                      id: index,
+                      value: message,
+                    }))}
+                  >
+                    {item => (
+                      <ListBoxItem className="even:bg-[--hl-xs] p-[--padding-sm] focus-within:bg-[--hl-md] data-[focused]:bg-[--hl-md] outline-none flex items-center gap-2 text-xs transition-colors">
+                        <Icon
+                          className={
+                            item.type === 'error'
+                              ? 'text-[--color-danger]'
+                              : 'text-[--color-warning]'
+                          }
+                          icon={
+                            item.type === 'error'
+                              ? 'circle-xmark'
+                              : 'triangle-exclamation'
+                          }
+                        />
+                        <span className="truncate">{item.message}</span>
+                        <span className="flex-shrink-0 text-[--hl-lg]">
+                          [Ln {item.line}]
+                        </span>
+                      </ListBoxItem>
+                    )}
+                  </ListBox>
+                )}
+              </div>
+            </div>
           </Panel>
-          <PanelResizeHandle className={direction === 'horizontal' ? 'h-full w-[1px] bg-[--hl-md]' : 'w-full h-[1px] bg-[--hl-md]'} />
-          <Panel id="pane-two" className='pane-two theme--pane'>
-            {isSpecPaneOpen && <SwaggerUIDiv text={apiSpec.contents} />}
-          </Panel>
+          {isSpecPaneOpen && (
+            <>
+              <PanelResizeHandle className={direction === 'horizontal' ? 'h-full w-[1px] bg-[--hl-md]' : 'w-full h-[1px] bg-[--hl-md]'} />
+              <Panel id="pane-two" minSize={10} className='pane-two theme--pane'>
+                <SwaggerUIDiv text={apiSpec.contents} />
+              </Panel>
+            </>
+          )}
         </PanelGroup>
       </Panel>
     </PanelGroup>

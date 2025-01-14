@@ -4,10 +4,9 @@ import { test } from '../../playwright/test';
 test.describe('Cookie editor', async () => {
 
   test.beforeEach(async ({ app, page }) => {
-    await page.getByRole('button', { name: 'Create in project' }).click();
     const text = await loadFixture('simple.yaml');
     await app.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), text);
-    await page.getByRole('menuitemradio', { name: 'Import' }).click();
+    await page.getByLabel('Import').click();
     await page.locator('[data-test-id="import-from-clipboard"]').click();
     await page.getByRole('button', { name: 'Scan' }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
@@ -44,7 +43,7 @@ test.describe('Cookie editor', async () => {
     await page.click('[data-testid="request-pane"] button:has-text("Send")');
 
     // Check in the timeline that the cookie was sent
-    await page.getByRole('tab', { name: 'Timeline' }).click();
+    await page.getByRole('tab', { name: 'Console' }).click();
     await page.click('text=foo2=bar2; foo=b123ar');
 
     // Send ws request
@@ -53,7 +52,7 @@ test.describe('Cookie editor', async () => {
     await page.click('[data-testid="request-pane"] >> text=Connect');
 
     // Check in the timeline that the cookie was sent
-    await page.getByRole('tab', { name: 'Timeline' }).click();
+    await page.getByRole('tab', { name: 'Console' }).click();
     await page.click('text=foo2=bar2; foo=b123ar;');
   });
 

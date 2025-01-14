@@ -1,4 +1,5 @@
-import React, { FC } from 'react';
+import React, { type FC } from 'react';
+import { Button } from 'react-aria-components';
 
 import {
   areSameKeyCombinations,
@@ -8,10 +9,10 @@ import {
   newDefaultRegistry,
 } from '../../../common/hotkeys';
 import { generateId } from '../../../common/misc';
-import { HotKeyRegistry, KeyboardShortcut, KeyCombination } from '../../../common/settings';
+import type { HotKeyRegistry, KeyboardShortcut, KeyCombination } from '../../../common/settings';
 import { useSettingsPatcher } from '../../hooks/use-request';
 import { useRootLoaderData } from '../../routes/root';
-import { Dropdown, DropdownButton, DropdownItem, DropdownSection, ItemContent } from '../base/dropdown';
+import { Dropdown, DropdownItem, DropdownSection, ItemContent } from '../base/dropdown';
 import { PromptButton } from '../base/prompt-button';
 import { Hotkey } from '../hotkey';
 import { showModal } from '../modals';
@@ -63,15 +64,9 @@ export const Shortcuts: FC = () => {
                     aria-label='Select a mode'
                     closeOnSelect={false}
                     triggerButton={
-                      <DropdownButton
-                        removePaddings={false}
-                        removeBorderRadius={false}
-                        disableHoverBehavior={false}
-                        radius="var(--radius-md)"
-                        variant='outlined'
-                      >
+                      <Button >
                         <i className="fa fa-gear" />
-                      </DropdownButton>
+                      </Button>
                     }
                   >
                     <DropdownItem aria-label='Add keyboard shortcut'>

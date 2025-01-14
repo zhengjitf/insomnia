@@ -5,9 +5,9 @@ import path from 'path';
 import { database as db } from '../../common/database';
 import type { BaseModel } from '../../models';
 import * as models from '../../models';
-import { isProtoDirectory, ProtoDirectory } from '../../models/proto-directory';
-import { isProtoFile, ProtoFile } from '../../models/proto-file';
-import { isWorkspace } from '../../models/workspace';
+import { isProtoDirectory, type ProtoDirectory } from '../../models/proto-directory';
+import { isProtoFile, type ProtoFile } from '../../models/proto-file';
+import { isWorkspace, type Workspace } from '../../models/workspace';
 
 interface WriteResult {
   filePath: string;
@@ -40,7 +40,7 @@ const recursiveWriteProtoDirectory = async (
 
 export const writeProtoFile = async (protoFile: ProtoFile): Promise<WriteResult> => {
   // Find all ancestors
-  const ancestors = await db.withAncestors(protoFile, [
+  const ancestors = await db.withAncestors<ProtoFile | ProtoDirectory | Workspace>(protoFile, [
     models.protoDirectory.type,
     models.workspace.type,
   ]);

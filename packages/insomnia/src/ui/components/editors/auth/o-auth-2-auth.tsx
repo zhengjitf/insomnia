@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FC, ReactNode, useEffect, useMemo, useState } from 'react';
+import React, { type ChangeEvent, type FC, type ReactNode, useEffect, useMemo, useState } from 'react';
 import { useRouteLoaderData } from 'react-router-dom';
 
 import { AUTH_OAUTH_2 } from '../../../../common/constants';
@@ -19,7 +19,8 @@ import {
 import { getOAuth2Token } from '../../../../network/o-auth-2/get-token';
 import { initNewOAuthSession } from '../../../../network/o-auth-2/get-token';
 import { useNunjucks } from '../../../context/nunjucks/use-nunjucks';
-import { RequestLoaderData } from '../../../routes/request';
+import type { RequestLoaderData } from '../../../routes/request';
+import type { RequestGroupLoaderData } from '../../../routes/request-group';
 import { Link } from '../../base/link';
 import { showModal } from '../../modals';
 import { ResponseDebugModal } from '../../modals/response-debug-modal';
@@ -245,9 +246,11 @@ const getFieldsForGrantType = (authentication: Extract<RequestAuthentication, { 
 };
 
 export const OAuth2Auth: FC = () => {
-  const { activeRequest } = useRouteLoaderData('request/:requestId') as RequestLoaderData;
-  const authentication = activeRequest.authentication as AuthTypeOAuth2;
-  const { basic, advanced } = getFieldsForGrantType(authentication);
+  const reqData = useRouteLoaderData('request/:requestId') as RequestLoaderData;
+  const groupData = useRouteLoaderData('request-group/:requestGroupId') as RequestGroupLoaderData;
+  const { authentication } = reqData?.activeRequest || groupData.activeRequestGroup;
+
+  const { basic, advanced } = getFieldsForGrantType(authentication as AuthTypeOAuth2);
 
   return (
     <>
@@ -266,7 +269,7 @@ export const OAuth2Auth: FC = () => {
               <td />
               <td className="wide">
                 <div className="pad-top text-right">
-                  <button className="btn btn--clicky" onClick={initNewOAuthSession}>
+                  <button className="border border-solid border-[--hl-lg] px-[--padding-md] h-[--line-height-xs] rounded-[--radius-md] hover:bg-[--hl-xs]" onClick={initNewOAuthSession}>
                     Clear OAuth 2 session
                   </button>
                 </div>
@@ -339,13 +342,14 @@ const renderAccessTokenExpiry = (token?: Pick<OAuth2Token, 'accessToken' | 'expi
 };
 
 const OAuth2TokenInput: FC<{ token: OAuth2Token | null; label: string; property: keyof Pick<OAuth2Token, 'accessToken' | 'refreshToken' | 'identityToken'> }> = ({ token, label, property }) => {
-  const { activeRequest } = useRouteLoaderData('request/:requestId') as RequestLoaderData;
-
+  const reqData = useRouteLoaderData('request/:requestId') as RequestLoaderData;
+  const groupData = useRouteLoaderData('request-group/:requestGroupId') as RequestGroupLoaderData;
+  const { _id } = reqData?.activeRequest || groupData.activeRequestGroup;
   const onChange = async ({ currentTarget: { value } }: ChangeEvent<HTMLInputElement>) => {
     if (token) {
       await models.oAuth2Token.update(token, { [property]: value });
     } else {
-      await models.oAuth2Token.create({ [property]: value, parentId: activeRequest._id });
+      await models.oAuth2Token.create({ [property]: value, parentId: _id });
     }
   };
 
@@ -422,15 +426,17 @@ const OAuth2Error: FC<{ token: OAuth2Token | null }> = ({ token }) => {
 };
 
 const OAuth2Tokens: FC = () => {
-  const { activeRequest: { authentication, _id: requestId } } = useRouteLoaderData('request/:requestId') as RequestLoaderData;
+  const reqData = useRouteLoaderData('request/:requestId') as RequestLoaderData;
+  const groupData = useRouteLoaderData('request-group/:requestGroupId') as RequestGroupLoaderData;
+  const { authentication, _id } = reqData?.activeRequest || groupData.activeRequestGroup;
   const [token, setToken] = useState<OAuth2Token | null>(null);
   useEffect(() => {
     const fn = async () => {
-      const token = await models.oAuth2Token.getByParentId(requestId);
+      const token = await models.oAuth2Token.getByParentId(_id);
       setToken(token);
     };
     fn();
-  }, [requestId]);
+  }, [_id]);
   const { handleRender } = useNunjucks();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -449,7 +455,7 @@ const OAuth2Tokens: FC = () => {
       <div className='pad-top text-right'>
         {token ? (
           <button
-            className="btn btn--clicky"
+            className="border border-solid border-[--hl-lg] px-[--padding-md] h-[--line-height-xs] rounded-[--radius-md] hover:bg-[--hl-xs]"
             disabled={!token}
             onClick={() => {
               if (token) {
@@ -463,14 +469,14 @@ const OAuth2Tokens: FC = () => {
         ) : null}
         &nbsp;&nbsp;
         <button
-          className="btn btn--clicky"
+          className="border border-solid border-[--hl-lg] px-[--padding-md] h-[--line-height-xs] rounded-[--radius-md] hover:bg-[--hl-xs]"
           onClick={async () => {
             setError('');
             setLoading(true);
 
             try {
               const renderedAuthentication = await handleRender(authentication) as AuthTypeOAuth2;
-              const t = await getOAuth2Token(requestId, renderedAuthentication, true);
+              const t = await getOAuth2Token(_id, renderedAuthentication, true);
               setToken(t);
               setLoading(false);
             } catch (err) {

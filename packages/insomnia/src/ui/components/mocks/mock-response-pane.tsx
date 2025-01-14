@@ -1,23 +1,25 @@
 import fs from 'fs';
-import * as Har from 'har-format';
+import type * as Har from 'har-format';
 import React, { Fragment, useCallback, useEffect, useState } from 'react';
+import { Button, Tab, TabList, TabPanel, Tabs, Toolbar } from 'react-aria-components';
 import { useRouteLoaderData } from 'react-router-dom';
 import { useFetcher } from 'react-router-dom';
 import { useInterval } from 'react-use';
 
-import { getMockServiceURL, getPreviewModeName, PREVIEW_MODE_FRIENDLY, PREVIEW_MODES, PreviewMode } from '../../../common/constants';
+import { getMockServiceURL, getPreviewModeName, PREVIEW_MODE_FRIENDLY, PREVIEW_MODES, type PreviewMode } from '../../../common/constants';
 import { exportHarCurrentRequest } from '../../../common/har';
-import { ResponseTimelineEntry } from '../../../main/network/libcurl-promise';
+import type { ResponseTimelineEntry } from '../../../main/network/libcurl-promise';
 import * as models from '../../../models';
-import { MockRoute } from '../../../models/mock-route';
-import { MockServer } from '../../../models/mock-server';
-import { Response } from '../../../models/response';
+import type { MockRoute } from '../../../models/mock-route';
+import type { MockServer } from '../../../models/mock-server';
+import type { Response } from '../../../models/response';
 import { cancelRequestById } from '../../../network/cancellation';
+import { insomniaFetch } from '../../../ui/insomniaFetch';
 import { jsonPrettify } from '../../../utils/prettify/json';
-import { MockRouteLoaderData } from '../../routes/mock-route';
+import { useExecutionState } from '../../hooks/use-execution-state';
+import type { MockRouteLoaderData } from '../../routes/mock-route';
 import { useRootLoaderData } from '../../routes/root';
-import { Dropdown, DropdownButton, DropdownItem, DropdownSection, ItemContent } from '../base/dropdown';
-import { TabItem, Tabs } from '../base/tabs';
+import { Dropdown, DropdownItem, DropdownSection, ItemContent } from '../base/dropdown';
 import { CodeEditor } from '../codemirror/code-editor';
 import { Pane, PaneHeader } from '../panes/pane';
 import { PlaceholderResponsePane } from '../panes/placeholder-response-pane';
@@ -53,6 +55,7 @@ export const MockResponsePane = () => {
   const [timeline, setTimeline] = useState<ResponseTimelineEntry[]>([]);
   const [previewMode, setPreviewMode] = useState<PreviewMode>(PREVIEW_MODE_FRIENDLY);
   const requestFetcher = useFetcher({ key: 'mock-request-fetcher' });
+  const { steps } = useExecutionState({ requestId: activeResponse?.parentId });
 
   useEffect(() => {
     const fn = async () => {
@@ -68,6 +71,8 @@ export const MockResponsePane = () => {
       <PlaceholderResponsePane>
         {<ResponseTimer
           handleCancel={() => activeResponse && cancelRequestById(activeResponse.parentId)}
+          activeRequestId={mockRoute._id}
+          steps={steps}
         />}
       </PlaceholderResponsePane>
     );
@@ -78,54 +83,79 @@ export const MockResponsePane = () => {
         <PaneHeader className="row-spaced">
           <div aria-atomic="true" aria-live="polite" className="no-wrap scrollable scrollable--no-bars pad-left">
             <StatusTag statusCode={activeResponse.statusCode} statusMessage={activeResponse.statusMessage} />
-            <TimeTag milliseconds={activeResponse.elapsedTime} />
+            <TimeTag milliseconds={activeResponse.elapsedTime} steps={[]} />
             <SizeTag bytesRead={activeResponse.bytesRead} bytesContent={activeResponse.bytesContent} />
           </div>
         </PaneHeader>
       )}
-    <Tabs aria-label="Mock response">
-      <TabItem
-        key="preview"
-        title={activeResponse ?
-          <PreviewModeDropdown
-            activeResponse={activeResponse}
+      <Tabs aria-label='Mock response' className="flex-1 w-full h-full flex flex-col">
+        <TabList className='w-full flex-shrink-0  overflow-x-auto border-solid scro border-b border-b-[--hl-md] bg-[--color-bg] flex items-center h-[--line-height-sm]' aria-label='Request pane tabs'>
+          <Tab
+            className='flex-shrink-0 h-full flex items-center justify-between cursor-pointer gap-2 outline-none select-none px-3 py-1 text-[--hl] aria-selected:text-[--color-font]  hover:bg-[--hl-sm] hover:text-[--color-font] aria-selected:bg-[--hl-xs] aria-selected:focus:bg-[--hl-sm] aria-selected:hover:bg-[--hl-sm] focus:bg-[--hl-sm] transition-colors duration-300'
+            id='preview'
+          >
+            Preview
+          </Tab>
+          <Tab
+            className='flex-shrink-0 h-full flex items-center justify-between cursor-pointer gap-2 outline-none select-none px-3 py-1 text-[--hl] aria-selected:text-[--color-font]  hover:bg-[--hl-sm] hover:text-[--color-font] aria-selected:bg-[--hl-xs] aria-selected:focus:bg-[--hl-sm] aria-selected:hover:bg-[--hl-sm] focus:bg-[--hl-sm] transition-colors duration-300'
+            id='headers'
+          >
+            Headers
+          </Tab>
+          <Tab
+            className='flex-shrink-0 h-full flex items-center justify-between cursor-pointer gap-2 outline-none select-none px-3 py-1 text-[--hl] aria-selected:text-[--color-font]  hover:bg-[--hl-sm] hover:text-[--color-font] aria-selected:bg-[--hl-xs] aria-selected:focus:bg-[--hl-sm] aria-selected:hover:bg-[--hl-sm] focus:bg-[--hl-sm] transition-colors duration-300'
+            id='timeline'
+          >
+            Console
+          </Tab>
+          <Tab
+            className='flex-shrink-0 h-full flex items-center justify-between cursor-pointer gap-2 outline-none select-none px-3 py-1 text-[--hl] aria-selected:text-[--color-font]  hover:bg-[--hl-sm] hover:text-[--color-font] aria-selected:bg-[--hl-xs] aria-selected:focus:bg-[--hl-sm] aria-selected:hover:bg-[--hl-sm] focus:bg-[--hl-sm] transition-colors duration-300'
+            id='history'
+          >
+            History
+          </Tab>
+        </TabList>
+        <TabPanel className='w-full flex-1 flex flex-col overflow-y-auto' id='preview'>
+          <Toolbar className="w-full flex-shrink-0 h-[--line-height-sm] border-b border-solid border-[--hl-md] flex items-center px-2">
+            {activeResponse ?
+              <PreviewModeDropdown
+                activeResponse={activeResponse}
+                previewMode={previewMode}
+                setPreviewMode={setPreviewMode}
+              /> : null}
+          </Toolbar>
+          {activeResponse && <ResponseViewer
+            key={activeResponse._id}
+            bytes={Math.max(activeResponse.bytesContent, activeResponse.bytesRead)}
+            contentType={activeResponse.contentType || ''}
+            disableHtmlPreviewJs={settings.disableHtmlPreviewJs}
+            disablePreviewLinks={settings.disableResponsePreviewLinks}
+            download={() => { }}
+            editorFontSize={settings.editorFontSize}
+            error={activeResponse.error}
+            filter={''}
+            filterHistory={[]}
+            getBody={() => models.response.getBodyBuffer(activeResponse)}
             previewMode={previewMode}
-            setPreviewMode={setPreviewMode}
-          /> :
-          'Preview'}
-      >
-        {activeResponse && <ResponseViewer
-          key={activeResponse._id}
-          bytes={Math.max(activeResponse.bytesContent, activeResponse.bytesRead)}
-          contentType={activeResponse.contentType || ''}
-          disableHtmlPreviewJs={settings.disableHtmlPreviewJs}
-          disablePreviewLinks={settings.disableResponsePreviewLinks}
-          download={() => { }}
-          editorFontSize={settings.editorFontSize}
-          error={activeResponse.error}
-          filter={''}
-          filterHistory={[]}
-          getBody={() => models.response.getBodyBuffer(activeResponse)}
-          previewMode={previewMode}
-          responseId={activeResponse._id}
-          updateFilter={activeResponse.error ? undefined : () => { }}
-          url={activeResponse.url}
-        />}
-      </TabItem>
-      <TabItem key="headers" title="Headers">
-        <ResponseHeadersViewer headers={activeResponse?.headers || []} />
-      </TabItem>
-      <TabItem key="timeline" title="Timeline">
-        <ResponseTimelineViewer
-          key={activeResponse?._id}
-          timeline={timeline}
-          pinToBottom={true}
-        />
-      </TabItem>
-      <TabItem key="history" title="History">
-        <HistoryViewWrapperComponentFactory mockServer={mockServer} mockRoute={mockRoute} />
-      </TabItem>
-    </Tabs>
+            responseId={activeResponse._id}
+            updateFilter={activeResponse.error ? undefined : () => { }}
+            url={activeResponse.url}
+          />}
+        </TabPanel>
+        <TabPanel className='w-full flex-1 flex flex-col overflow-y-auto' id='headers'>
+          <ResponseHeadersViewer headers={activeResponse?.headers || []} />
+        </TabPanel>
+        <TabPanel className='w-full flex-1 flex flex-col overflow-y-auto' id='timeline'>
+          <ResponseTimelineViewer
+            key={activeResponse?._id}
+            timeline={timeline}
+            pinToBottom={true}
+          />
+        </TabPanel>
+        <TabPanel className='w-full flex-1 flex flex-col overflow-y-auto' id='history'>
+          <HistoryViewWrapperComponentFactory mockServer={mockServer} mockRoute={mockRoute} />
+        </TabPanel>
+      </Tabs>
     </Pane>
   );
 };
@@ -139,22 +169,25 @@ const HistoryViewWrapperComponentFactory = ({ mockServer, mockRoute }: { mockSer
     const compoundId = mockRoute.parentId + mockRoute.name;
     const mockbinUrl = mockServer.useInsomniaCloud ? getMockServiceURL() : mockServer.url;
     try {
-      const res = await window.main.insomniaFetch<MockbinLogOutput>({
+      const res = await insomniaFetch<MockbinLogOutput>({
         origin: mockbinUrl,
         path: `/bin/log/${compoundId}`,
         method: 'GET',
+        headers: {
+          'insomnia-mock-method': mockRoute.method,
+        },
         sessionId: userSession.id,
       });
       if (res?.log) {
         setLogs(res);
         return;
       }
-      console.log('Error: fetching logs from remote', { mockbinUrl, res });
+      console.log('[mock] Error: fetching logs from remote', { mockbinUrl, res });
     } catch (e) {
       // network erros will be managed by the upsert trigger, so we can ignore them here
       console.log({ mockbinUrl, e });
     }
-  }, [mockRoute.name, mockRoute.parentId, mockServer.url, mockServer.useInsomniaCloud, userSession.id]);
+  }, [mockRoute.method, mockRoute.name, mockRoute.parentId, mockServer.url, mockServer.useInsomniaCloud, userSession.id]);
   // refetches logs whenever the path changes, or a response is recieved, or tenseconds elapses or history tab is click
   // chatgpt: answer my called
   useInterval(() => {
@@ -215,10 +248,10 @@ const PreviewModeDropdown = ({ activeResponse, previewMode, setPreviewMode }: { 
     <Dropdown
       aria-label='Preview Mode Dropdown'
       triggerButton={
-        <DropdownButton className="tall !text-[--hl]">
+        <Button className="text-[--hl]">
           {getPreviewModeName(previewMode)}
           <i className="fa fa-caret-down space-left" />
-        </DropdownButton>
+        </Button>
       }
     >
       <DropdownSection

@@ -1,12 +1,10 @@
 import { createBuilder } from '@develohpanda/fluent-builder';
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { globalBeforeEach } from '../../../__jest__/before-each';
 import { baseModelSchema, workspaceModelSchema } from '../../../models/__schemas__/model-schemas';
 import { projectSchema } from '../../__schemas__/type-schemas';
 import MemoryDriver from '../../store/drivers/memory-driver';
 import { BackendProject } from '../../types';
-import * as paths from '../paths';
 import { describeChanges } from '../util';
 import { VCS } from '../vcs';
 
@@ -28,8 +26,7 @@ async function vcs(branch) {
 describe('VCS', () => {
   beforeEach(async () => {
     let ts = 1000000000000;
-    Date.now = jest.fn(() => ts++);
-    await globalBeforeEach();
+    Date.now = vi.fn(() => ts++);
   });
 
   describe('status()', () => {
@@ -524,12 +521,12 @@ describe('VCS', () => {
     });
   });
 
-  describe('getBranches()', () => {
+  describe('getBranchNames()', () => {
     it('lists branches', async () => {
       const v = await vcs('master');
       await v.checkout([], 'branch-1');
       await v.checkout([], 'branch-2');
-      const branches = await v.getBranches();
+      const branches = await v.getBranchNames();
       expect(branches).toEqual(['master', 'branch-1', 'branch-2']);
     });
   });
@@ -578,11 +575,11 @@ describe('VCS', () => {
       await v.takeSnapshot('Add foo');
       // Checkout branch
       await v.checkout([], 'new-branch');
-      expect(await v.getBranches()).toEqual(['master', 'new-branch']);
+      expect(await v.getBranchNames()).toEqual(['master', 'new-branch']);
       // Back to master and delete other branch
       await v.checkout([], 'master');
       await v.removeBranch('new-branch');
-      expect(await v.getBranches()).toEqual(['master']);
+      expect(await v.getBranchNames()).toEqual(['master']);
     });
   });
 
@@ -606,7 +603,7 @@ describe('VCS', () => {
       await v.fork('new-branch');
       await v.checkout([], 'new-branch');
       const history = await v.getHistory();
-      expect(await v.getBranch()).toBe('new-branch');
+      expect(await v.getCurrentBranchName()).toBe('new-branch');
       expect(history).toEqual([
         {
           created: expect.any(Date),
@@ -717,7 +714,7 @@ describe('VCS', () => {
     it('does something', async () => {
       const v = await vcs('master');
       // Add a file to master
-      expect(await v.getBranch()).toBe('master');
+      expect(await v.getCurrentBranchName()).toBe('master');
       const status1 = await v.status(
         [
           {
@@ -750,7 +747,7 @@ describe('VCS', () => {
       // Checkout new branch and add file
       await v.fork('new-branch');
       await v.checkout([], 'new-branch');
-      expect(await v.getBranch()).toBe('new-branch');
+      expect(await v.getCurrentBranchName()).toBe('new-branch');
       const status2 = await v.status(
         [
           {
@@ -802,7 +799,7 @@ describe('VCS', () => {
       ]);
       // Merge new branch back into master
       await v.checkout([], 'master');
-      expect(await v.getBranch()).toBe('master');
+      expect(await v.getCurrentBranchName()).toBe('master');
       await v.merge([], 'new-branch');
       expect(await v.getHistory()).toEqual([
         {
@@ -959,9 +956,9 @@ describe('VCS', () => {
       const driver = new MemoryDriver();
       vcs = new VCS(driver);
 
-      driver.setItem(paths.projects(), Buffer.from(JSON.stringify([backendProject])));
-      driver.setItem(paths.projectBase(backendProject.id), Buffer.from(''));
-      driver.setItem(paths.project(backendProject.id), Buffer.from(JSON.stringify(backendProject)));
+      driver.setItem('/projects/', Buffer.from(JSON.stringify([backendProject])));
+      driver.setItem(`/projects/${backendProject.id}/`, Buffer.from(''));
+      driver.setItem(`/projects/${backendProject.id}/meta.json`, Buffer.from(JSON.stringify(backendProject)));
     });
 
     it('should return true if has project', async () => {

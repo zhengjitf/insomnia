@@ -1,33 +1,38 @@
-import electron, { BrowserWindow, ipcMain } from 'electron';
+import electron, { BrowserWindow } from 'electron';
 import fs from 'fs';
+import { MessageType, parseMessage } from 'graphql-ws';
 import { IncomingMessage } from 'http';
 import path from 'path';
-import tls, { KeyObject, PxfObject } from 'tls';
+import tls, { type KeyObject, type PxfObject } from 'tls';
 import { v4 as uuidV4 } from 'uuid';
 import {
-  CloseEvent,
-  ErrorEvent,
-  Event,
-  MessageEvent,
+  type CloseEvent,
+  type ErrorEvent,
+  type Event,
+  type MessageEvent,
   WebSocket,
 } from 'ws';
 
 import { AUTH_API_KEY, AUTH_BASIC, AUTH_BEARER } from '../../common/constants';
 import { jarFromCookies } from '../../common/cookies';
 import { generateId, getSetCookieHeaders } from '../../common/misc';
+import type { RenderedRequest } from '../../common/render';
 import { webSocketRequest } from '../../models';
 import * as models from '../../models';
-import { CookieJar } from '../../models/cookie-jar';
-import { RequestAuthentication, RequestHeader } from '../../models/request';
-import { BaseWebSocketRequest } from '../../models/websocket-request';
+import type { CookieJar } from '../../models/cookie-jar';
+import type { Request } from '../../models/request';
+import { type RequestAuthentication, type RequestHeader } from '../../models/request';
+import type { BaseWebSocketRequest } from '../../models/websocket-request';
 import type { WebSocketResponse } from '../../models/websocket-response';
 import { COOKIE, HEADER, QUERY_PARAMS } from '../../network/api-key/constants';
 import { getBasicAuthHeader } from '../../network/basic-auth/get-header';
 import { getBearerAuthHeader } from '../../network/bearer-auth/get-header';
 import { filterClientCertificates } from '../../network/certificate';
 import { addSetCookiesToToughCookieJar } from '../../network/set-cookie-util';
+import { parseGraphQLReqeustBody } from '../../utils/graph-ql';
 import { invariant } from '../../utils/invariant';
 import { buildQueryStringFromParams, joinUrlAndQueryString } from '../../utils/url/querystring';
+import { ipcMainHandle, ipcMainOn } from '../ipc/electron';
 
 export interface WebSocketConnection extends WebSocket {
   _id: string;
@@ -99,6 +104,7 @@ interface OpenWebSocketRequestOptions {
   authentication: RequestAuthentication;
   cookieJar: CookieJar;
   initialPayload?: string;
+  isGraphqlSubscriptionRequest?: boolean;
 }
 const openWebSocketConnection = async (
   _event: Electron.IpcMainInvokeEvent,
@@ -110,7 +116,8 @@ const openWebSocketConnection = async (
     console.warn('Connection still open to ' + existingConnection.url);
     return;
   }
-  const request = await webSocketRequest.getById(options.requestId);
+
+  const request = options.isGraphqlSubscriptionRequest ? await models.request.getById(options.requestId) : await webSocketRequest.getById(options.requestId);
   const responseId = generateId('res');
   if (!request) {
     return;
@@ -219,7 +226,7 @@ const openWebSocketConnection = async (
       'on': true,
       'global': settings.followRedirects,
     }[request.settingFollowRedirects] ?? true;
-    const protocols = lowerCasedEnabledHeaders['sec-websocket-protocol'];
+    const protocols = lowerCasedEnabledHeaders['sec-websocket-protocol']?.split(',').map(p => p.trim());
     const ws = new WebSocket(url, protocols, {
       headers: lowerCasedEnabledHeaders,
       ca: caCertificate,
@@ -332,6 +339,11 @@ const openWebSocketConnection = async (
       };
 
       eventLogFileStreams.get(options.requestId)?.write(JSON.stringify(messageEvent) + '\n');
+
+      // send subscribe operation to graphql websocket server
+      if (options.isGraphqlSubscriptionRequest) {
+        handleGraphQLWsMessage(data, request as Request);
+      }
     });
 
     ws.addEventListener('close', ({ code, reason, wasClean }) => {
@@ -380,6 +392,33 @@ const openWebSocketConnection = async (
   }
 };
 
+// graphql ws protocl message handler. Refer: https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md
+const handleGraphQLWsMessage = (data: MessageEvent['data'], request: Request) => {
+  const graphqlServerData = parseMessage(data);
+  const graphqlServerDataType = graphqlServerData.type;
+  const requestId = request._id;
+  // send subscribe operation to graphql websocket server when ack is received
+  if (graphqlServerDataType === MessageType.ConnectionAck) {
+    parseGraphQLReqeustBody(request as RenderedRequest);
+    let subscriptionPayload = {};
+    try {
+      // @ts-expect-error graphql request has body attribute
+      subscriptionPayload = JSON.parse(request.body.text);
+    } catch (error) {
+      console.warn('failed to parse graphql subscription request body', error);
+    }
+    const payload = JSON.stringify({
+      id: uuidV4(),
+      type: MessageType.Subscribe,
+      payload: subscriptionPayload,
+    });
+    sendWebSocketEvent({ payload, requestId });
+  } else if (graphqlServerDataType === MessageType.Error || graphqlServerDataType === MessageType.Complete) {
+    // close connection if server responsed with error or complete
+    closeWebSocketConnection({ requestId });
+  }
+};
+
 const createErrorResponse = async (responseId: string, requestId: string, environmentId: string | null, timelinePath: string, message: string) => {
   const settings = await models.settings.get();
   const responsePatch = {
@@ -419,7 +458,7 @@ const sendPayload = async (ws: WebSocket, options: { payload: string; requestId:
     if (error) {
       console.error(error);
     } else {
-      console.log('Message sent');
+      console.log('[main] Message sent');
     }
   });
 
@@ -493,12 +532,12 @@ export interface WebSocketBridgeAPI {
   };
 }
 export const registerWebSocketHandlers = () => {
-  ipcMain.handle('webSocket.open', openWebSocketConnection);
-  ipcMain.handle('webSocket.event.send', (_, options: Parameters<typeof sendWebSocketEvent>[0]) => sendWebSocketEvent(options));
-  ipcMain.on('webSocket.close', (_, options: Parameters<typeof closeWebSocketConnection>[0]) => closeWebSocketConnection(options));
-  ipcMain.on('webSocket.closeAll', closeAllWebSocketConnections);
-  ipcMain.handle('webSocket.readyState', (_, options: Parameters<typeof getWebSocketReadyState>[0]) => getWebSocketReadyState(options));
-  ipcMain.handle('webSocket.event.findMany', (_, options: Parameters<typeof findMany>[0]) => findMany(options));
+  ipcMainHandle('webSocket.open', openWebSocketConnection);
+  ipcMainHandle('webSocket.event.send', (_, options: Parameters<typeof sendWebSocketEvent>[0]) => sendWebSocketEvent(options));
+  ipcMainOn('webSocket.close', (_, options: Parameters<typeof closeWebSocketConnection>[0]) => closeWebSocketConnection(options));
+  ipcMainOn('webSocket.closeAll', closeAllWebSocketConnections);
+  ipcMainHandle('webSocket.readyState', (_, options: Parameters<typeof getWebSocketReadyState>[0]) => getWebSocketReadyState(options));
+  ipcMainHandle('webSocket.event.findMany', (_, options: Parameters<typeof findMany>[0]) => findMany(options));
 };
 
 electron.app.on('window-all-closed', closeAllWebSocketConnections);

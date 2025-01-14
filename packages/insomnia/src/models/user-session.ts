@@ -5,7 +5,6 @@ import type { BaseModel } from './index';
 export interface BaseUserSession {
   accountId: string;
   id: string;
-  sessionExpiry: Date | null;
   email: string;
   firstName: string;
   lastName: string;
@@ -14,7 +13,11 @@ export interface BaseUserSession {
   encPrivateKey: AESMessage;
 };
 
-export type UserSession = BaseModel & BaseUserSession;
+export interface HashedUserSession {
+  hashedAccountId: string;
+}
+
+export type UserSession = BaseModel & BaseUserSession & HashedUserSession;
 export const name = 'UserSession';
 export const type = 'UserSession';
 export const prefix = 'usr';
@@ -25,7 +28,6 @@ export function init(): BaseUserSession {
   return {
     accountId: '',
     id: '',
-    sessionExpiry: null,
     email: '',
     firstName: '',
     lastName: '',

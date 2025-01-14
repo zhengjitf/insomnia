@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button, Dialog, GridList, GridListItem, Heading, Input, Label, Modal, ModalOverlay, TextField } from 'react-aria-components';
 import { useFetcher, useParams } from 'react-router-dom';
 
 import { PromptButton } from '../base/prompt-button';
 import { Icon } from '../icon';
+import { showAlert } from '.';
 
 const LocalBranchItem = ({
   branch,
@@ -18,9 +19,40 @@ const LocalBranchItem = ({
   projectId: string;
   workspaceId: string;
 }) => {
-  const checkoutBranchFetcher = useFetcher();
+  const checkoutBranchFetcher = useFetcher<{} | { error: string }>();
   const mergeBranchFetcher = useFetcher();
   const deleteBranchFetcher = useFetcher();
+
+  useEffect(() => {
+    if (checkoutBranchFetcher.data && 'error' in checkoutBranchFetcher.data && checkoutBranchFetcher.data.error && checkoutBranchFetcher.state === 'idle') {
+      const error: string = checkoutBranchFetcher.data.error || 'An unexpected error occurred while checking out the branch.';
+      showAlert({
+        title: 'Error while checking out branch.',
+        message: error,
+      });
+    }
+  }, [checkoutBranchFetcher.data, checkoutBranchFetcher.state]);
+
+  useEffect(() => {
+    if (mergeBranchFetcher.data && 'error' in mergeBranchFetcher.data && mergeBranchFetcher.data.error && mergeBranchFetcher.state === 'idle') {
+      const error: string = mergeBranchFetcher.data.error || 'An unexpected error occurred while merging the branches.';
+      showAlert({
+        title: 'Error while merging branches.',
+        message: error,
+      });
+    }
+  }, [mergeBranchFetcher.data, mergeBranchFetcher.state]);
+
+  useEffect(() => {
+    if (deleteBranchFetcher.data && 'error' in deleteBranchFetcher.data && deleteBranchFetcher.data.error && deleteBranchFetcher.state === 'idle') {
+      const error: string = deleteBranchFetcher.data.error || 'An unexpected error occurred while deleting the branch.';
+      showAlert({
+        title: 'Error while deleting branch',
+        message: error,
+      });
+    }
+  }, [deleteBranchFetcher.data, deleteBranchFetcher.state]);
+
   return (
     <div className="flex items-center w-full">
       <span className='flex-1 truncate'>{branch}</span>
@@ -63,12 +95,15 @@ const LocalBranchItem = ({
           doneMessage="Merged"
           confirmMessage='Confirm'
           disabled={isCurrent}
-          onClick={() => mergeBranchFetcher.submit({
-            branch,
-          }, {
-            method: 'POST',
-            action: `/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/insomnia-sync/branch/merge`,
-          })}
+          onClick={() => {
+            // file://./../../routes/remote-collections.tsx#mergeBranchAction
+            mergeBranchFetcher.submit({
+              branch,
+            }, {
+              method: 'POST',
+              action: `/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/insomnia-sync/branch/merge`,
+            });
+          }}
         >
           <Icon icon={mergeBranchFetcher.state !== 'idle' ? 'spinner' : 'code-merge'} className={`w-5 ${mergeBranchFetcher.state !== 'idle' ? 'animate-spin' : ''}`} />
           Merge
@@ -93,6 +128,26 @@ const RemoteBranchItem = ({
 }) => {
   const deleteBranchFetcher = useFetcher();
   const pullBranchFetcher = useFetcher();
+
+  useEffect(() => {
+    if (pullBranchFetcher.data && 'error' in pullBranchFetcher.data && pullBranchFetcher.data.error && pullBranchFetcher.state === 'idle') {
+      const error: string = pullBranchFetcher.data.error || 'An unexpected error occurred while pulling the branch.';
+      showAlert({
+        title: 'Error while pulling branch.',
+        message: error,
+      });
+    }
+  }, [pullBranchFetcher.data, pullBranchFetcher.state]);
+
+  useEffect(() => {
+    if (deleteBranchFetcher.data && 'error' in deleteBranchFetcher.data && deleteBranchFetcher.data.error && deleteBranchFetcher.state === 'idle') {
+      const error: string = deleteBranchFetcher.data.error || 'An unexpected error occurred while deleting the branch.';
+      showAlert({
+        title: 'Error while deleting branch.',
+        message: error,
+      });
+    }
+  }, [deleteBranchFetcher.data, deleteBranchFetcher.state]);
 
   return (
     <div className="flex items-center w-full">
@@ -134,6 +189,7 @@ const RemoteBranchItem = ({
     </div>
   );
 };
+
 interface Props {
   branches: string[];
   remoteBranches: string[];
@@ -181,7 +237,7 @@ export const SyncBranchesModal = ({ onClose, branches, remoteBranches, currentBr
           {({ close }) => (
             <div className='flex-1 flex flex-col gap-4 overflow-hidden'>
               <div className='flex-shrink-0 flex gap-2 items-center justify-between'>
-                <Heading className='text-2xl'>Branches</Heading>
+                <Heading slot="title" className='text-2xl'>Branches</Heading>
                 <Button
                   className="flex flex-shrink-0 items-center justify-center aspect-square h-6 aria-pressed:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm"
                   onPress={close}
@@ -247,7 +303,7 @@ export const SyncBranchesModal = ({ onClose, branches, remoteBranches, currentBr
               </div>
 
               {remoteBranches.length > 0 && (
-                <div className='select-none border border-solid rounded border-[--hl-sm] divide-y divide-solid divide-[--hl-sm]'>
+                <div className='flex-1 max-h-96 overflow-hidden flex flex-col select-none border border-solid rounded border-[--hl-sm] divide-y divide-solid divide-[--hl-sm]'>
                   <Heading className='font-semibold uppercase text-[--hl] text-sm p-2'>Remote Branches</Heading>
                   <GridList
                     aria-label='Remote Branches list'

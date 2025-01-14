@@ -1,16 +1,37 @@
-import { ActionFunction } from 'react-router-dom';
+import { type ActionFunction, type LoaderFunction, redirect } from 'react-router-dom';
 
 import * as models from '../../models';
-import { RequestGroup } from '../../models/request-group';
-import { RequestGroupMeta } from '../../models/request-group-meta';
+import { EnvironmentType } from '../../models/environment';
+import type { RequestGroup } from '../../models/request-group';
+import type { RequestGroupMeta } from '../../models/request-group-meta';
 import { invariant } from '../../utils/invariant';
+
+export interface RequestGroupLoaderData {
+  activeRequestGroup: RequestGroup;
+}
+export const loader: LoaderFunction = async ({ params }): Promise<RequestGroupLoaderData> => {
+  const { organizationId, projectId, requestGroupId, workspaceId } = params;
+  invariant(requestGroupId, 'Request ID is required');
+  invariant(workspaceId, 'Workspace ID is required');
+  invariant(projectId, 'Project ID is required');
+  const activeRequestGroup = await models.requestGroup.getById(requestGroupId);
+  if (!activeRequestGroup) {
+    throw redirect(`/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/debug`);
+  }
+
+  return {
+    activeRequestGroup,
+  };
+};
 
 export const createRequestGroupAction: ActionFunction = async ({ request, params }) => {
   const { workspaceId } = params;
   const formData = await request.formData();
   const name = formData.get('name') as string;
   const parentId = formData.get('parentId') as string;
-  const requestGroup = await models.requestGroup.create({ parentId: parentId || workspaceId, name });
+  // New folder environment to be key-value pair by default;
+  const environmentType = formData.get('environmentType') as EnvironmentType || EnvironmentType.KVPAIR;
+  const requestGroup = await models.requestGroup.create({ parentId: parentId || workspaceId, name, environmentType });
   await models.requestGroupMeta.create({ parentId: requestGroup._id, collapsed: false });
   return null;
 };

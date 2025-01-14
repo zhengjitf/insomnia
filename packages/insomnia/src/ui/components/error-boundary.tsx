@@ -1,4 +1,4 @@
-import React, { PureComponent, ReactNode } from 'react';
+import React, { PureComponent, type ReactNode } from 'react';
 
 import { showError } from './modals/index';
 
@@ -45,7 +45,7 @@ class SingleErrorBoundary extends PureComponent<Props, State> {
           title: 'Application Error',
           message: (
             <p>
-              Failed to render {componentName}. Please report the error to <a href="https://github.com/Kong/insomnia/issues">our Github Issues</a>
+              Failed to render {componentName}. Please report the error to <a href="https://github.com/Kong/insomnia/issues">our GitHub Issues</a>
             </p>
           ),
         });
@@ -58,7 +58,7 @@ class SingleErrorBoundary extends PureComponent<Props, State> {
   render() {
     if (this.state.error) {
       return (
-        <div className={this.props.errorClassName ?? ''}>Render Failure: {this.state.error.message}</div>
+        <div className={this.props.errorClassName ?? 'font-error'}>Render Failure: {this.state.error.message}</div>
       );
     }
 

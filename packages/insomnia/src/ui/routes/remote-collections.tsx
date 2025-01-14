@@ -1,27 +1,30 @@
-import { ActionFunction, LoaderFunction, redirect } from 'react-router-dom';
+import * as Sentry from '@sentry/electron/renderer';
+import { type ActionFunction, type LoaderFunction, redirect } from 'react-router-dom';
 
-import { database, Operation } from '../../common/database';
+import { database, type Operation } from '../../common/database';
 import { isNotNullOrUndefined } from '../../common/misc';
+import { SentryMetrics } from '../../common/sentry';
 import * as models from '../../models';
 import { canSync } from '../../models';
-import { ApiSpec } from '../../models/api-spec';
-import { Environment } from '../../models/environment';
-import { GrpcRequest } from '../../models/grpc-request';
-import { MockRoute } from '../../models/mock-route';
-import { MockServer } from '../../models/mock-server';
-import { Request } from '../../models/request';
-import { RequestGroup } from '../../models/request-group';
-import { UnitTest } from '../../models/unit-test';
-import { UnitTestSuite } from '../../models/unit-test-suite';
-import { WebSocketRequest } from '../../models/websocket-request';
-import { scopeToActivity, Workspace } from '../../models/workspace';
-import {
+import type { ApiSpec } from '../../models/api-spec';
+import type { Environment } from '../../models/environment';
+import type { GrpcRequest } from '../../models/grpc-request';
+import type { MockRoute } from '../../models/mock-route';
+import type { MockServer } from '../../models/mock-server';
+import type { Request } from '../../models/request';
+import type { RequestGroup } from '../../models/request-group';
+import type { UnitTest } from '../../models/unit-test';
+import type { UnitTestSuite } from '../../models/unit-test-suite';
+import type { WebSocketRequest } from '../../models/websocket-request';
+import { scopeToActivity, type Workspace } from '../../models/workspace';
+import type {
   BackendProject,
+  Compare,
   Snapshot,
   Status,
   StatusCandidate,
 } from '../../sync/types';
-import { VCSInstance } from '../../sync/vcs/insomnia-sync';
+import { UserAbortResolveMergeConflictError, VCSInstance } from '../../sync/vcs/insomnia-sync';
 import { pullBackendProject } from '../../sync/vcs/pull-backend-project';
 import { invariant } from '../../utils/invariant';
 
@@ -124,51 +127,58 @@ export const pullRemoteCollectionAction: ActionFunction = async ({
   request,
   params,
 }) => {
-  const { organizationId, projectId } = params;
-  invariant(typeof projectId === 'string', 'Project Id is required');
-  invariant(typeof organizationId === 'string', 'Organization Id is required');
-  const formData = await request.formData();
+  try {
+    const { organizationId } = params;
+    invariant(typeof organizationId === 'string', 'Organization Id is required');
+    const formData = await request.formData();
 
-  const backendProjectId = formData.get('backendProjectId');
-  invariant(typeof backendProjectId === 'string', 'Collection Id is required');
-  const remoteId = formData.get('remoteId');
-  invariant(typeof remoteId === 'string', 'Remote Id is required');
+    const backendProjectId = formData.get('backendProjectId');
+    invariant(typeof backendProjectId === 'string', 'Collection Id is required');
+    const remoteId = formData.get('remoteId');
+    invariant(typeof remoteId === 'string', 'Remote Id is required');
 
-  const vcs = VCSInstance();
-  const remoteBackendProjects = await vcs.remoteBackendProjects({
-    teamId: organizationId,
-    teamProjectId: remoteId,
-  });
+    const vcs = VCSInstance();
 
-  const backendProject = remoteBackendProjects.find(
-    p => p.id === backendProjectId
-  );
+    const remoteBackendProjects = await vcs.remoteBackendProjects({
+      teamId: organizationId,
+      teamProjectId: remoteId,
+    });
 
-  invariant(backendProject, 'Backend project not found');
+    const backendProject = remoteBackendProjects.find(
+      p => p.id === backendProjectId
+    );
 
-  const project = await models.project.getById(projectId);
+    invariant(backendProject, 'Backend project not found');
 
-  invariant(project?.remoteId, 'Project is not a remote project');
+    const project = await models.project.getByRemoteId(remoteId);
 
-  // Clone old VCS so we don't mess anything up while working on other backend projects
-  const newVCS = vcs.newInstance();
-  // Remove all backend projects for workspace first
-  await newVCS.removeBackendProjectsForRoot(backendProject.rootDocumentId);
+    invariant(project?.remoteId, 'Project is not a remote project');
 
-  const { workspaceId } = await pullBackendProject({
-    vcs: newVCS,
-    backendProject,
-    remoteProject: project,
-  });
+    // Clone old VCS so we don't mess anything up while working on other backend projects
+    const newVCS = vcs.newInstance();
+    // Remove all backend projects for workspace first
+    await newVCS.removeBackendProjectsForRoot(backendProject.rootDocumentId);
 
-  const workspace = await models.workspace.getById(workspaceId);
+    const { workspaceId } = await pullBackendProject({
+      vcs: newVCS,
+      backendProject,
+      remoteProject: project,
+    });
 
-  invariant(workspace, 'Workspace not found');
-  const activity = scopeToActivity(workspace?.scope);
+    const workspace = await models.workspace.getById(workspaceId);
 
-  return redirect(
-    `/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/${activity}`
-  );
+    invariant(workspace, 'Workspace not found');
+    const activity = scopeToActivity(workspace?.scope);
+
+    return redirect(
+      `/organization/${organizationId}/project/${project._id}/workspace/${workspaceId}/${activity}`
+    );
+  } catch (e) {
+    console.warn('Failed to pull remote collection', e);
+    return {
+      error: 'Failed to pull remote collection',
+    };
+  }
 };
 
 export interface RemoteCollectionsLoaderData {
@@ -241,15 +251,11 @@ interface SyncData {
   historyCount: number;
   status: Status;
   syncItems: StatusCandidate[];
-  compare: {
-    ahead: number;
-    behind: number;
-  };
-  remoteBackendProjects: BackendProject[];
+  compare: Compare;
 }
 
 const remoteBranchesCache: Record<string, string[]> = {};
-const remoteCompareCache: Record<string, { ahead: number; behind: number }> =
+const remoteCompareCache: Record<string, Compare> =
   {};
 const remoteBackendProjectsCache: Record<string, BackendProject[]> = {};
 
@@ -262,7 +268,7 @@ export const syncDataAction: ActionFunction = async ({ params }) => {
     invariant(project, 'Project not found');
     invariant(project.remoteId, 'Project is not remote');
     const vcs = VCSInstance();
-    const remoteBranches = (await vcs.getRemoteBranches()).sort();
+    const remoteBranches = (await vcs.getRemoteBranchNames()).sort();
     const compare = await vcs.compareRemoteBranch();
     const remoteBackendProjects = await vcs.remoteBackendProjects({
       teamId: project.parentId,
@@ -310,28 +316,44 @@ export const syncDataLoader: LoaderFunction = async ({
     invariant(project.remoteId, 'Project is not remote');
     const vcs = VCSInstance();
     const { syncItems } = await getSyncItems({ workspaceId });
-    const localBranches = (await vcs.getBranches()).sort();
-    const remoteBranches = (
-      remoteBranchesCache[workspaceId] || (await vcs.getRemoteBranches())
-    ).sort();
-    const currentBranch = await vcs.getBranch();
+    const localBranches = (await vcs.getBranchNames()).sort();
+    const currentBranch = await vcs.getCurrentBranchName();
     const history = (await vcs.getHistory()).sort((a, b) =>
       b.created > a.created ? 1 : -1
     );
     const historyCount = await vcs.getHistoryCount();
     const status = await vcs.status(syncItems);
-    const compare =
-      remoteCompareCache[workspaceId] || (await vcs.compareRemoteBranch());
-    const remoteBackendProjects =
-      remoteBackendProjectsCache[workspaceId] ||
-      (await vcs.remoteBackendProjects({
-        teamId: project.parentId,
-        teamProjectId: project.remoteId,
-      }));
 
-    remoteBranchesCache[workspaceId] = remoteBranches;
-    remoteCompareCache[workspaceId] = compare;
-    remoteBackendProjectsCache[workspaceId] = remoteBackendProjects;
+    let remoteBranches: string[] = [];
+    let compare = { ahead: 0, behind: 0 };
+    try {
+      remoteBranches = (
+        remoteBranchesCache[workspaceId] || (await vcs.getRemoteBranchNames())
+      ).sort();
+      compare = remoteCompareCache[workspaceId] || (await vcs.compareRemoteBranch());
+      const remoteBackendProjects =
+        remoteBackendProjectsCache[workspaceId] ||
+        (await vcs.remoteBackendProjects({
+          teamId: project.parentId,
+          teamProjectId: project.remoteId,
+        }));
+      remoteBranchesCache[workspaceId] = remoteBranches;
+      remoteCompareCache[workspaceId] = compare;
+      remoteBackendProjectsCache[workspaceId] = remoteBackendProjects;
+
+      let hasUncommittedChanges = false;
+      if (status?.unstaged && Object.keys(status.unstaged).length > 0) {
+        hasUncommittedChanges = true;
+      }
+      if (status?.stage && Object.keys(status.stage).length > 0) {
+        hasUncommittedChanges = true;
+      }
+      // update workspace meta with sync data, use for show unpushed changes on collection card
+      models.workspaceMeta.updateByParentId(workspaceId, {
+        hasUncommittedChanges,
+        hasUnpushedChanges: compare?.ahead > 0,
+      });
+    } catch (e) { }
 
     return {
       syncItems,
@@ -342,7 +364,6 @@ export const syncDataLoader: LoaderFunction = async ({
       historyCount,
       status,
       compare,
-      remoteBackendProjects,
     };
   } catch (e) {
     const errorMessage =
@@ -396,7 +417,16 @@ export const mergeBranchAction: ActionFunction = async ({
   invariant(typeof branch === 'string', 'Branch is required');
   const vcs = VCSInstance();
   const { syncItems } = await getSyncItems({ workspaceId });
-  const delta = await vcs.merge(syncItems, branch);
+  let delta;
+  try {
+    delta = await vcs.merge(syncItems, branch);
+  } catch (err) {
+    if (err instanceof UserAbortResolveMergeConflictError) {
+      return null;
+    } else {
+      throw err;
+    }
+  }
   try {
     await database.batchModifyDocs(delta as Operation);
     delete remoteCompareCache[workspaceId];
@@ -479,6 +509,7 @@ export const deleteBranchAction: ActionFunction = async ({
 };
 
 export const pullFromRemoteAction: ActionFunction = async ({ params }) => {
+  const startPullActionTime = performance.now();
   const { organizationId, projectId, workspaceId } = params;
   invariant(typeof projectId === 'string', 'Project Id is required');
   invariant(typeof workspaceId === 'string', 'Workspace Id is required');
@@ -492,10 +523,17 @@ export const pullFromRemoteAction: ActionFunction = async ({ params }) => {
       candidates: syncItems,
       teamId: project.parentId,
       teamProjectId: project.remoteId,
+      projectId: project._id,
     });
 
-    await database.batchModifyDocs(delta as unknown as Operation);
+    await database.batchModifyDocs(delta);
     delete remoteCompareCache[workspaceId];
+
+    const duration = performance.now() - startPullActionTime;
+    Sentry.metrics.distribution(SentryMetrics.CLOUD_SYNC_DURATION, duration, {
+      unit: 'millisecond',
+      tags: { action: 'pull' },
+    });
   } catch (err) {
     const errorMessage =
       err instanceof Error
@@ -525,26 +563,19 @@ export const fetchRemoteBranchAction: ActionFunction = async ({
   const branch = formData.get('branch');
   invariant(typeof branch === 'string', 'Branch is required');
   const vcs = VCSInstance();
-  const currentBranch = await vcs.getBranch();
+  const currentBranch = await vcs.getCurrentBranchName();
 
   try {
     invariant(project.remoteId, 'Project is not remote');
     await vcs.checkout([], branch);
-    const delta = (await vcs.pull({
+    const delta = await vcs.pull({
       candidates: [],
       teamId: project.parentId,
       teamProjectId: project.remoteId,
-    })) as unknown as Operation;
-    // vcs.pull sometimes results in a delta with parentId: null, causing workspaces to be orphaned, this is a hack to restore those parentIds until we have a chance to redesign vcs
-    await database.batchModifyDocs({
-      remove: delta.remove,
-      upsert: delta.upsert?.map(doc => ({
-        ...doc,
-        ...(!doc.parentId && doc.type === models.workspace.type
-          ? { parentId: projectId }
-          : {}),
-      })),
+      projectId,
     });
+
+    await database.batchModifyDocs(delta);
   } catch (err) {
     await vcs.checkout([], currentBranch);
     const errorMessage =
@@ -560,6 +591,7 @@ export const fetchRemoteBranchAction: ActionFunction = async ({
 };
 
 export const pushToRemoteAction: ActionFunction = async ({ params }) => {
+  const startPushActionTime = performance.now();
   const { projectId, workspaceId } = params;
   invariant(typeof projectId === 'string', 'Project Id is required');
   invariant(typeof workspaceId === 'string', 'Workspace Id is required');
@@ -575,6 +607,12 @@ export const pushToRemoteAction: ActionFunction = async ({ params }) => {
       teamProjectId: project.remoteId,
     });
     delete remoteCompareCache[workspaceId];
+
+    const duration = performance.now() - startPushActionTime;
+    Sentry.metrics.distribution(SentryMetrics.CLOUD_SYNC_DURATION, duration, {
+      unit: 'millisecond',
+      tags: { action: 'push' },
+    });
   } catch (err) {
     const errorMessage =
       err instanceof Error

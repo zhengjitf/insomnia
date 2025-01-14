@@ -1,5 +1,5 @@
 import { Differ, Viewer } from 'json-diff-kit';
-import React, { forwardRef, useImperativeHandle, useState } from 'react';
+import React, { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
 import { Button, Dialog, Form, GridList, GridListItem, Heading, Modal, ModalOverlay, Radio, RadioGroup } from 'react-aria-components';
 
 import type { MergeConflict } from '../../../sync/types';
@@ -33,12 +33,17 @@ export const SyncMergeModal = forwardRef<SyncMergeModalHandle>((_, ref) => {
     labels: { ours: '', theirs: '' },
   });
 
-  useImperativeHandle(ref, () => ({
-    hide: () => setState({
+  const reset = useCallback(() => {
+    setState({
       conflicts: [],
       isOpen: false,
       labels: { ours: '', theirs: '' },
-    }),
+    });
+    setSelectedConflict(null);
+  }, []);
+
+  useImperativeHandle(ref, () => ({
+    hide: reset,
     show: ({ conflicts, labels, handleDone }) => {
       setState({
         conflicts,
@@ -46,12 +51,14 @@ export const SyncMergeModal = forwardRef<SyncMergeModalHandle>((_, ref) => {
         isOpen: true,
         labels,
       });
+      // select the first conflict by default
+      setSelectedConflict(conflicts?.[0] || null);
 
       window.main.trackSegmentEvent({
         event: SegmentEvent.syncConflictResolutionStart,
       });
     },
-  }), []);
+  }), [reset]);
 
   const { conflicts, handleDone } = state;
 
@@ -61,11 +68,7 @@ export const SyncMergeModal = forwardRef<SyncMergeModalHandle>((_, ref) => {
     <ModalOverlay
       isOpen={state.isOpen}
       onOpenChange={isOpen => {
-        !isOpen && setState({
-          conflicts: [],
-          isOpen: false,
-          labels: { ours: '', theirs: '' },
-        });
+        !isOpen && reset();
 
         !isOpen && handleDone?.();
       }}
@@ -74,11 +77,7 @@ export const SyncMergeModal = forwardRef<SyncMergeModalHandle>((_, ref) => {
     >
       <Modal
         onOpenChange={isOpen => {
-          !isOpen && setState({
-            conflicts: [],
-            isOpen: false,
-            labels: { ours: '', theirs: '' },
-          });
+          !isOpen && reset();
 
           !isOpen && handleDone?.();
         }}
@@ -116,11 +115,7 @@ export const SyncMergeModal = forwardRef<SyncMergeModalHandle>((_, ref) => {
                     });
                   }
 
-                  setState({
-                    conflicts: [],
-                    isOpen: false,
-                    labels: { ours: '', theirs: '' },
-                  });
+                  reset();
                 }}
               >
                 <div className='grid [grid-template-columns:300px_1fr] h-full overflow-hidden divide-x divide-solid divide-[--hl-md] gap-2'>

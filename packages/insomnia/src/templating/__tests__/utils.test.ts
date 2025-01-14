@@ -1,10 +1,31 @@
-import { beforeEach, describe, expect, it } from '@jest/globals';
+import { describe, expect, it } from 'vitest';
 
-import { globalBeforeEach } from '../../__jest__/before-each';
 import * as utils from '../utils';
 
+describe('forceBracketNotation()', () => {
+  it('forces bracket notation', () => {
+    expect(utils.forceBracketNotation('_', 'foo')).toBe("_['foo']");
+    expect(utils.forceBracketNotation('_', 'foo[bar]')).toBe("_['foo[bar]']");
+    expect(utils.forceBracketNotation('_', 'foo.bar')).toBe("_['foo.bar']");
+    expect(utils.forceBracketNotation('_', 'foo[bar].baz')).toBe("_['foo[bar].baz']");
+    expect(utils.forceBracketNotation('_', 'foo[bar].baz[qux]')).toBe("_['foo[bar].baz[qux]']");
+    expect(utils.forceBracketNotation('_', 'arr-name-with-dash')).toBe("_['arr-name-with-dash']");
+  });
+});
+
+describe('normalizeToDotAndBracketNotation()', () => {
+  it('normalizes to dot and bracket notation', () => {
+    expect(utils.normalizeToDotAndBracketNotation('foo')).toBe('foo');
+    expect(utils.normalizeToDotAndBracketNotation('foo.bar')).toBe('foo.bar');
+    expect(utils.normalizeToDotAndBracketNotation('foo[bar]')).toBe('foo.bar');
+    expect(utils.normalizeToDotAndBracketNotation('foo[bar].baz')).toBe('foo.bar.baz');
+    expect(utils.normalizeToDotAndBracketNotation('_')).toBe('_');
+    expect(utils.normalizeToDotAndBracketNotation("_['notbob']")).toBe('_.notbob');
+    expect(utils.normalizeToDotAndBracketNotation("_['bob-fred']")).toBe("_['bob-fred']");
+    expect(utils.normalizeToDotAndBracketNotation('a.b["c"]')).toBe('a.b.c');
+  });
+});
 describe('getKeys()', () => {
-  beforeEach(globalBeforeEach);
 
   it('flattens complex object', () => {
     const obj = {
@@ -89,7 +110,6 @@ describe('getKeys()', () => {
 });
 
 describe('tokenizeTag()', () => {
-  beforeEach(globalBeforeEach);
 
   it('tokenizes complex tag', () => {
     const actual = utils.tokenizeTag('{% name bar, "baz \\"qux\\""   , 1 + 5 | default("foo") %}');
@@ -224,7 +244,6 @@ describe('tokenizeTag()', () => {
 });
 
 describe('unTokenizeTag()', () => {
-  beforeEach(globalBeforeEach);
 
   it('handles the default case', () => {
     const tagStr = '{% name bar, "baz \\"qux\\""   , 1 + 5, \'hi\' %}';
@@ -297,7 +316,6 @@ describe('unTokenizeTag()', () => {
 });
 
 describe('encodeEncoding()', () => {
-  beforeEach(globalBeforeEach);
 
   it('encodes things', () => {
     expect(utils.encodeEncoding('hello', 'base64')).toBe('b64::aGVsbG8=::46b');
@@ -308,7 +326,6 @@ describe('encodeEncoding()', () => {
 });
 
 describe('decodeEncoding()', () => {
-  beforeEach(globalBeforeEach);
 
   it('encodes things', () => {
     expect(utils.decodeEncoding('b64::aGVsbG8=::46b')).toBe('hello');
@@ -319,13 +336,12 @@ describe('decodeEncoding()', () => {
   });
 });
 
-describe('extractVariableKey()', () => {
-  beforeEach(globalBeforeEach);
+describe('extractUndefinedVariableKey()', () => {
 
   it('extract nunjucks variable key', () => {
-    expect(utils.extractVariableKey('{{name}}', 1, 1)).toBe('name');
-    expect(utils.extractVariableKey('aaaaaa{{name}}', 1, 7)).toBe('name');
-    expect(utils.extractVariableKey('{{name}}\n\n{{age}}', 3, 1)).toBe('age');
-    expect(utils.extractVariableKey('', 1, 1)).toBe('');
+    expect(utils.extractUndefinedVariableKey('{{name}}', {})).toEqual(['name']);
+    expect(utils.extractUndefinedVariableKey('{{name}}', { name: '' })).toEqual([]);
+    expect(utils.extractUndefinedVariableKey('aaaaaa{{a}}{{b}}{{c}}', { a: 1 })).toEqual(['b', 'c']);
+    expect(utils.extractUndefinedVariableKey('{{a.b}}\n\n{{c}} {{d}}', { a: { b: 1 } })).toEqual(['c', 'd']);
   });
 });

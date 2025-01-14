@@ -1,4 +1,5 @@
 import type { CurlRequestOutput } from 'insomnia/src/main/network/libcurl-promise';
+import { readCurlResponse } from 'insomnia/src/models/response';
 import type { Settings } from 'insomnia/src/models/settings';
 import { Cookie } from 'tough-cookie';
 import { v4 as uuidv4 } from 'uuid';
@@ -14,23 +15,24 @@ export async function sendRequest(
     cb: (error?: string, response?: Response) => void,
     settings: Settings,
 ): Promise<Response | undefined> {
-    return new Promise<Response | undefined>(resolve => {
+    return new Promise<Response | undefined>(async resolve => {
         // TODO(george): enable cascading cancellation later as current solution just adds complexity
         const requestOptions = requestToCurlOptions(request, settings);
 
         try {
-            window.bridge.curlRequest(requestOptions)
-                .then(result => {
+            const nodejsCurlRequest = process.type === 'renderer' ? window.bridge.curlRequest : (await import('insomnia/src/main/network/libcurl-promise')).curlRequest;
+            nodejsCurlRequest(requestOptions)
+                .then((result: any) => {
                     const output = result as CurlRequestOutput;
                     return curlOutputToResponse(output, request);
-                }).then(transformedOutput => {
+                }).then((transformedOutput: Response) => {
                     cb(undefined, transformedOutput);
                     resolve(transformedOutput);
                 }).catch(e => {
                     cb(e, undefined);
                     resolve(undefined);
                 });
-        } catch (err) {
+        } catch (err: any) {
             if (err.name === 'AbortError') {
                 cb(`Request was cancelled: ${err.message}`, undefined);
             } else {
@@ -196,7 +198,17 @@ async function curlOutputToResponse(
     result: CurlRequestOutput,
     request: string | Request | RequestOptions,
 ): Promise<Response> {
+    if (result.headerResults.length === 0) {
+        throw Error('curlOutputToResponse: no header result is found');
+    }
+    if (result.patch.error) {
+        throw result.patch.error;
+    }
+
     const lastRedirect = result.headerResults[result.headerResults.length - 1];
+    if (!lastRedirect) {
+        throw Error('curlOutputToResponse: the lastRedirect is not defined');
+    }
 
     const originalRequest = typeof request === 'string' ?
         new Request({ url: request, method: 'GET' }) :
@@ -214,8 +226,8 @@ async function curlOutputToResponse(
     // TODO: tackle stream field but currently it is just a duplication of body
     const cookies = cookieHeaders
         .map(cookieHeader => {
-            const cookieObj = Cookie.parse(cookieHeader.value || '');
-            if (cookieObj != null) {
+            const cookieObj = Cookie.parse(cookieHeader.value || '', { loose: true });
+            if (cookieObj) {
                 return {
                     key: cookieObj.key,
                     value: cookieObj.value,
@@ -244,12 +256,11 @@ async function curlOutputToResponse(
             body: '',
             stream: undefined,
             responseTime: result.patch.elapsedTime,
-            status: lastRedirect.reason,
             originalRequest,
         });
     }
-
-    const bodyResult = await window.bridge.readCurlResponse({
+    const nodejsReadCurlResponse = process.type === 'renderer' ? window.bridge.readCurlResponse : readCurlResponse;
+    const bodyResult = await nodejsReadCurlResponse({
         bodyPath: result.responseBodyPath,
         bodyCompression: result.patch.bodyCompression,
     });
@@ -266,7 +277,6 @@ async function curlOutputToResponse(
         // because it is inaccurate to differentiate if body is binary
         stream: undefined,
         responseTime: result.patch.elapsedTime,
-        status: lastRedirect.reason,
         originalRequest,
     });
 }

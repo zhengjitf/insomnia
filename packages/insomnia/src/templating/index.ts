@@ -4,7 +4,7 @@ import nunjucks from 'nunjucks/browser/nunjucks';
 import * as plugins from '../plugins/index';
 import { localTemplateTags } from '../ui/components/templating/local-template-tags';
 import BaseExtension from './base-extension';
-import { extractVariableKey, type NunjucksParsedTag } from './utils';
+import { extractUndefinedVariableKey, type NunjucksParsedTag } from './utils';
 
 export enum RenderErrorSubType {
   EnvironmentVariable = 'environmentVariable'
@@ -22,7 +22,12 @@ export class RenderError extends Error {
 
   type!: string;
   reason!: string;
-  extraInfo?: Record<string, string>;
+  extraInfo?: Record<string, any>;
+
+  constructor(message: string) {
+    super(message);
+    this.message = message;
+  }
 }
 
 // Some constants
@@ -72,18 +77,18 @@ export function render(
   const renderMode = config.renderMode || RENDER_ALL;
   return new Promise<string | null>(async (resolve, reject) => {
     // NOTE: this is added as a breadcrumb because renderString sometimes hangs
-    const id = setTimeout(() => console.log('Warning: nunjucks failed to respond within 5 seconds'), 5000);
+    const id = setTimeout(() => console.log('[templating] Warning: nunjucks failed to respond within 5 seconds'), 5000);
     const nj = await getNunjucks(renderMode, config.ignoreUndefinedEnvVariable);
     nj?.renderString(text, templatingContext, (err: Error | null, result: any) => {
       clearTimeout(id);
       if (err) {
-        console.log('Error rendering template', err);
+        console.warn('[templating] Error rendering template', err);
         const sanitizedMsg = err.message
           .replace(/\(unknown path\)\s/, '')
           .replace(/\[Line \d+, Column \d*]/, '')
           .replace(/^\s*Error:\s*/, '')
           .trim();
-        const location = err.message.match(/\[Line (\d)+, Column (\d)*]/);
+        const location = err.message.match(/\[Line (\d+), Column (\d+)*]/);
         const line = location ? parseInt(location[1]) : 1;
         const column = location ? parseInt(location[2]) : 1;
         const reason = err.message.includes('attempted to output null or undefined value')
@@ -102,7 +107,7 @@ export function render(
         if (hasNunjucksInterpolationSymbols && reason === 'undefined') {
           newError.extraInfo = {
             subType: RenderErrorSubType.EnvironmentVariable,
-            missingKey: extractVariableKey(text, line, column),
+            undefinedEnvironmentVariables: extractUndefinedVariableKey(text, templatingContext),
           };
         }
         reject(newError);

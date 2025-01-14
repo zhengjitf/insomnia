@@ -10,8 +10,7 @@ test('Command palette - can switch between requests and workspaces', async ({ ap
   const text = await loadFixture('smoke-test-collection.yaml');
   await app.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), text);
 
-  await page.getByRole('button', { name: 'Create in project' }).click();
-  await page.getByRole('menuitemradio', { name: 'Import' }).click();
+  await page.getByLabel('Import').click();
   await page.locator('[data-test-id="import-from-clipboard"]').click();
   await page.getByRole('button', { name: 'Scan' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
@@ -20,14 +19,13 @@ test('Command palette - can switch between requests and workspaces', async ({ ap
   const swaggerDoc = await loadFixture('swagger2.yaml');
   await app.evaluate(async ({ clipboard }, swaggerDoc) => clipboard.writeText(swaggerDoc), swaggerDoc);
 
-  await page.getByRole('button', { name: 'Create in project' }).click();
-  await page.getByRole('menuitemradio', { name: 'Import' }).click();
+  await page.getByLabel('Import').click();
   await page.locator('[data-test-id="import-from-clipboard"]').click();
   await page.getByRole('button', { name: 'Scan' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
 
   await page.getByLabel('Smoke tests').click();
-  await page.getByTestId('sends request with cookie and get cookie in response').getByLabel('request name').click();
+  await page.getByTestId('sends request with cookie and get cookie in response').getByText('GET', { exact: true }).click();
   await page.getByTestId('OneLineEditor').getByText('http://127.0.0.1:4010/cookies').click();
   const requestSwitchKeyboardShortcut = process.platform === 'darwin' ? 'Meta+p' : 'Control+p';
   await page.locator('body').press(requestSwitchKeyboardShortcut);
@@ -35,11 +33,10 @@ test('Command palette - can switch between requests and workspaces', async ({ ap
   await page.getByPlaceholder('Search and switch between').press('ArrowDown');
   await page.getByPlaceholder('Search and switch between').press('Enter');
   await page.getByTestId('OneLineEditor').getByText('http://127.0.0.1:4010/pets/').click();
-  await page.getByRole('button', { name: 'Send' }).click();
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
   await page.getByText('200 OK').click();
 
   await page.locator('body').press(requestSwitchKeyboardShortcut);
-  await page.getByPlaceholder('Search and switch between').press('ArrowUp');
   await page.getByPlaceholder('Search and switch between').press('ArrowUp');
   await page.getByPlaceholder('Search and switch between').press('ArrowUp');
   await page.getByPlaceholder('Search and switch between').press('Enter');

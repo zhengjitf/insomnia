@@ -1,9 +1,10 @@
 import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import { Button } from 'react-aria-components';
 
 import { NunjucksEnabledProvider } from '../../context/nunjucks/nunjucks-enabled-context';
 import { CopyButton } from '../base/copy-button';
-import { Dropdown, DropdownButton, DropdownItem, DropdownSection, ItemContent } from '../base/dropdown';
-import { Modal, type ModalHandle, ModalProps } from '../base/modal';
+import { Dropdown, DropdownItem, DropdownSection, ItemContent } from '../base/dropdown';
+import { Modal, type ModalHandle, type ModalProps } from '../base/modal';
 import { ModalBody } from '../base/modal-body';
 import { ModalFooter } from '../base/modal-footer';
 import { ModalHeader } from '../base/modal-header';
@@ -36,9 +37,11 @@ interface CodePromptModalOptions {
 export interface CodePromptModalHandle {
   show: (options: CodePromptModalOptions) => void;
   hide: () => void;
+  setError: (error: string) => void;
 }
 export const CodePromptModal = forwardRef<CodePromptModalHandle, ModalProps>((_, ref) => {
   const modalRef = useRef<ModalHandle>(null);
+  const [error, setError] = useState('');
   const [state, setState] = useState<CodePromptModalOptions>({
     title: 'Not Set',
     defaultValue: '',
@@ -65,6 +68,7 @@ export const CodePromptModal = forwardRef<CodePromptModalHandle, ModalProps>((_,
       }));
       modalRef.current?.show();
     },
+    setError: (error: string) => setError(error),
   }), []);
 
   const {
@@ -115,20 +119,17 @@ export const CodePromptModal = forwardRef<CodePromptModalHandle, ModalProps>((_,
               />
             </div>
           ) : (
-            <div className="pad-sm pad-bottom tall">
-              <div className="form-control form-control--outlined form-control--tall tall">
+              <div className="tall bg-[--hl-xs] rounded">
                 <CodeEditor
                   id="code-prompt-modal"
                   hideLineNumbers
                   showPrettifyButton
-                  className="tall"
                   defaultValue={defaultValue}
                   placeholder={placeholder}
                   onChange={onChange}
                   mode={mode}
                   enableNunjucks
                 />
-              </div>
             </div>
           )}
         </NunjucksEnabledProvider>
@@ -138,10 +139,10 @@ export const CodePromptModal = forwardRef<CodePromptModalHandle, ModalProps>((_,
           <Dropdown
             aria-label='Select a mode'
             triggerButton={
-              <DropdownButton className="btn btn--clicky margin-left-sm">
+              <Button className="!hover:no-underline !bg-transparent !hover:bg-opacity-90 !border !border-solid !border-[--hl-md] !py-2 !px-3 !text-[--color-font] !transition-colors !rounded-sm">
                 {MODES[mode]}
                 <i className="fa fa-caret-down space-left" />
-              </DropdownButton>
+              </Button>
             }
           >
             <DropdownSection
@@ -167,7 +168,8 @@ export const CodePromptModal = forwardRef<CodePromptModalHandle, ModalProps>((_,
           </Dropdown>
         ) : null}
         <div className="margin-left faint italic txt-sm">{hint ? `* ${hint}` : ''}</div>
-        <button className="btn" onClick={() => modalRef.current?.hide()}>
+        {error !== '' && <p className="notice error w-full" style={{ marginTop: 0, marginBottom: 0 }}>{error}</p>}
+        <button className="btn" onClick={() => modalRef.current?.hide()} disabled={error !== ''} aria-label='Modal Submit'>
           {submitName || 'Submit'}
         </button>
       </ModalFooter>

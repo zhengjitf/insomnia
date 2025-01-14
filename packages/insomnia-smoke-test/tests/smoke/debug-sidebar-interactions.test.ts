@@ -6,10 +6,9 @@ import { test } from '../../playwright/test';
 test.describe('Debug-Sidebar', async () => {
   test.slow(process.platform === 'darwin' || process.platform === 'win32', 'Slow app start on these platforms');
   test.beforeEach(async ({ app, page }) => {
-    await page.getByRole('button', { name: 'Create in project' }).click();
     const text = await loadFixture('simple.yaml');
     await app.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), text);
-    await page.getByRole('menuitemradio', { name: 'Import' }).click();
+    await page.getByLabel('Import').click();
     await page.locator('[data-test-id="import-from-clipboard"]').click();
     await page.getByRole('button', { name: 'Scan' }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
@@ -22,7 +21,6 @@ test.describe('Debug-Sidebar', async () => {
       await requestLocator.click();
       await requestLocator.getByLabel('Request Actions').click();
       await page.getByRole('menuitemradio', { name: 'Settings' }).click();
-      await page.getByRole('tab', { name: 'Preview' }).click();
       // Close settings modal
       await page.locator('.app').press('Escape');
 
@@ -37,7 +35,6 @@ test.describe('Debug-Sidebar', async () => {
       await ws.click();
       await ws.getByLabel('Request Actions').click();
       await page.getByRole('menuitemradio', { name: 'Settings' }).click();
-      await page.getByRole('tab', { name: 'Preview' }).click();
       // Close settings modal
       await page.locator('.app').press('Escape');
 
@@ -45,14 +42,12 @@ test.describe('Debug-Sidebar', async () => {
       await gql.click();
       await gql.getByLabel('Request Actions').click();
       await page.getByRole('menuitemradio', { name: 'Settings' }).click();
-      await page.getByRole('tab', { name: 'Preview' }).click();
       // Close settings modal
       await page.locator('.app').press('Escape');
       const folderLocator = page.getByLabel('Request Collection').getByRole('row', { name: 'test folder' });
       await folderLocator.click();
       await folderLocator.getByLabel('Request Group Actions').click();
       await page.getByRole('menuitemradio', { name: 'Settings' }).click();
-      await page.getByRole('tab', { name: 'Preview' }).click();
       // Close settings modal
       await page.locator('.app').press('Escape');
     });
@@ -85,10 +80,6 @@ test.describe('Debug-Sidebar', async () => {
       await page.locator('text=Done').click();
     });
 
-    test.skip('Use Copy as Curl for a request', async ({}) => {
-      // TODO: implement this in a separate ticket
-    });
-
     test('Pin a Request', async ({ page }) => {
       const requestLocator = page.getByLabel('Request Collection').getByRole('row', { name: 'example http' });
       await requestLocator.click();
@@ -117,8 +108,9 @@ test.describe('Debug-Sidebar', async () => {
       await requestLocator.click();
       await requestLocator.getByLabel('Request Actions').click();
       await page.getByRole('menuitemradio', { name: 'Rename' }).click();
-      await page.locator('text=Rename RequestName Rename >> input[type="text"]').fill('example http1');
-      await page.locator('div[role="dialog"] button:has-text("Rename")').click();
+
+      await page.getByRole('textbox', { name: 'GET example http' }).fill('example http1');
+      await requestLocator.click();
       await page.getByLabel('Request Collection').getByRole('row', { name: 'example http1' }).click();
     });
 
@@ -133,10 +125,10 @@ test.describe('Debug-Sidebar', async () => {
     });
 
     test('Rename a request by clicking', async ({ page }) => {
-      await page.getByTestId('example http').getByLabel('request name').dblclick();
-      await page.getByRole('textbox', { name: 'request name' }).fill('new name');
+      await page.getByTestId('example http').getByLabel('GET example http', { exact: true }).dblclick();
+      await page.getByRole('textbox', { name: 'GET example http' }).fill('new name');
       await page.getByLabel('Request Collection').click();
-      await expect(page.getByTestId('new name').getByLabel('request name')).toContainText('new name');
+      await expect(page.getByTestId('new name').getByLabel('GET new name', { exact: true })).toContainText('new name');
     });
 
     test('Create a new HTTP request', async ({ page }) => {
@@ -144,7 +136,5 @@ test.describe('Debug-Sidebar', async () => {
       await page.getByRole('menuitemradio', { name: 'Http Request' }).click();
       await page.getByLabel('Request Collection').getByRole('row', { name: 'New Request' }).click();
     });
-
-  // TODO: more scenarios will be added in follow-up iterations of increasing test coverage
   });
 });

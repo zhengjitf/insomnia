@@ -1,5 +1,5 @@
-import { IconName } from '@fortawesome/fontawesome-svg-core';
-import React, { FC, Fragment, useEffect, useState } from 'react';
+import type { IconName } from '@fortawesome/fontawesome-svg-core';
+import React, { type FC, Fragment, useEffect, useState } from 'react';
 import {
   Button,
   Dialog,
@@ -21,18 +21,18 @@ import {
 import { useFetcher } from 'react-router-dom';
 
 import {
-  isDefaultOrganizationProject,
   isRemoteProject,
-  Project,
+  type Project,
 } from '../../../models/project';
+import { ORG_STORAGE_RULE } from '../../routes/organization';
 import { Icon } from '../icon';
 import { showAlert, showModal } from '../modals';
 import { AskModal } from '../modals/ask-modal';
 
 interface Props {
-  project: Project;
+  project: Project & { hasUncommittedOrUnpushedChanges?: boolean };
   organizationId: string;
-  storage: 'cloud_only' | 'local_only' | 'cloud_plus_local';
+  storage: ORG_STORAGE_RULE;
 }
 
 interface ProjectActionItem {
@@ -49,9 +49,11 @@ export const ProjectDropdown: FC<Props> = ({ project, organizationId, storage })
   const updateProjectFetcher = useFetcher();
   const [projectType, setProjectType] = useState<'local' | 'remote' | ''>('');
 
-  const isRemoteProjectInconsistent = isRemoteProject(project) && storage === 'local_only';
-  const isLocalProjectInconsistent = !isRemoteProject(project) && storage === 'cloud_only';
+  const isRemoteProjectInconsistent = isRemoteProject(project) && storage === ORG_STORAGE_RULE.LOCAL_ONLY;
+  const isLocalProjectInconsistent = !isRemoteProject(project) && storage === ORG_STORAGE_RULE.CLOUD_ONLY;
   const isProjectInconsistent = isRemoteProjectInconsistent || isLocalProjectInconsistent;
+  const showStorageRestrictionMessage = storage !== ORG_STORAGE_RULE.CLOUD_PLUS_LOCAL;
+
   const projectActionList: ProjectActionItem[] = [
     {
       id: 'settings',
@@ -59,7 +61,7 @@ export const ProjectDropdown: FC<Props> = ({ project, organizationId, storage })
       icon: 'gear',
       action: () => setIsProjectSettingsModalOpen(true),
     },
-    ...!isDefaultOrganizationProject(project) ? [{
+    {
       id: 'delete',
       name: 'Delete',
       icon: 'trash',
@@ -83,7 +85,7 @@ export const ProjectDropdown: FC<Props> = ({ project, organizationId, storage })
           },
         });
       },
-    }] satisfies ProjectActionItem[] : [],
+    },
   ];
 
   useEffect(() => {
@@ -94,7 +96,16 @@ export const ProjectDropdown: FC<Props> = ({ project, organizationId, storage })
       });
     }
   }, [deleteProjectFetcher.data, deleteProjectFetcher.state]);
-  const defaultStorageSelection = storage === 'local_only' ? 'local' : 'remote';
+
+  useEffect(() => {
+    if (updateProjectFetcher.data && updateProjectFetcher.data.error && updateProjectFetcher.state === 'idle') {
+      showAlert({
+        title: 'Could not update project',
+        message: updateProjectFetcher.data.error,
+      });
+    }
+  }, [updateProjectFetcher.data, updateProjectFetcher.state]);
+
   return (
     <Fragment>
       {isProjectInconsistent &&
@@ -113,18 +124,23 @@ export const ProjectDropdown: FC<Props> = ({ project, organizationId, storage })
             offset={4}
             className="border select-none text-sm max-w-xs border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] text-[--color-font] px-4 py-2 rounded-md overflow-y-auto max-h-[85vh] focus:outline-none"
           >
-            {`This project type is not allowed by the organization owner. You can manually convert it to use ${storage === 'cloud_only' ? 'Cloud Sync' : 'Local Vault'}.`}
+            {`This project type is not allowed by the organization owner. You can manually convert it to use ${storage === ORG_STORAGE_RULE.CLOUD_ONLY ? 'Cloud Sync' : 'Local Vault'}.`}
           </Tooltip>
         </TooltipTrigger>
       }
+      {project.hasUncommittedOrUnpushedChanges && (
+        <div className='group-focus:hidden group-hover:hidden aspect-square h-6 flex items-center justify-center'>
+          <Icon icon="circle" className='w-2 h-2' color="var(--color-warning)" />
+        </div>
+      )}
       <MenuTrigger>
         <Button
           aria-label="Project Actions"
-          className="opacity-0 items-center hover:opacity-100 focus:opacity-100 data-[pressed]:opacity-100 flex group-focus:opacity-100 group-hover:opacity-100 justify-center h-6 aspect-square aria-pressed:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm"
+          className="opacity-0 hidden items-center hover:opacity-100 focus:opacity-100 data-[pressed]:opacity-100 data-[pressed]:flex group-focus:flex group-hover:flex group-focus:opacity-100 group-hover:opacity-100 justify-center h-6 aspect-square aria-pressed:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm"
         >
           <Icon icon="caret-down" />
         </Button>
-        <Popover className="min-w-max">
+        <Popover className="min-w-max overflow-y-hidden flex flex-col">
           <Menu
             aria-label="Project Actions Menu"
             selectionMode="single"
@@ -132,7 +148,7 @@ export const ProjectDropdown: FC<Props> = ({ project, organizationId, storage })
               projectActionList.find(({ id }) => key === id)?.action(project._id, project.name);
             }}
             items={projectActionList}
-            className="border select-none text-sm min-w-max border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] py-2 rounded-md overflow-y-auto max-h-[85vh] focus:outline-none"
+            className="border select-none text-sm min-w-max border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] py-2 rounded-md overflow-y-auto focus:outline-none"
           >
             {item => (
               <MenuItem
@@ -178,9 +194,6 @@ export const ProjectDropdown: FC<Props> = ({ project, organizationId, storage })
                     <Icon icon="x" />
                   </Button>
                 </div>
-                {isDefaultOrganizationProject(project) && <p>
-                  <Icon icon="info-circle" /> This is the default project for your organization. You can not delete it or change its type.
-                </p>}
                 <form
                   className='flex flex-col gap-4'
                   onSubmit={e => {
@@ -194,6 +207,14 @@ export const ProjectDropdown: FC<Props> = ({ project, organizationId, storage })
                     } else if (type === 'local' && project.remoteId && !projectType) {
                       setProjectType('local');
                     } else {
+                      if (!type) {
+                        showAlert({
+                          title: 'Project type not selected',
+                          message: 'Please select a project type before continuing',
+                        });
+                        return;
+                      }
+
                       updateProjectFetcher.submit(formData, {
                         action: `/organization/${organizationId}/project/${project._id}/update`,
                         method: 'post',
@@ -218,13 +239,13 @@ export const ProjectDropdown: FC<Props> = ({ project, organizationId, storage })
                         className="py-1 placeholder:italic w-full pl-2 pr-7 rounded-sm border border-solid border-[--hl-sm] bg-[--color-bg] text-[--color-font] focus:outline-none focus:ring-1 focus:ring-[--hl-md] transition-colors"
                       />
                     </TextField>
-                    <RadioGroup name="type" defaultValue={defaultStorageSelection} className="flex flex-col gap-2">
+                    <RadioGroup name="type" defaultValue={storage === ORG_STORAGE_RULE.CLOUD_PLUS_LOCAL ? project.remoteId ? 'remote' : 'local' : storage !== ORG_STORAGE_RULE.CLOUD_ONLY ? 'local' : 'remote'} className="flex flex-col gap-2">
                       <Label className="text-sm text-[--hl]">
                         Project type
                       </Label>
                       <div className="flex gap-2">
                         <Radio
-                          isDisabled={storage === 'local_only'}
+                          isDisabled={storage === ORG_STORAGE_RULE.LOCAL_ONLY}
                           value="remote"
                           className="data-[selected]:border-[--color-surprise] flex-1 data-[disabled]:opacity-25 data-[selected]:ring-2 data-[selected]:ring-[--color-surprise] hover:bg-[--hl-xs] focus:bg-[--hl-sm] border border-solid border-[--hl-md] rounded p-4 focus:outline-none transition-colors"
                         >
@@ -237,7 +258,7 @@ export const ProjectDropdown: FC<Props> = ({ project, organizationId, storage })
                           </p>
                         </Radio>
                         <Radio
-                          isDisabled={storage === 'cloud_only'}
+                          isDisabled={storage === ORG_STORAGE_RULE.CLOUD_ONLY}
                           value="local"
                           className="data-[selected]:border-[--color-surprise] flex-1 data-[disabled]:opacity-25 data-[selected]:ring-2 data-[selected]:ring-[--color-surprise] hover:bg-[--hl-xs] focus:bg-[--hl-sm] border border-solid border-[--hl-md] rounded p-4 focus:outline-none transition-colors"
                         >
@@ -295,7 +316,7 @@ export const ProjectDropdown: FC<Props> = ({ project, organizationId, storage })
                     <div className="flex items-center gap-2 text-sm">
                       <Icon icon="info-circle" />
                       <span>
-                        {isProjectInconsistent && `The organization owner mandates that projects must be created and stored ${storage.split('_').join(' ')}.`} You can optionally enable Git Sync
+                        {showStorageRestrictionMessage && `The organization owner mandates that projects must be created and stored ${storage.split('_').join(' ')}.`} You can optionally enable Git Sync
                       </span>
                     </div>
                     <div className='flex items-center gap-2'>

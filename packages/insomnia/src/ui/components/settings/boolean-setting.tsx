@@ -1,29 +1,16 @@
-import React, { FC, ReactNode } from 'react';
-import styled from 'styled-components';
+import React, { type FC, type ReactNode } from 'react';
 
-import { SettingsOfType } from '../../../common/settings';
+import type { SettingsOfType } from '../../../common/settings';
 import { useSettingsPatcher } from '../../hooks/use-request';
 import { useRootLoaderData } from '../../routes/root';
 import { HelpTooltip } from '../help-tooltip';
-const Descriptions = styled.div({
-  fontSize: 'var(--font-size-sm)',
-  opacity: 'var(--opacity-subtle)',
-  paddingLeft: 18,
-  '& *': {
-    marginTop: 'var(--padding-xs)',
-    marginBottom: 'var(--padding-sm)',
-  },
-});
 
 export const BooleanSetting: FC<{
-  /** each element of this array will appear as a paragraph below the setting describing it */
-  descriptions?: string[];
   help?: string;
   label: ReactNode;
   setting: SettingsOfType<boolean>;
   disabled?: boolean;
 }> = ({
-  descriptions,
   help,
   label,
   setting,
@@ -39,10 +26,8 @@ export const BooleanSetting: FC<{
 
   return (
     <>
-      <div className="form-control form-control--thin">
-        <label className="inline-block">
-          {label}
-          {help && <HelpTooltip className="space-left">{help}</HelpTooltip>}
+      <div className="">
+        <label className="flex items-center gap-2">
           <input
             checked={Boolean(settings[setting])}
             name={setting}
@@ -50,16 +35,10 @@ export const BooleanSetting: FC<{
             type="checkbox"
             disabled={disabled}
           />
+          {label}
+          {help && <HelpTooltip className="space-left">{help}</HelpTooltip>}
         </label>
       </div>
-
-      {descriptions && (
-        <Descriptions>
-          {descriptions.map(description => (
-            <div key={description}>{description}</div>
-          ))}
-        </Descriptions>
-      )}
     </>
   );
 };

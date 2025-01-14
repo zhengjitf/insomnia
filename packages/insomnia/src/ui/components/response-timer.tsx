@@ -1,20 +1,21 @@
-import React, { DOMAttributes, FunctionComponent, useEffect, useState } from 'react';
+import React, { type DOMAttributes, type FunctionComponent, useEffect, useState } from 'react';
 
-import { REQUEST_SETUP_TEARDOWN_COMPENSATION, REQUEST_TIME_TO_SHOW_COUNTER } from '../../common/constants';
+import type { TimingStep } from '../../main/network/request-timing';
 
 interface Props {
   handleCancel: DOMAttributes<HTMLButtonElement>['onClick'];
+  activeRequestId: string;
+  steps: TimingStep[];
 }
-
-export const ResponseTimer: FunctionComponent<Props> = ({ handleCancel }) => {
+// triggers a 100 ms render in order to show a incrementing counter
+const MillisecondTimer = ({ startedAt }: { startedAt: number }) => {
   const [milliseconds, setMilliseconds] = useState(0);
-
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
-    const loadStartTime = Date.now();
-
+    const loadStartTime = startedAt || Date.now();
     interval = setInterval(() => {
-      setMilliseconds(Date.now() - loadStartTime - REQUEST_SETUP_TEARDOWN_COMPENSATION);
+      const delta = Date.now() - loadStartTime;
+      setMilliseconds(delta);
     }, 100);
     return () => {
       if (interval !== null) {
@@ -22,24 +23,48 @@ export const ResponseTimer: FunctionComponent<Props> = ({ handleCancel }) => {
         clearInterval(interval);
       }
     };
-  }, []);
+  }, [startedAt]);
+  const ms = (milliseconds / 1000);
+  return ms > 0 ? `${ms.toFixed(1)} s` : '0 s';
+};
 
-  const seconds = milliseconds / 1000;
+export const ResponseTimer: FunctionComponent<Props> = ({ handleCancel, activeRequestId, steps }) => {
   return (
-    <div className="overlay theme--transparent-overlay">
-      <h2 style={{ fontVariantNumeric: 'tabular-nums' }}>
-        {seconds >= REQUEST_TIME_TO_SHOW_COUNTER ? `${seconds.toFixed(1)} seconds` : 'Loading'}...
-      </h2>
-      <div className="pad">
-        <i className="fa fa-refresh fa-spin" />
-      </div>
-      <div className="pad">
-        <button
-          className="btn btn--clicky"
-          onClick={handleCancel}
-        >
-          Cancel Request
-        </button>
+    <div className="flex overlay theme--transparent-overlay-darker w-full h-full">
+      <div className="m-auto w-[60%] min-w-[400px]">
+        <div className="timer-list mx-auto">
+          {steps.map((record: TimingStep) => (
+            <div
+              key={`${activeRequestId}-${record.stepName}`}
+              className='flex w-full leading-8'
+            >
+              <div className='w-3/4 ml-1 text-left text-md content-center leading-8'>
+                <span className="leading-8 w-1/5">
+                  {
+                    record.duration !== undefined ?
+                      (<i className="fa fa-circle-check fa-1x mr-2 text-green-500" />) :
+                      (<i className="fa fa-spinner fa-spin fa-1x mr-2" />)
+                  }
+                </span>
+                <span className="inline-block align-top text-clip w-4/5">
+                  {record.stepName}
+                </span>
+              </div>
+              <div className='w-1/4 mr-1 text-right leading-8'>
+                {record.duration !== undefined ? `${((record.duration) / 1000).toFixed(1)} s` : (<MillisecondTimer startedAt={record.startedAt} />)}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="pad text-center">
+          <button
+            className="btn btn--clicky"
+            onClick={handleCancel}
+          >
+            Cancel Request
+          </button>
+        </div>
       </div>
     </div>
   );

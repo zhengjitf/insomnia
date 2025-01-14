@@ -1,4 +1,4 @@
-import { PromiseFsClient } from 'isomorphic-git';
+import type { PromiseFsClient } from 'isomorphic-git';
 import path from 'path';
 
 import Stat from './stat';
@@ -33,6 +33,9 @@ interface FSDir {
 
 type FSEntry = FSDir | FSFile | FSLink;
 
+/**
+ * In-memory file system client
+ */
 export class MemClient {
   __fs: FSEntry;
   __ino: 0;

@@ -1,8 +1,8 @@
 // @ts-expect-error the enquirer types are incomplete https://github.com/enquirer/enquirer/pull/307
 import { AutoComplete } from 'enquirer';
 
-import { logger } from '../../logger';
-import type { Database } from '../index';
+import { logger } from '../../cli';
+import { type Database } from '../index';
 import type { Environment } from './types';
 import { ensureSingle, generateIdIsh, getDbChoice, matchIdIsh } from './util';
 
@@ -25,27 +25,17 @@ export const loadEnvironment = (
     return null;
   }
 
-  // Get the sub environments
-  const baseWorkspaceEnv = loadBaseEnvironmentForWorkspace(db, workspaceId);
-  const subEnvs = db.Environment.filter(
-    env => env.parentId === baseWorkspaceEnv._id,
-  );
-
   // If no identifier, return base environment
   if (!identifier) {
     logger.trace('No sub environments found, using base environment');
-    return baseWorkspaceEnv;
+    return loadBaseEnvironmentForWorkspace(db, workspaceId);
   }
 
   logger.trace(
     'Load sub environment with identifier `%s` from data store',
     identifier,
   );
-  const items = subEnvs.filter(
-    env => matchIdIsh(env, identifier) || env.name === identifier,
-  );
-  logger.trace('Found %d', items.length);
-  return ensureSingle(items, 'sub environment');
+  return db.Environment.find(env => matchIdIsh(env, identifier) || env.name === identifier);
 };
 
 export const promptEnvironment = async (

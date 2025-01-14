@@ -1,24 +1,32 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FocusScope } from 'react-aria';
-import { Button, Input } from 'react-aria-components';
+import { Input } from 'react-aria-components';
 
 export const EditableInput = ({
   value = 'Untitled',
   ariaLabel,
+  editable = false,
   name,
   className,
   onSubmit,
-  onSingleClick,
+  onEditableChange,
 }: {
   value: string;
   ariaLabel?: string;
+    editable?: boolean;
+    onEditableChange?: (editable: boolean) => void;
   name?: string;
     className?: string;
     onSubmit: (value: string) => void;
-    onSingleClick?: () => void;
 }) => {
-  const [isEditable, setIsEditable] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [isEditable, setIsEditable] = useState(editable);
+  const editableRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsEditable(editable);
+  }
+    , [editable]);
+
   useEffect(() => {
     if (!isEditable) {
       return;
@@ -45,67 +53,30 @@ export const EditableInput = ({
     };
   }, [isEditable]);
 
-  useEffect(() => {
-    const button = buttonRef.current;
-    if (button) {
-      let clickTimeout: ReturnType<typeof setTimeout> | null = null;
-      function onClick(e: MouseEvent) {
-        e.stopPropagation();
-        e.preventDefault();
-        if (clickTimeout !== null) {
-          console.log('click: timeout exists');
-          clearTimeout(clickTimeout);
-        }
-        // If timeout passes fire the single click
-        // else prevent the single click and fire the double click
-        clickTimeout = setTimeout(() => {
-          onSingleClick?.();
-        }, 200);
-      }
-      button.addEventListener('click', onClick);
+  function onDoubleClick(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    e.stopPropagation();
+    e.preventDefault();
 
-      function onDoubleClick(e: MouseEvent) {
-        e.stopPropagation();
-        e.preventDefault();
-        if (clickTimeout !== null) {
-          clearTimeout(clickTimeout);
-          clickTimeout = null;
-        }
-        setIsEditable(true);
-      }
-
-      button.addEventListener('dblclick', onDoubleClick);
-
-      return () => {
-        button.removeEventListener('click', onClick);
-        button.removeEventListener('dblclick', onDoubleClick);
-      };
-    }
-
-    return () => { };
-  }, [onSingleClick]);
+    setIsEditable(true);
+    onEditableChange?.(true);
+  }
 
   return (
     <>
-      <Button
-        ref={buttonRef}
+      <div
+        ref={editableRef}
         className={
           `items-center truncate justify-center data-[pressed]:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all
             ${isEditable ? 'hidden' : ''}
             ${className || 'px-2'}
           `
         }
-        onPress={e => {
-          if (e.pointerType !== 'mouse') {
-            setIsEditable(true);
-          }
-        }}
-        name={name}
+        onDoubleClick={onDoubleClick}
+        data-editable
         aria-label={ariaLabel}
-        value={value}
       >
         <span className="truncate">{value}</span>
-      </Button>
+      </div>
       {isEditable && (
         <FocusScope contain restoreFocus autoFocus>
           <Input
@@ -119,17 +90,20 @@ export const EditableInput = ({
                 e.stopPropagation();
                 onSubmit(value);
                 setIsEditable(false);
+                onEditableChange?.(false);
               }
 
               if (e.key === 'Escape') {
                 e.stopPropagation();
                 setIsEditable(false);
+                onEditableChange?.(false);
               }
             }}
             onBlur={e => {
               const value = e.currentTarget.value;
               onSubmit(value);
               setIsEditable(false);
+              onEditableChange?.(false);
             }}
           />
         </FocusScope>

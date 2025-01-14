@@ -13,8 +13,7 @@ test.describe('pre-request features tests', async () => {
         const text = await loadFixture('pre-request-collection.yaml');
         await app.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), text);
 
-        await page.getByRole('button', { name: 'Create in project' }).click();
-        await page.getByRole('menuitemradio', { name: 'Import' }).click();
+        await page.getByLabel('Import').click();
         await page.locator('[data-test-id="import-from-clipboard"]').click();
         await page.getByRole('button', { name: 'Scan' }).click();
         await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
@@ -26,13 +25,11 @@ test.describe('pre-request features tests', async () => {
         {
             name: 'environments setting and overriding',
             expectedBody: {
-                environmentName: '',
-                baseEnvironmentName: 'Base Environment',
-                collectionVariablesName: 'Base Environment',
-                fromBaseEnv: 'baseEnv',
+                // fallbackToGlobal: 'fallbackToGlobal',
+                fallbackToBase: 'fallbackToBase',
                 scriptValue: 'fromEnv',
                 preDefinedValue: 'fromScript',
-                customValue: 'fromFolder',
+                folderEnv: 'fromFolder',
             },
         },
         {
@@ -176,6 +173,12 @@ test.describe('pre-request features tests', async () => {
                 asyncTaskDone: true,
             },
         },
+        {
+            name: 'run parent scripts only',
+            expectedBody: {
+                'onlySetByFolderPreScript': 888,
+            },
+        },
     ];
 
     for (let i = 0; i < testCases.length; i++) {
@@ -217,13 +220,13 @@ test.describe('pre-request features tests', async () => {
         // set request body
         await page.getByRole('tab', { name: 'Body' }).click();
         await page.getByRole('button', { name: 'Body' }).click();
-        await page.getByRole('menuitem', { name: 'JSON' }).click();
+        await page.getByRole('option', { name: 'JSON' }).click();
 
         const bodyEditor = page.getByTestId('CodeEditor').getByRole('textbox');
         await bodyEditor.fill('{ "rawBody": {{ _.rawBody }}, "urlencodedBody": {{ _.urlencodedBody }}, "gqlBody": {{ _.gqlBody }}, "fileBody": {{ _.fileBody }}, "formdataBody": {{ _.formdataBody }} }');
 
         // enter script
-        await page.getByTestId('pre-request-script-tab').click();
+        await page.getByRole('tab', { name: 'Scripts' }).click();
         const preRequestScriptEditor = page.getByTestId('CodeEditor').getByRole('textbox');
         await preRequestScriptEditor.fill(`
         const rawReq = {
@@ -351,11 +354,14 @@ test.describe('pre-request features tests', async () => {
         // update proxy configuration
         await page.locator('[data-testid="settings-button"]').click();
         await page.locator('text=Insomnia Preferences').first().click();
+        await page.getByRole('tab', { name: 'Proxy' }).click();
         await page.locator('text=Enable proxy').click();
         await page.locator('[name="httpProxy"]').fill('localhost:1111');
         await page.locator('[name="httpsProxy"]').fill('localhost:2222');
         await page.locator('[name="noProxy"]').fill('http://a.com,https://b.com');
         await page.locator('.app').press('Escape');
+        // add 1s timeout to ensure noProxy settings is applied - INS-4155
+        await page.waitForTimeout(1000);
 
         await page.getByLabel('Request Collection').getByTestId('test proxies manipulation').press('Enter');
 
@@ -363,7 +369,7 @@ test.describe('pre-request features tests', async () => {
         await page.getByTestId('request-pane').getByRole('button', { name: 'Send' }).click();
 
         // verify
-        await page.getByRole('tab', { name: 'Timeline' }).click();
+        await page.getByRole('tab', { name: 'Console' }).click();
         await expect(responsePane).toContainText('localhost:2222'); // original proxy
         await expect(responsePane).toContainText('Trying 127.0.0.1:8888'); // updated proxy
     });
@@ -375,7 +381,7 @@ test.describe('pre-request features tests', async () => {
         // update proxy configuration
         await page.locator('text=Add Certificates').click();
         await page.locator('text=Add client certificate').click();
-        await page.locator('[name="host"]').fill('a.com');
+        await page.locator('[name="host"]').fill('127.0.0.1');
         await page.locator('[data-key="pfx"]').click();
 
         const fileChooserPromise = page.waitForEvent('filechooser');
@@ -390,23 +396,48 @@ test.describe('pre-request features tests', async () => {
         // send
         await page.getByTestId('request-pane').getByRole('button', { name: 'Send' }).click();
         // verify
-        await page.getByRole('tab', { name: 'Timeline' }).click();
+        await page.getByRole('tab', { name: 'Console' }).click();
         await expect(responsePane).toContainText('fixtures/certificates/fake.pfx'); // original proxy
     });
 
-    test('insomnia.test and insomnia.expect can work together ', async ({ page }) => {
-        const responsePane = page.getByTestId('response-pane');
-
+    test('pre: insomnia.test and insomnia.expect can work together', async ({ page }) => {
         await page.getByLabel('Request Collection').getByTestId('insomnia.test').press('Enter');
 
         // send
         await page.getByTestId('request-pane').getByRole('button', { name: 'Send' }).click();
 
         // verify
-        await page.getByRole('tab', { name: 'Timeline' }).click();
+        await page.getByRole('tab', { name: 'Tests' }).click();
 
-        await expect(responsePane).toContainText('✓ happy tests'); // original proxy
-        await expect(responsePane).toContainText('✕ unhappy tests: AssertionError: expected 199 to deeply equal 200'); // updated proxy
+        const responsePane = page.getByTestId('response-pane');
+        expect(responsePane).toContainText('FAILunhappy tests | AssertionError: expected 199 to deeply equal 200Pre-request Test');
+        expect(responsePane).toContainText('PASShappy tests');
+    });
+
+    test('environment and baseEnvironment can be persisted', async ({ page }) => {
+        const statusTag = page.locator('[data-testid="response-status-tag"]:visible');
+        await page.getByLabel('Request Collection').getByTestId('persist environment').press('Enter');
+
+        // send
+        await page.getByTestId('request-pane').getByRole('button', { name: 'Send' }).click();
+
+        // verify response
+        await page.waitForSelector('[data-testid="response-status-tag"]:visible');
+        await expect(statusTag).toContainText('200 OK');
+
+        // verify persisted environment
+        await page.getByRole('button', { name: 'Manage Environments' }).click();
+        await page.getByRole('button', { name: 'Manage collection environments' }).click();
+        const responseBody = page.getByRole('dialog').getByTestId('CodeEditor').locator('.CodeMirror-line');
+        const rows = await responseBody.allInnerTexts();
+        const bodyJson = JSON.parse(rows.join(' '));
+
+        expect(bodyJson).toEqual({
+            // no environment is selected so the environment value will be persisted to the base environment
+            '__fromScript1': 'baseEnvironment',
+            '__fromScript2': 'collection',
+            '__fromScript': 'environment',
+        });
     });
 });
 
@@ -417,8 +448,7 @@ test.describe('unhappy paths', async () => {
         const text = await loadFixture('pre-request-collection.yaml');
         await app.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), text);
 
-        await page.getByRole('button', { name: 'Create in project' }).click();
-        await page.getByRole('menuitemradio', { name: 'Import' }).click();
+        await page.getByLabel('Import').click();
         await page.locator('[data-test-id="import-from-clipboard"]').click();
         await page.getByRole('button', { name: 'Scan' }).click();
         await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
@@ -427,18 +457,6 @@ test.describe('unhappy paths', async () => {
     });
 
     const testCases = [
-        {
-            name: 'invalid result is returned',
-            preReqScript: `
-          return;
-          `,
-            context: {
-                insomnia: {},
-            },
-            expectedResult: {
-                message: 'insomnia object is invalid or script returns earlier than expected.',
-            },
-        },
         {
             name: 'custom error is returned',
             preReqScript: `
@@ -476,10 +494,10 @@ test.describe('unhappy paths', async () => {
             // set request body
             await page.getByRole('tab', { name: 'Body' }).click();
             await page.getByRole('button', { name: 'Body' }).click();
-            await page.getByRole('menuitem', { name: 'JSON' }).click();
+            await page.getByRole('option', { name: 'JSON' }).click();
 
             // enter script
-            await page.getByTestId('pre-request-script-tab').click();
+            await page.getByRole('tab', { name: 'Scripts' }).click();
             const preRequestScriptEditor = page.getByTestId('CodeEditor').getByRole('textbox');
             await preRequestScriptEditor.fill(tc.preReqScript);
 

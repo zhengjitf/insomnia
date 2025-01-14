@@ -1,5 +1,6 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it } from 'vitest';
 
+import { MockServer } from '../../models/mock-server';
 import {
   ACTIVITY_DEBUG,
   ACTIVITY_HOME,
@@ -76,7 +77,7 @@ describe('getContentTypeName', () => {
     expect(getContentTypeName('application/json; charset=utf-8')).toBe('JSON');
     expect(getContentTypeName('text/plain')).toBe('Plain');
     expect(getContentTypeName('application/xml')).toBe('XML');
-    expect(getContentTypeName('text/yaml')).toBe('YAML');
+    expect(getContentTypeName('application/yaml')).toBe('YAML');
     expect(getContentTypeName('application/edn')).toBe('EDN');
     expect(getContentTypeName('application/x-www-form-urlencoded')).toBe('Form');
     expect(getContentTypeName('multipart/form-data')).toBe('Multipart');
@@ -89,9 +90,20 @@ describe('getContentTypeName', () => {
 });
 
 describe('getMockSeviceBinUrl', () => {
-  it('should add subdomain when using insomnia cloud', () => {
-    expect(getMockServiceBinURL('xyz', '/my-route', undefined)).toBe('https://xyz.mock.insomnia.rest/my-route');
-    expect(getMockServiceBinURL('mock_123', '/my-route', undefined)).toBe('https://mock_123.mock.insomnia.rest/my-route');
-    expect(getMockServiceBinURL('mock_123', '/my-route', 'http://localhost:8080')).toBe('http://localhost:8080/bin/mock_123/my-route');
+  it('should return correct mock url', () => {
+    expect(getMockServiceBinURL({
+      useInsomniaCloud: true,
+      _id: 'mock_617eac05d9a94e38a1187f9b4400039b',
+      url: '',
+    } as MockServer, '/my-route')).toBe(
+      'https://mock-617eac05d9a94e38a1187f9b4400039b.mock.insomnia.rest/my-route'
+    );
+    expect(getMockServiceBinURL({
+      useInsomniaCloud: false,
+      _id: 'mock_617eac05d9a94e38a1187f9b4400039b',
+      url: 'http://localhost:8080',
+    } as MockServer, '/my-route')).toBe(
+      'http://localhost:8080/bin/mock_617eac05d9a94e38a1187f9b4400039b/my-route'
+    );
   });
 });

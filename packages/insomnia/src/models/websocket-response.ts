@@ -1,10 +1,10 @@
 import fs from 'fs';
 
-import { database as db, Query } from '../common/database';
+import { database as db, type Query } from '../common/database';
 import * as requestOperations from './helpers/request-operations';
 import type { BaseModel } from './index';
 import * as models from './index';
-import { ResponseHeader } from './response';
+import type { ResponseHeader } from './response';
 
 export const name = 'WebSocket Response';
 
@@ -153,7 +153,7 @@ async function _findRecentForRequest(
   environmentId: string | null,
   limit: number,
 ) {
-  const query: Query = {
+  const query: Query<WebSocketResponse> = {
     parentId: requestId,
   };
 

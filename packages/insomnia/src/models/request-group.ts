@@ -1,5 +1,7 @@
 import { database as db } from '../common/database';
+import type { EnvironmentKvPairData, EnvironmentType } from './environment';
 import type { BaseModel } from './index';
+import type { RequestAuthentication, RequestHeader } from './request';
 
 export const name = 'Folder';
 
@@ -10,12 +12,23 @@ export const prefix = 'fld';
 export const canDuplicate = true;
 
 export const canSync = true;
+// for those keys do not need to add in model init method
+export const optionalKeys = [
+  'kvPairData',
+  'environmentType',
+];
 interface BaseRequestGroup {
   name: string;
   description: string;
   environment: Record<string, any>;
   environmentPropertyOrder: Record<string, any> | null;
+  kvPairData?: EnvironmentKvPairData[];
+  environmentType?: EnvironmentType;
   metaSortKey: number;
+  preRequestScript?: string;
+  afterResponseScript?: string;
+  authentication?: RequestAuthentication | {};
+  headers?: RequestHeader[];
 }
 
 export type RequestGroup = BaseModel & BaseRequestGroup;
@@ -31,6 +44,10 @@ export function init(): BaseRequestGroup {
     environment: {},
     environmentPropertyOrder: null,
     metaSortKey: -1 * Date.now(),
+    preRequestScript: undefined,
+    afterResponseScript: undefined,
+    authentication: undefined,
+    headers: undefined,
   };
 }
 
@@ -78,7 +95,6 @@ export async function duplicate(requestGroup: RequestGroup, patch: Partial<Reque
     },
   };
 
-  // @ts-expect-error -- TSCONVERSION appears to be a genuine error
   const [nextRequestGroup] = await db.find<RequestGroup>(type, q, {
     metaSortKey: 1,
   });
@@ -96,4 +112,4 @@ export async function duplicate(requestGroup: RequestGroup, patch: Partial<Reque
   });
 }
 
-export const isRequestGroupId = (id: string) => id.startsWith(prefix);
+export const isRequestGroupId = (id?: string | null) => id?.startsWith(prefix);
